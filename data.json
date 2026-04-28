@@ -12,6 +12,9 @@
         { "name": "雙手劍", "coefficient": 1.34 },
         { "name": "單手斧", "coefficient": 1.20 },
         { "name": "雙手斧", "coefficient": 1.34 }
+      ],
+      "skills": [
+        { "name": "激勵 (Rage)", "type": "atkFlat", "value": 20, "enabled": true }
       ]
     },
     {
@@ -28,6 +31,9 @@
         { "name": "雙手斧", "coefficient": 1.34 },
         { "name": "單手棍", "coefficient": 1.20 },
         { "name": "雙手棍", "coefficient": 1.34 }
+      ],
+      "skills": [
+        { "name": "激勵 (Rage)", "type": "atkFlat", "value": 20, "enabled": true }
       ]
     },
     {
@@ -40,6 +46,9 @@
       "weapons": [
         { "name": "長槍", "coefficient": 1.49 },
         { "name": "矛",   "coefficient": 1.49 }
+      ],
+      "skills": [
+        { "name": "守護者祝福 (Beholder)", "type": "atkFlat", "value": 15, "enabled": true }
       ]
     },
     {
@@ -52,7 +61,8 @@
       "weapons": [
         { "name": "長杖", "coefficient": 1.20 },
         { "name": "短杖", "coefficient": 1.20 }
-      ]
+      ],
+      "skills": []
     },
     {
       "id": "iceLightningMage",
@@ -64,7 +74,8 @@
       "weapons": [
         { "name": "長杖", "coefficient": 1.20 },
         { "name": "短杖", "coefficient": 1.20 }
-      ]
+      ],
+      "skills": []
     },
     {
       "id": "bishop",
@@ -76,7 +87,8 @@
       "weapons": [
         { "name": "長杖", "coefficient": 1.20 },
         { "name": "短杖", "coefficient": 1.20 }
-      ]
+      ],
+      "skills": []
     },
     {
       "id": "bowmaster",
@@ -87,6 +99,10 @@
       "attackType": "physical",
       "weapons": [
         { "name": "弓", "coefficient": 1.30 }
+      ],
+      "skills": [
+        { "name": "會心之眼 (Sharp Eyes) 爆擊率", "type": "critRate", "value": 30, "enabled": true },
+        { "name": "會心之眼 (Sharp Eyes) 爆傷", "type": "critDmg", "value": 30, "enabled": true }
       ]
     },
     {
@@ -98,6 +114,10 @@
       "attackType": "physical",
       "weapons": [
         { "name": "弩", "coefficient": 1.35 }
+      ],
+      "skills": [
+        { "name": "會心之眼 (Sharp Eyes) 爆擊率", "type": "critRate", "value": 30, "enabled": true },
+        { "name": "會心之眼 (Sharp Eyes) 爆傷", "type": "critDmg", "value": 30, "enabled": true }
       ]
     },
     {
@@ -109,7 +129,8 @@
       "attackType": "physical",
       "weapons": [
         { "name": "拳套（爪型）", "coefficient": 1.75 }
-      ]
+      ],
+      "skills": []
     },
     {
       "id": "shadower",
@@ -120,7 +141,8 @@
       "attackType": "physical",
       "weapons": [
         { "name": "短劍", "coefficient": 1.30 }
-      ]
+      ],
+      "skills": []
     },
     {
       "id": "dualBlade",
@@ -131,7 +153,8 @@
       "attackType": "physical",
       "weapons": [
         { "name": "雙刀", "coefficient": 1.30 }
-      ]
+      ],
+      "skills": []
     },
     {
       "id": "buccaneer",
@@ -142,7 +165,8 @@
       "attackType": "physical",
       "weapons": [
         { "name": "拳套", "coefficient": 1.70 }
-      ]
+      ],
+      "skills": []
     },
     {
       "id": "corsair",
@@ -153,7 +177,8 @@
       "attackType": "physical",
       "weapons": [
         { "name": "手槍", "coefficient": 1.50 }
-      ]
+      ],
+      "skills": []
     },
     {
       "id": "cannoneer",
@@ -164,7 +189,8 @@
       "attackType": "physical",
       "weapons": [
         { "name": "大砲", "coefficient": 1.50 }
-      ]
+      ],
+      "skills": []
     },
     {
       "id": "aran",
@@ -175,7 +201,8 @@
       "attackType": "physical",
       "weapons": [
         { "name": "矛", "coefficient": 1.49 }
-      ]
+      ],
+      "skills": []
     },
     {
       "id": "evan",
@@ -187,7 +214,8 @@
       "weapons": [
         { "name": "長杖", "coefficient": 1.20 },
         { "name": "短杖", "coefficient": 1.20 }
-      ]
+      ],
+      "skills": []
     },
     {
       "id": "battleMage",
@@ -198,6 +226,10 @@
       "attackType": "magical",
       "weapons": [
         { "name": "長杖", "coefficient": 1.20 }
+      ],
+      "skills": [
+        { "name": "黑暗光環 (Dark Aura) ATK%", "type": "atkPct", "value": 20, "enabled": true },
+        { "name": "三繩技能", "type": "atkFlat", "value": 0, "enabled": false }
       ]
     },
     {
@@ -209,7 +241,8 @@
       "attackType": "physical",
       "weapons": [
         { "name": "弩", "coefficient": 1.35 }
-      ]
+      ],
+      "skills": []
     },
     {
       "id": "mechanic",
@@ -220,7 +253,8 @@
       "attackType": "physical",
       "weapons": [
         { "name": "火槍", "coefficient": 1.50 }
-      ]
+      ],
+      "skills": []
     },
     {
       "id": "demonSlayer",
@@ -231,7 +265,8 @@
       "attackType": "physical",
       "weapons": [
         { "name": "單手棍", "coefficient": 1.20 }
-      ]
+      ],
+      "skills": []
     },
     {
       "id": "mercedes",
@@ -242,7 +277,8 @@
       "attackType": "physical",
       "weapons": [
         { "name": "雙弩", "coefficient": 1.30 }
-      ]
+      ],
+      "skills": []
     },
     {
       "id": "phantom",
@@ -253,6 +289,10 @@
       "attackType": "physical",
       "weapons": [
         { "name": "手杖", "coefficient": 1.30 }
+      ],
+      "skills": [
+        { "name": "會心之眼（複製）爆擊率", "type": "critRate", "value": 30, "enabled": true },
+        { "name": "會心之眼（複製）爆傷", "type": "critDmg", "value": 30, "enabled": true }
       ]
     },
     {
@@ -264,7 +304,8 @@
       "attackType": "physical",
       "weapons": [
         { "name": "武士刀", "coefficient": 1.25 }
-      ]
+      ],
+      "skills": []
     },
     {
       "id": "kanna",
@@ -275,7 +316,55 @@
       "attackType": "magical",
       "weapons": [
         { "name": "扇子", "coefficient": 1.35 }
+      ],
+      "skills": []
+    }
+  ],
+  "partyBuffs": [
+    {
+      "id": "sharpEyes",
+      "name": "會心之眼",
+      "source": "箭神 / 神射手",
+      "effects": [
+        { "type": "critRate", "value": 30 },
+        { "type": "critDmg", "value": 30 }
       ]
+    },
+    {
+      "id": "rage",
+      "name": "激勵 (Rage)",
+      "source": "英雄",
+      "effects": [{ "type": "atkFlat", "value": 20 }]
+    },
+    {
+      "id": "advBlessing",
+      "name": "進階祝福",
+      "source": "主教",
+      "effects": [{ "type": "atkFlat", "value": 30 }]
+    },
+    {
+      "id": "darkAura",
+      "name": "黑暗光環",
+      "source": "煉獄巫師",
+      "effects": [{ "type": "atkPct", "value": 20 }]
+    },
+    {
+      "id": "battleMageRope",
+      "name": "三繩技能",
+      "source": "煉獄巫師",
+      "effects": [{ "type": "atkFlat", "value": 0 }]
+    },
+    {
+      "id": "mapleWarrior",
+      "name": "楓葉戰士",
+      "source": "多職業 4 轉",
+      "effects": [{ "type": "allStatPct", "value": 15 }]
+    },
+    {
+      "id": "finalSpeed",
+      "name": "最終極速",
+      "source": "待確認",
+      "effects": [{ "type": "hitsPerSecBonus", "value": 0 }]
     }
   ]
 }
