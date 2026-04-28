@@ -367,7 +367,7 @@ body {
    Tab 1 — BUFF List
    ════════════════════════════════════════════════════════════ */
 .buff-list { display: flex; flex-direction: column; gap: 5px; }
-.buff-item { font-size: 14px; }
+.buff-item { font-size: 20px; }
 .buff-label {
   display: flex;
   align-items: center;
@@ -376,7 +376,7 @@ body {
   padding: 3px 0;
 }
 .buff-name { color: var(--text); flex: 1; }
-.buff-source { color: var(--text-dim); font-size: 12px; white-space: nowrap; }
+.buff-source { color: var(--text-dim); font-size: 18px; white-space: nowrap; }
 .buff-effects {
   margin-left: 22px;
   margin-top: 3px;
@@ -384,8 +384,8 @@ body {
   flex-direction: column;
   gap: 3px;
 }
-.buff-effect-row { display: flex; gap: 6px; align-items: center; font-size: 13px; }
-.buff-effect-type { color: var(--text-dim); min-width: 110px; font-size: 12px; }
+.buff-effect-row { display: flex; gap: 6px; align-items: center; font-size: 19px; }
+.buff-effect-type { color: var(--text-dim); min-width: 110px; font-size: 18px; }
 .buff-val {
   width: 72px;
   background: var(--bg-input);
@@ -410,7 +410,7 @@ body {
   border-right: 1px solid var(--border);
   padding: 14px;
   overflow-y: auto;
-  font-size: 15px;
+  font-size: 21px;
 }
 
 .equip-content {
@@ -421,7 +421,7 @@ body {
 
 /* ── 裝備槽清單 ── */
 .slot-group-label {
-  font-size: 10px;
+  font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--accent-dim);
@@ -439,7 +439,7 @@ body {
   border: 1px solid transparent;
   margin-bottom: 2px;
   transition: all 0.15s;
-  font-size: 14px;
+  font-size: 20px;
 }
 
 .slot-list-item:hover { background: var(--bg-input); }
@@ -450,7 +450,7 @@ body {
 }
 
 .slot-summary {
-  font-size: 10px;
+  font-size: 16px;
   color: var(--text-dim);
   max-width: 90px;
   text-align: right;
@@ -467,7 +467,7 @@ body {
   width: 100%;
   text-align: center;
   padding: 7px 10px;
-  font-size: 12px;
+  font-size: 18px;
   border-radius: 6px;
 }
 .btn-import:hover { background: #2a4a3a; }
@@ -484,7 +484,7 @@ body {
 }
 
 .slot-detail-header {
-  font-size: 15px;
+  font-size: 21px;
   font-weight: 700;
   color: var(--accent);
   margin-bottom: 12px;
@@ -495,7 +495,7 @@ body {
 .detail-section { margin-bottom: 12px; }
 
 .detail-section-title {
-  font-size: 10px;
+  font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--accent-dim);
@@ -510,7 +510,7 @@ body {
 }
 
 .scroll-total {
-  font-size: 12px;
+  font-size: 18px;
   color: var(--success);
   margin-top: 5px;
 }
@@ -529,13 +529,13 @@ body {
   border: 1px solid #2a5a3a;
   border-radius: 4px;
   padding: 2px 8px;
-  font-size: 12px;
+  font-size: 18px;
   cursor: pointer;
   white-space: nowrap;
 }
 .btn-add-skill:hover { background: #2a4a3a; }
 
-.skill-empty-hint { color: #555; font-size: 12px; margin-bottom: 6px; font-style: italic; }
+.skill-empty-hint { color: #555; font-size: 18px; margin-bottom: 6px; font-style: italic; }
 
 .skill-item {
   background: var(--bg-input);
@@ -557,7 +557,7 @@ body {
   border: none;
   border-bottom: 1px solid var(--border);
   color: var(--text);
-  font-size: 13px;
+  font-size: 19px;
   padding: 2px 4px;
   outline: none;
 }
@@ -568,7 +568,7 @@ body {
   border: none;
   color: var(--danger);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 18px;
   padding: 2px 4px;
   line-height: 1;
 }
@@ -588,7 +588,7 @@ body {
   border-radius: 4px;
   color: var(--text);
   padding: 3px 6px;
-  font-size: 12px;
+  font-size: 18px;
 }
 
 .potential-type-sel {
@@ -598,7 +598,7 @@ body {
   border-radius: 4px;
   color: var(--text);
   padding: 5px 7px;
-  font-size: 14px;
+  font-size: 20px;
 }
 
 .potential-val {
@@ -608,7 +608,7 @@ body {
   border-radius: 4px;
   color: var(--text);
   padding: 5px 7px;
-  font-size: 14px;
+  font-size: 20px;
 }
 
 /* ── 底部三格 ── */
@@ -626,7 +626,7 @@ body {
 }
 
 .panel-title {
-  font-size: 13px;
+  font-size: 19px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--accent);
@@ -637,7 +637,7 @@ body {
 }
 
 .panel-sub-title {
-  font-size: 12px;
+  font-size: 18px;
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -649,7 +649,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
+  font-size: 19px;
   margin-bottom: 3px;
   color: var(--text-dim);
 }
@@ -657,7 +657,7 @@ body {
 .stat-val {
   color: var(--success);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 20px;
 }
 
 /* ── 攻屬比 ── */
@@ -669,8 +669,8 @@ body {
   text-align: center;
   margin-bottom: 10px;
 }
-.table-atk-label { font-size: 13px; color: #ff9933; margin-bottom: 4px; }
-.table-atk-range { font-size: 26px; font-weight: 700; color: #ffcc66; letter-spacing: 2px; }
+.table-atk-label { font-size: 19px; color: #ff9933; margin-bottom: 4px; }
+.table-atk-range { font-size: 32px; font-weight: 700; color: #ffcc66; letter-spacing: 2px; }
 
 .ratio-box {
   background: #0a3028;
@@ -680,13 +680,13 @@ body {
   text-align: center;
 }
 
-.ratio-label { font-size: 13px; color: var(--text-dim); margin-bottom: 4px; }
-.ratio-value { font-size: 32px; font-weight: 700; color: var(--accent); }
+.ratio-label { font-size: 19px; color: var(--text-dim); margin-bottom: 4px; }
+.ratio-value { font-size: 38px; font-weight: 700; color: var(--accent); }
 
 .efficiency-row {
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: 19px;
   color: var(--text-dim);
   margin-bottom: 3px;
 }
@@ -698,20 +698,20 @@ body {
   display: grid;
   grid-template-columns: auto 1fr 1fr;
   gap: 4px 8px;
-  font-size: 11px;
+  font-size: 17px;
   align-items: center;
 }
 
 .dps-col-head {
   text-align: center;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 19px;
 }
 
-.dps-row-label { color: var(--text-dim); white-space: nowrap; font-size: 13px; }
-.dps-val { text-align: center; color: #7ec8e3; font-weight: 600; font-size: 14px; }
-.final-row { color: var(--text); font-weight: 700; font-size: 14px; }
-.final-val { color: var(--accent) !important; font-size: 17px !important; font-weight: 700 !important; }
+.dps-row-label { color: var(--text-dim); white-space: nowrap; font-size: 19px; }
+.dps-val { text-align: center; color: #7ec8e3; font-weight: 600; font-size: 20px; }
+.final-row { color: var(--text); font-weight: 700; font-size: 20px; }
+.final-val { color: var(--accent) !important; font-size: 23px !important; font-weight: 700 !important; }
 
 /* ══════════════════════════════════════════════════════════════
    Responsive

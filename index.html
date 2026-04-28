@@ -445,16 +445,24 @@
           <input type="number" v-model.number="equip.equipSettings.value.hitsPerSec" min="0" step="0.1" />
         </div>
         <div class="field-group">
+          <label>BOSS 傷害 %</label>
+          <input type="number" v-model.number="equip.equipSettings.value.baseBossDmg" min="0" />
+        </div>
+        <div class="field-group">
+          <label>總傷害 %</label>
+          <input type="number" v-model.number="equip.equipSettings.value.baseTotalDmg" min="0" />
+        </div>
+        <div class="field-group">
+          <label>無視防禦 %</label>
+          <input type="number" v-model.number="equip.equipSettings.value.ignoreDefPct" min="0" max="100" />
+        </div>
+        <div class="field-group">
           <label>BOSS 防禦率 %</label>
           <input type="number" v-model.number="equip.equipSettings.value.bossDefPct" min="0" max="100" />
         </div>
         <div class="field-group">
           <label>小怪防禦率 %</label>
           <input type="number" v-model.number="equip.equipSettings.value.monsterDefPct" min="0" max="100" />
-        </div>
-        <div class="field-group">
-          <label>無視防禦（設定值）%</label>
-          <input type="number" v-model.number="equip.equipSettings.value.ignoreDefPct" min="0" max="100" />
         </div>
 
         <!-- 存檔區 -->

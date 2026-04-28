@@ -87,6 +87,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
   const equipSettings = Vue.ref({
     skillPct: 100, mastery: 60,
     critRate: 0, minCritBonus: 20, maxCritBonus: 50,
+    baseBossDmg: 0, baseTotalDmg: 0,
     bossDefPct: 0, monsterDefPct: 10, ignoreDefPct: 0,
     hitsPerSec: 1,
   })
@@ -100,7 +101,9 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
   const totals = Vue.computed(() => {
     let flatMain = 0, flatSub = 0, flatAtk = 0
     let pctMain = 0, pctSub = 0, pctAtk = 0
-    let critRate = 0, critDmg = 0, bossDmg = 0, totalDmg = 0
+    let critRate = 0, critDmg = 0
+    let bossDmg  = Number(equipSettings.value.baseBossDmg)  || 0
+    let totalDmg = Number(equipSettings.value.baseTotalDmg) || 0
     const ignoreDefFactors = []
 
     for (const slot of Object.values(slots.value)) {
