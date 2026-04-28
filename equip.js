@@ -269,18 +269,39 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     return r.step1 / (4 * pctMult * r.finalAtk)
   })
 
-  const upgradeEfficiency = Vue.computed(() => {
+  function _efficiencyBase(r, t) {
+    return {
+      mainPct: r.step1 > 0 ? (4 * r.finalMain * (1 + t.pctMain / 100) * 0.01 / r.step1) * 100 : 0,
+      atkPct:  (100 + r.finalAtkPct) > 0 ? 100 / (100 + r.finalAtkPct) : 0,
+    }
+  }
+
+  // 打 BOSS：總傷與 BOSS傷 分母都包含 bossDmg
+  const upgradeEfficiencyBoss = Vue.computed(() => {
     const r = dmgResult.value
     const t = totals.value
-    const mainPctGain  = r.step1 > 0 ? (4 * r.finalMain * (1 + t.pctMain / 100) * 0.01 / r.step1) * 100 : 0
-    const atkPctGain   = (100 + r.finalAtkPct) > 0 ? 100 / (100 + r.finalAtkPct) : 0
-    const bossDmgGain  = (100 + t.bossDmg + t.totalDmg) > 0 ? 100 / (100 + t.bossDmg + t.totalDmg) : 0
+    const { mainPct, atkPct } = _efficiencyBase(r, t)
+    const base = 100 + t.bossDmg + t.totalDmg
+    const bossDmgGain  = base > 0 ? 100 / base : 0
+    const totalDmgGain = base > 0 ? 100 / base : 0  // 對 BOSS，兩者分母相同
+    return [
+      { label: '+1% 主屬性', gain: mainPct },
+      { label: '+1% ATK',   gain: atkPct },
+      { label: '+1% BOSS傷', gain: bossDmgGain },
+      { label: '+1% 總傷',   gain: totalDmgGain },
+    ].sort((a, b) => b.gain - a.gain)
+  })
+
+  // 打小怪：BOSS傷無效，只計總傷
+  const upgradeEfficiencyMob = Vue.computed(() => {
+    const r = dmgResult.value
+    const t = totals.value
+    const { mainPct, atkPct } = _efficiencyBase(r, t)
     const totalDmgGain = (100 + t.totalDmg) > 0 ? 100 / (100 + t.totalDmg) : 0
     return [
-      { label: '+1% 主屬性', gain: mainPctGain },
-      { label: '+1% ATK',                gain: atkPctGain },
-      { label: '+1% BOSS傷',         gain: bossDmgGain },
-      { label: '+1% 總傷',       gain: totalDmgGain },
+      { label: '+1% 主屬性', gain: mainPct },
+      { label: '+1% ATK',   gain: atkPct },
+      { label: '+1% 總傷',   gain: totalDmgGain },
     ].sort((a, b) => b.gain - a.gain)
   })
 
@@ -342,7 +363,8 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     baseStats, equipSettings, useEquipSlots,
     slots, selectedSlotId, selectedSlot,
     jobSkills, activeBuffs,
-    totals, dmgResult, attackStatRatio, onePercentMainEquivFlat, oneAtkEquivMain, upgradeEfficiency,
+    totals, dmgResult, attackStatRatio, onePercentMainEquivFlat, oneAtkEquivMain,
+    upgradeEfficiencyBoss, upgradeEfficiencyMob,
     getState, setState,
     initJobSkills, initPartyBuffs, importFromTab1,
   }
