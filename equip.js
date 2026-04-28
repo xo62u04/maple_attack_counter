@@ -85,12 +85,16 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
   const baseStats = Vue.ref({ mainStat: 0, subStat: 0, atk: 0 })
 
   const equipSettings = Vue.ref({
+    weaponCoeff: 1.0,
     skillPct: 100, mastery: 60,
     critRate: 0, minCritBonus: 20, maxCritBonus: 50,
     baseBossDmg: 0, baseTotalDmg: 0,
     bossDefPct: 0, monsterDefPct: 10, ignoreDefPct: 0,
     hitsPerSec: 1,
   })
+
+  // 是否啟用裝備槽計算（關閉時直接用裸裝+技能/BUFF，適合直接輸入聚合值）
+  const useEquipSlots  = Vue.ref(true)
 
   const slots          = Vue.ref(Object.fromEntries(SLOT_DEFS.map(d => [d.id, makeSlot(d)])))
   const selectedSlotId = Vue.ref('weapon')
@@ -106,6 +110,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     let totalDmg = Number(equipSettings.value.baseTotalDmg) || 0
     const ignoreDefFactors = []
 
+    if (useEquipSlots.value)
     for (const slot of Object.values(slots.value)) {
       flatMain += Number(slot.base.mainStat) || 0
       flatSub  += Number(slot.base.subStat)  || 0
@@ -168,8 +173,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
   const dmgResult = Vue.computed(() => {
     const t = totals.value
     const s = equipSettings.value
-    const job = (jobsRef.value || []).find(j => j.id === (selectedJobIdRef ? selectedJobIdRef.value : null))
-    const coeff = (job && job.weapons && job.weapons[0]) ? job.weapons[0].coefficient : 1
+    const coeff = Number(s.weaponCoeff) || 1
 
     const finalMain   = (Number(baseStats.value.mainStat) || 0) + t.flatMain
     const finalSub    = (Number(baseStats.value.subStat)  || 0) + t.flatSub
@@ -280,76 +284,35 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     ].sort((a, b) => b.gain - a.gain)
   })
 
-  const EQUIP_STORAGE_KEY = 'maple_calc_equipment'
-  const MAX_EQUIP_SAVES   = 20
-  const equipSets         = Vue.ref([])
-  const equipSaveName     = Vue.ref('')
-  const selectedEquipSave = Vue.ref('')
-  const equipSaveMsg      = Vue.ref('')
-
-  function loadEquipSets() {
-    try {
-      const raw = localStorage.getItem(EQUIP_STORAGE_KEY)
-      equipSets.value = raw ? JSON.parse(raw) : []
-    } catch { equipSets.value = [] }
-  }
-
-  function persistEquipSets() {
-    try {
-      localStorage.setItem(EQUIP_STORAGE_KEY, JSON.stringify(equipSets.value))
-    } catch { equipSaveMsg.value = '⚠️ 儲存失敗（空間不足）' }
-  }
-
-  function saveEquipSet() {
-    const name = equipSaveName.value.trim()
-    if (!name) return
-    const exists = equipSets.value.find(e => e.name === name)
-    if (!exists && equipSets.value.length >= MAX_EQUIP_SAVES) {
-      equipSaveMsg.value = '⚠️ 已達 20 筆上限'
-      return
-    }
-    const entry = {
-      name,
+  // ── 統一存檔介面（由 app.js 的 saveCharacter/loadCharacter 管理）──
+  function getState() {
+    return {
       baseStats:     JSON.parse(JSON.stringify(baseStats.value)),
       equipSettings: JSON.parse(JSON.stringify(equipSettings.value)),
       slots:         JSON.parse(JSON.stringify(slots.value)),
       jobSkills:     JSON.parse(JSON.stringify(jobSkills.value)),
       activeBuffs:   JSON.parse(JSON.stringify(activeBuffs.value)),
+      useEquipSlots: useEquipSlots.value,
     }
-    const idx = equipSets.value.findIndex(e => e.name === name)
-    if (idx >= 0) equipSets.value[idx] = entry
-    else equipSets.value.push(entry)
-    persistEquipSets()
-    equipSaveMsg.value = '✅ 已儲存「' + name + '」'
-    setTimeout(() => { equipSaveMsg.value = '' }, 2000)
   }
 
-  function loadEquipSet() {
-    const key = selectedEquipSave.value
-    if (!key) return
-    const entry = equipSets.value.find(e => e.name === key)
-    if (!entry) return
-    Object.assign(baseStats.value,     entry.baseStats     || {})
-    Object.assign(equipSettings.value, entry.equipSettings || {})
-    slots.value       = entry.slots      || slots.value
-    jobSkills.value   = entry.jobSkills  || []
-    activeBuffs.value = entry.activeBuffs || []
-    equipSaveName.value = entry.name
-  }
-
-  function deleteEquipSet() {
-    const key = selectedEquipSave.value
-    if (!key) return
-    equipSets.value = equipSets.value.filter(e => e.name !== key)
-    persistEquipSets()
-    selectedEquipSave.value = ''
-    equipSaveMsg.value = '🗑️ 已刪除「' + key + '」'
-    setTimeout(() => { equipSaveMsg.value = '' }, 2000)
+  function setState(state) {
+    if (!state) return
+    if (state.baseStats)     Object.assign(baseStats.value,     state.baseStats)
+    if (state.equipSettings) Object.assign(equipSettings.value, state.equipSettings)
+    if (state.slots)         slots.value       = state.slots
+    if (state.jobSkills)     jobSkills.value   = state.jobSkills
+    if (state.activeBuffs)   activeBuffs.value = state.activeBuffs
+    if (state.useEquipSlots !== undefined) useEquipSlots.value = state.useEquipSlots
   }
 
   function initJobSkills(jobId) {
     const job = (jobsRef.value || []).find(j => j.id === jobId)
     jobSkills.value = (job && job.skills) ? job.skills.map(s => Object.assign({}, s)) : []
+    // 同時設定武器係數（取第一把武器；使用者可在側欄手動修改）
+    if (job && job.weapons && job.weapons[0]) {
+      equipSettings.value.weaponCoeff = job.weapons[0].coefficient
+    }
   }
 
   function initPartyBuffs() {
@@ -376,12 +339,11 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
 
   return {
     SLOT_DEFS, POTENTIAL_TYPES, makeSlot,
-    baseStats, equipSettings,
+    baseStats, equipSettings, useEquipSlots,
     slots, selectedSlotId, selectedSlot,
     jobSkills, activeBuffs,
     totals, dmgResult, attackStatRatio, onePercentMainEquivFlat, oneAtkEquivMain, upgradeEfficiency,
-    equipSets, equipSaveName, selectedEquipSave, equipSaveMsg,
-    loadEquipSets, saveEquipSet, loadEquipSet, deleteEquipSet,
+    getState, setState,
     initJobSkills, initPartyBuffs, importFromTab1,
   }
 }

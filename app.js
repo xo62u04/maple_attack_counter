@@ -36,8 +36,6 @@ createApp({
       }
       loadFromUrl()
       loadSavedCharacters()
-      // 裝備模擬器初始化
-      equip.loadEquipSets()
       initTab1Buffs()
       equip.initPartyBuffs()
     })
@@ -250,8 +248,16 @@ createApp({
     // ── 裝備模擬器 Composable ──
     const equip = useEquip(jobs, partyBuffs, selectedJobId)
 
-    // 職業變更時自動同步裝備模擬器的職業技能
-    watch(selectedJobId, (id) => { equip.initJobSkills(id) })
+    // 職業變更時：更新武器係數；只在 Tab2 技能清單為空時才自動載入（避免覆蓋已設定的技能）
+    watch(selectedJobId, (id) => {
+      const job = (jobs.value || []).find(j => j.id === id)
+      if (job && job.weapons && job.weapons[0]) {
+        equip.equipSettings.value.weaponCoeff = job.weapons[0].coefficient
+      }
+      if (equip.jobSkills.value.length === 0) {
+        equip.initJobSkills(id)
+      }
+    })
 
     // 新增自訂技能
     function addCustomSkill() {
@@ -329,7 +335,8 @@ createApp({
         weaponName: selectedWeaponName.value,
         coefficient: coefficient.value,
         stats: { ...stats.value },
-        tab1Buffs: JSON.parse(JSON.stringify(tab1Buffs.value))
+        tab1Buffs: JSON.parse(JSON.stringify(tab1Buffs.value)),
+        equipData: equip.getState(),
       }
       const idx = savedCharacters.value.findIndex(c => c.name === name)
       if (idx >= 0) savedCharacters.value[idx] = entry
@@ -352,7 +359,9 @@ createApp({
       if (entry.tab1Buffs) tab1Buffs.value = entry.tab1Buffs
       else initTab1Buffs()
       saveName.value = entry.name
-      equip.initJobSkills(entry.jobId)
+      // 還原裝備模擬器（含武器係數、裝備槽、技能）
+      if (entry.equipData) equip.setState(entry.equipData)
+      else equip.initJobSkills(entry.jobId)
     }
 
     function deleteCharacter() {
@@ -433,7 +442,8 @@ createApp({
     }
 
     return {
-      activeTab, equipZoom, changeEquipZoom,
+      activeTab, equipZoom, changeEquipZoom, saveName, selectedSaveKey, saveMessage, savedCharacters,
+      saveCharacter, loadCharacter, deleteCharacter,
       jobs, partyBuffs, loading, loadError,
       groups, filteredJobs, selectedJob,
       selectedGroup, selectedJobId, selectedWeaponName, coefficient,
@@ -447,8 +457,6 @@ createApp({
       maxDmgBoss, minDmgBoss, avgDmgBoss, avgDmgBossCrit,
       maxDmgMob, minDmgMob, avgDmgMob, avgDmgMobCrit,
       fmt, fmtFinal, fmtM,
-      saveName, selectedSaveKey, saveMessage, savedCharacters,
-      saveCharacter, loadCharacter, deleteCharacter,
       shareUrl,
       equip,
       slotSummary,

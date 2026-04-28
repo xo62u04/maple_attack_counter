@@ -384,10 +384,35 @@
       <!-- 左欄：裝備槽清單 + 裸裝設定 + 存檔 -->
       <section class="equip-sidebar">
 
+        <!-- ── 統一存檔 ── -->
+        <div class="save-section" style="margin-bottom:10px">
+          <div class="field-group">
+            <label>存檔名稱</label>
+            <input type="text" v-model="saveName" placeholder="角色名稱" maxlength="20" />
+          </div>
+          <div class="save-actions">
+            <button @click="saveCharacter" class="btn btn-save" :disabled="!saveName.trim()">💾 儲存</button>
+            <select v-model="selectedSaveKey" @change="loadCharacter" v-if="savedCharacters.length > 0">
+              <option value="">載入存檔...</option>
+              <option v-for="c in savedCharacters" :key="c.name" :value="c.name">{{ c.name }}</option>
+            </select>
+            <button @click="deleteCharacter" class="btn btn-delete" v-if="selectedSaveKey" title="刪除">🗑️</button>
+          </div>
+          <div v-if="saveMessage" class="save-message">{{ saveMessage }}</div>
+        </div>
+
         <div class="equip-import-bar">
           <button class="btn btn-import" @click="equip.importFromTab1(stats, selectedJob ? selectedJob.mainStat : 'STR')">
             📥 從攻擊力計算機匯入裸裝
           </button>
+        </div>
+
+        <!-- 裝備槽模式切換 -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:14px">
+          <input type="checkbox" v-model="equip.useEquipSlots.value" id="useSlots" />
+          <label for="useSlots" style="cursor:pointer;color:var(--text-dim)">
+            啟用裝備槽計算（關閉則僅用裸裝+技能/BUFF聚合值）
+          </label>
         </div>
 
         <!-- 裝備槽清單 -->
@@ -423,6 +448,24 @@
         <div class="field-group">
           <label>裸裝攻擊力</label>
           <input type="number" v-model.number="equip.baseStats.value.atk" min="0" />
+        </div>
+
+        <!-- 武器設定 -->
+        <div class="divider"></div>
+        <div class="section-title">武器設定</div>
+        <div class="field-group" v-if="selectedJob">
+          <label>武器種類</label>
+          <select @change="equip.equipSettings.value.weaponCoeff = +$event.target.value">
+            <option v-for="w in selectedJob.weapons" :key="w.name"
+              :value="w.coefficient"
+              :selected="equip.equipSettings.value.weaponCoeff === w.coefficient">
+              {{ w.name }} (×{{ w.coefficient }})
+            </option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>武器係數（可手動調整）</label>
+          <input type="number" v-model.number="equip.equipSettings.value.weaponCoeff" step="0.01" min="0" />
         </div>
 
         <!-- 技能 & 戰鬥設定 -->
@@ -473,31 +516,14 @@
           <input type="number" v-model.number="equip.equipSettings.value.monsterDefPct" min="0" max="100" />
         </div>
 
-        <!-- 存檔區 -->
-        <div class="divider"></div>
-        <div class="save-section">
-          <div class="field-group">
-            <label>組合名稱</label>
-            <input type="text" v-model="equip.equipSaveName.value" placeholder="例：我的黑騎士配置" maxlength="20" />
-          </div>
-          <div class="save-actions">
-            <button class="btn btn-save" @click="equip.saveEquipSet()" :disabled="!equip.equipSaveName.value.trim()">💾 儲存</button>
-            <select v-model="equip.selectedEquipSave.value" @change="equip.loadEquipSet()" v-if="equip.equipSets.value.length > 0">
-              <option value="">載入組合...</option>
-              <option v-for="e in equip.equipSets.value" :key="e.name" :value="e.name">{{ e.name }}</option>
-            </select>
-            <button class="btn btn-delete" @click="equip.deleteEquipSet()" v-if="equip.selectedEquipSave.value">🗑️</button>
-          </div>
-          <div v-if="equip.equipSaveMsg.value" class="save-message">{{ equip.equipSaveMsg.value }}</div>
-        </div>
 
       </section>
 
       <!-- 右欄：裝備詳細 + 全裝統計 -->
       <section class="equip-content">
 
-        <!-- 選中裝備詳細輸入 -->
-        <div class="equip-slot-detail" v-if="equip.selectedSlot.value">
+        <!-- 選中裝備詳細輸入（只在啟用裝備槽時顯示）-->
+        <div class="equip-slot-detail" v-if="equip.selectedSlot.value && equip.useEquipSlots.value">
           <div class="slot-detail-header">{{ equip.selectedSlot.value.name }}</div>
 
           <!-- 本體屬性 -->
