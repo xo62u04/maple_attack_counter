@@ -102,7 +102,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
   const jobSkills      = Vue.ref([])
   const activeBuffs    = Vue.ref([])
 
-  // ── 藥水（不套用%屬性，加在乘算之後）──
+  // ── 藥水（基本屬性，套用%加成，加在%乘算之前）──
   const potions = Vue.ref([
     { id: 'mainStat', name: '主屬藥水',  statType: 'main', value: 0,  fixed: false, enabled: false },
     { id: 'atk',      name: '攻擊藥水',  statType: 'atk',  value: 0,  fixed: false, enabled: false },
@@ -111,7 +111,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     { id: 'weather',  name: '天氣',      statType: 'atk',  value: 30, fixed: true,  enabled: false },
   ])
 
-  // 藥水加總（bypass pct，獨立累計）
+  // 藥水加總（視為基本屬性，套用%加成）
   const potionTotals = Vue.computed(() => {
     let mainBypass = 0, atkBypass = 0
     for (const pot of potions.value) {
@@ -196,9 +196,11 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     const s = equipSettings.value
     const coeff = Number(s.weaponCoeff) || 1
 
-    const finalMain   = (Number(baseStats.value.mainStat) || 0) + t.flatMain
+    // 藥水是基本屬性，套用%加成（加在%乘算之前）
+    const pot = potionTotals.value
+    const finalMain   = (Number(baseStats.value.mainStat) || 0) + t.flatMain + pot.mainBypass
     const finalSub    = (Number(baseStats.value.subStat)  || 0) + t.flatSub
-    const finalAtk    = (Number(baseStats.value.atk)      || 0) + t.flatAtk
+    const finalAtk    = (Number(baseStats.value.atk)      || 0) + t.flatAtk + pot.atkBypass
     const finalAtkPct = t.pctAtk
 
     const realFinalMain = Math.floor(finalMain * (1 + t.pctMain / 100))
@@ -211,11 +213,9 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
                realFinalMain:0, realFinalSub:0, tableAtkMax:0, tableAtkMin:0 }
     }
 
-    // 藥水：不套用%屬性，直接加在乘算之後
-    const pot = potionTotals.value
-    const step1 = 4 * (realFinalMain + pot.mainBypass) + realFinalSub
-    // realFinalAtk：遊戲在 ATK 乘上 ATK% 後也做 floor（整數運算），再加藥水 ATK
-    const realFinalAtk = Math.floor(finalAtk * (1 + finalAtkPct / 100)) + pot.atkBypass
+    const step1 = 4 * realFinalMain + realFinalSub
+    // realFinalAtk：遊戲在 ATK 乘上 ATK% 後也做 floor（整數運算）
+    const realFinalAtk = Math.floor(finalAtk * (1 + finalAtkPct / 100))
     const step3 = realFinalAtk
     const step4 = step1 * coeff * step3 * 0.01 * (Number(s.skillPct) || 100) / 100
 
