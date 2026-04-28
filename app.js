@@ -2,9 +2,13 @@ const { createApp, ref, computed, onMounted } = Vue
 
 createApp({
   setup() {
+    // ── Tab 切換 ──
+    const activeTab = ref('calc')
+
     // ── 資料載入 ──
-    const jobs = ref([])
-    const loading = ref(true)
+    const jobs      = ref([])
+    const partyBuffs = ref([])
+    const loading   = ref(true)
     const loadError = ref(false)
 
     onMounted(async () => {
@@ -12,7 +16,8 @@ createApp({
         const res = await fetch('data.json')
         if (!res.ok) throw new Error('HTTP ' + res.status)
         const data = await res.json()
-        jobs.value = data.jobs
+        jobs.value       = data.jobs       || []
+        partyBuffs.value = data.partyBuffs || []
       } catch (e) {
         loadError.value = true
       } finally {
@@ -20,13 +25,17 @@ createApp({
       }
       loadFromUrl()
       loadSavedCharacters()
+      // 裝備模擬器初始化
+      equip.loadEquipSets()
+      initTab1Buffs()
+      equip.initPartyBuffs()
     })
 
     // ── 選擇狀態 ──
-    const selectedGroup = ref('')
-    const selectedJobId = ref('')
+    const selectedGroup      = ref('')
+    const selectedJobId      = ref('')
     const selectedWeaponName = ref('')
-    const coefficient = ref(1.0)
+    const coefficient        = ref(1.0)
 
     const groups = computed(() => {
       const seen = new Set()
@@ -44,16 +53,18 @@ createApp({
     )
 
     function onGroupChange() {
-      selectedJobId.value = ''
+      selectedJobId.value      = ''
       selectedWeaponName.value = ''
-      coefficient.value = 1.0
+      coefficient.value        = 1.0
     }
 
     function onJobChange() {
       const job = selectedJob.value
       if (!job) return
       selectedWeaponName.value = job.weapons[0]?.name || ''
-      coefficient.value = job.weapons[0]?.coefficient || 1.0
+      coefficient.value        = job.weapons[0]?.coefficient || 1.0
+      // 裝備模擬器同步更新職業技能
+      equip.initJobSkills(selectedJobId.value)
     }
 
     function onWeaponChange() {
@@ -70,23 +81,19 @@ createApp({
       skillPct: 100,
       totalDmgPct: 0, bossPct: 0, enhancePct: 0,
       bossDefPct: 0, ignoreDefPct: 0,
-      // 熟練度 & 爆擊（BigBang era）
       mastery: 60,
       critRate: 0,
       minCritBonus: 20,
       maxCritBonus: 50,
-      // 小怪防禦率（BigBang PDRate，大部分小怪預設 10%）
       monsterDefPct: 10
     })
 
-    // ── 需要顯示哪些屬性欄位 ──
     function needsStat(stat) {
       const job = selectedJob.value
       if (!job) return false
       return job.mainStat === stat || job.subStat.includes(stat)
     }
 
-    // ── 公式計算 ──
     function isValidNumber(v) {
       return v !== '' && v !== null && !isNaN(Number(v))
     }
@@ -106,12 +113,39 @@ createApp({
       return Number(stats.value[job.subStat]) || 0
     })
 
-    const subStatLabel = computed(() => {
-      const job = selectedJob.value
-      if (!job) return ''
-      return job.subStat
+    const subStatLabel = computed(() => selectedJob.value?.subStat || '')
+
+    // ── Tab 1 隊伍 BUFF ──
+    const tab1Buffs = ref([])
+
+    function initTab1Buffs() {
+      tab1Buffs.value = (partyBuffs.value || []).map(b => ({
+        ...b,
+        enabled: false,
+        effects: b.effects.map(e => ({ ...e }))
+      }))
+    }
+
+    const tab1BuffTotals = computed(() => {
+      let atkFlat = 0, atkPct = 0, critRate = 0, critDmg = 0
+      let allStatPct = 0, bossDmg = 0, totalDmg = 0
+      for (const buf of tab1Buffs.value) {
+        if (!buf.enabled) continue
+        for (const eff of buf.effects) {
+          const v = Number(eff.value) || 0
+          if (eff.type === 'atkFlat')        atkFlat    += v
+          else if (eff.type === 'atkPct')    atkPct     += v
+          else if (eff.type === 'critRate')  critRate   += v
+          else if (eff.type === 'critDmg')   critDmg    += v
+          else if (eff.type === 'allStatPct') allStatPct += v
+          else if (eff.type === 'bossDmg')   bossDmg    += v
+          else if (eff.type === 'totalDmg')  totalDmg   += v
+        }
+      }
+      return { atkFlat, atkPct, critRate, critDmg, allStatPct, bossDmg, totalDmg }
     })
 
+    // ── 公式計算（含 BUFF）──
     const formulaValid = computed(() => {
       if (!selectedJob.value) return false
       const s = stats.value
@@ -123,22 +157,39 @@ createApp({
       ].every(v => isValidNumber(v))
     })
 
-    // ── 步驟 1–4（共用）──
-    const step1 = computed(() => 4 * mainStatValue.value + subStatValue.value)
+    // 全屬性%加成到主/副屬性（allStatPct 讓主/副屬性同步等比放大）
+    const effectiveMainStat = computed(() => {
+      const base = mainStatValue.value
+      const allPct = tab1BuffTotals.value.allStatPct
+      return base * (1 + allPct / 100)
+    })
+    const effectiveSubStat = computed(() => {
+      const base = subStatValue.value
+      const allPct = tab1BuffTotals.value.allStatPct
+      return base * (1 + allPct / 100)
+    })
+
+    const step1 = computed(() => 4 * effectiveMainStat.value + effectiveSubStat.value)
     const step2 = computed(() => step1.value * coefficient.value)
-    const step3 = computed(() => (Number(stats.value.atk) || 0) * (1 + (Number(stats.value.atkPct) || 0) / 100))
+    const step3 = computed(() => {
+      const buffAtk    = tab1BuffTotals.value.atkFlat
+      const buffAtkPct = tab1BuffTotals.value.atkPct
+      const totalAtk   = (Number(stats.value.atk) || 0) + buffAtk
+      const totalAtkPct = (Number(stats.value.atkPct) || 0) + buffAtkPct
+      return totalAtk * (1 + totalAtkPct / 100)
+    })
     const step4 = computed(() => step2.value * step3.value * 0.01 * (Number(stats.value.skillPct) || 0) / 100)
 
-    // ── 步驟 5（打王 vs 打小怪倍率）──
-    const step5Boss = computed(() =>
-      1 + ((Number(stats.value.totalDmgPct) || 0) + (Number(stats.value.bossPct) || 0) + (Number(stats.value.enhancePct) || 0)) / 100
-    )
-    const step5Mob = computed(() =>
-      1 + ((Number(stats.value.totalDmgPct) || 0) + (Number(stats.value.enhancePct) || 0)) / 100
-    )
+    const step5Boss = computed(() => {
+      const buffBoss  = tab1BuffTotals.value.bossDmg
+      const buffTotal = tab1BuffTotals.value.totalDmg
+      return 1 + ((Number(stats.value.totalDmgPct) || 0) + (Number(stats.value.bossPct) || 0) + (Number(stats.value.enhancePct) || 0) + buffBoss + buffTotal) / 100
+    })
+    const step5Mob = computed(() => {
+      const buffTotal = tab1BuffTotals.value.totalDmg
+      return 1 + ((Number(stats.value.totalDmgPct) || 0) + (Number(stats.value.enhancePct) || 0) + buffTotal) / 100
+    })
 
-    // ── 步驟 6（防禦折減）──
-    // 打王：用 BOSS 防禦 %；打小怪：用怪物防禦率 %（BigBang PDRate）
     const step6Boss = computed(() =>
       1 - (Number(stats.value.bossDefPct) || 0) / 100 * (1 - (Number(stats.value.ignoreDefPct) || 0) / 100)
     )
@@ -146,61 +197,98 @@ createApp({
       1 - (Number(stats.value.monsterDefPct) || 0) / 100 * (1 - (Number(stats.value.ignoreDefPct) || 0) / 100)
     )
 
-    // ── 最終傷害（打王）──
     const finalDmgBoss = computed(() => step4.value * step5Boss.value * step6Boss.value)
-    const maxDmgBoss = computed(() => finalDmgBoss.value)
-    const minDmgBoss = computed(() => finalDmgBoss.value * (Number(stats.value.mastery) || 0) / 100)
-    const avgDmgBoss = computed(() => (maxDmgBoss.value + minDmgBoss.value) / 2)
+    const maxDmgBoss   = computed(() => finalDmgBoss.value)
+    const minDmgBoss   = computed(() => finalDmgBoss.value * (Number(stats.value.mastery) || 0) / 100)
+    const avgDmgBoss   = computed(() => (maxDmgBoss.value + minDmgBoss.value) / 2)
 
-    // ── 最終傷害（打小怪）──
-    const finalDmgMob = computed(() => step4.value * step5Mob.value * step6Mob.value)
-    const maxDmgMob = computed(() => finalDmgMob.value)
-    const minDmgMob = computed(() => finalDmgMob.value * (Number(stats.value.mastery) || 0) / 100)
-    const avgDmgMob = computed(() => (maxDmgMob.value + minDmgMob.value) / 2)
+    const finalDmgMob  = computed(() => step4.value * step5Mob.value * step6Mob.value)
+    const maxDmgMob    = computed(() => finalDmgMob.value)
+    const minDmgMob    = computed(() => finalDmgMob.value * (Number(stats.value.mastery) || 0) / 100)
+    const avgDmgMob    = computed(() => (maxDmgMob.value + minDmgMob.value) / 2)
 
-    // ── 爆擊平均（含爆率 × 平均爆傷）──
-    // BigBang 前 2016 年：最小爆傷與最大爆傷分開計算
-    // avg_with_crit = avg_no_crit × (1 + critRate% × (minCritBonus + maxCritBonus) / 200)
     const critMult = computed(() => {
-      const rate = (Number(stats.value.critRate) || 0) / 100
-      const avg = ((Number(stats.value.minCritBonus) || 0) + (Number(stats.value.maxCritBonus) || 0)) / 200
-      return 1 + rate * avg
+      const buffCritRate = tab1BuffTotals.value.critRate
+      const buffCritDmg  = tab1BuffTotals.value.critDmg
+      const rate = Math.min(100, (Number(stats.value.critRate) || 0) + buffCritRate) / 100
+      const minB = Number(stats.value.minCritBonus) || 0
+      const maxB = (Number(stats.value.maxCritBonus) || 0) + buffCritDmg
+      return 1 + rate * (minB + maxB) / 200
     })
     const avgDmgBossCrit = computed(() => avgDmgBoss.value * critMult.value)
-    const avgDmgMobCrit = computed(() => avgDmgMob.value * critMult.value)
+    const avgDmgMobCrit  = computed(() => avgDmgMob.value  * critMult.value)
 
     // ── 格式化 ──
     function fmt(n) {
+      if (n === undefined || n === null || isNaN(n)) return '0'
+      if (n >= 1e8) return (n / 1e8).toFixed(2) + ' 億'
+      if (n >= 1e4) return (n / 1e4).toFixed(1) + ' 萬'
       return Math.round(n).toLocaleString('zh-TW')
     }
     function fmtFinal(n) {
       if (!formulaValid.value) return '-'
+      return fmt(n)
+    }
+    function fmtM(n) {
+      if (!n) return '0'
+      if (n >= 1e8) return (n / 1e8).toFixed(2) + ' 億'
+      if (n >= 1e4) return (n / 1e4).toFixed(1) + ' 萬'
       return Math.round(n).toLocaleString('zh-TW')
+    }
+
+    // ── 裝備模擬器 Composable ──
+    const equip = useEquip(jobs, partyBuffs, selectedJobId)
+
+    // ── 裝備槽摘要（左欄清單顯示用）──
+    function slotSummary(slot) {
+      if (!slot) return ''
+      const parts = []
+      const scrollVal = (Number(slot.scroll.count) || 0) * (Number(slot.scroll.perScroll) || 0)
+      const totalAtk  = (Number(slot.base.atk)      || 0) + (slot.scroll.stat === 'atk'      ? scrollVal : 0)
+      const totalMain = (Number(slot.base.mainStat)  || 0) + (slot.scroll.stat === 'mainStat' ? scrollVal : 0)
+      if (totalAtk)  parts.push(`A+${totalAtk}`)
+      if (totalMain) parts.push(`主+${totalMain}`)
+      const pctLines = slot.potential.filter(p => p.type !== 'none' && (Number(p.value) || 0) > 0)
+      if (pctLines.length) parts.push(`潛×${pctLines.length}`)
+      return parts.join(' ')
+    }
+
+    // ── 匯出到 Tab 1 ──
+    function exportToTab1() {
+      const r = equip.dmgResult.value
+      const t = equip.totals.value
+      const job = selectedJob.value
+      if (job) {
+        stats.value[job.mainStat] = Math.round(r.finalMain)
+        stats.value.atk           = Math.round(r.finalAtk)
+        stats.value.atkPct        = parseFloat(r.finalAtkPct.toFixed(2))
+        stats.value.totalDmgPct   = parseFloat(t.totalDmg.toFixed(2))
+        stats.value.bossPct       = parseFloat(t.bossDmg.toFixed(2))
+        stats.value.critRate      = parseFloat((equip.equipSettings.value.critRate + t.critRate).toFixed(2))
+        stats.value.maxCritBonus  = parseFloat((equip.equipSettings.value.maxCritBonus + t.critDmg).toFixed(2))
+      }
+      activeTab.value = 'calc'
     }
 
     // ── 存檔（localStorage）──
     const STORAGE_KEY = 'maple_calc_characters'
-    const MAX_SAVES = 20
-    const saveName = ref('')
-    const selectedSaveKey = ref('')
-    const saveMessage = ref('')
-    const savedCharacters = ref([])
+    const MAX_SAVES   = 20
+    const saveName           = ref('')
+    const selectedSaveKey    = ref('')
+    const saveMessage        = ref('')
+    const savedCharacters    = ref([])
 
     function loadSavedCharacters() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY)
         savedCharacters.value = raw ? JSON.parse(raw) : []
-      } catch {
-        savedCharacters.value = []
-      }
+      } catch { savedCharacters.value = [] }
     }
 
     function persistSaves() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(savedCharacters.value))
-      } catch {
-        saveMessage.value = '⚠️ 儲存失敗（瀏覽器儲存空間不足）'
-      }
+      } catch { saveMessage.value = '⚠️ 儲存失敗（瀏覽器儲存空間不足）' }
     }
 
     function saveCharacter() {
@@ -216,14 +304,12 @@ createApp({
         group: selectedGroup.value,
         weaponName: selectedWeaponName.value,
         coefficient: coefficient.value,
-        stats: { ...stats.value }
+        stats: { ...stats.value },
+        tab1Buffs: JSON.parse(JSON.stringify(tab1Buffs.value))
       }
       const idx = savedCharacters.value.findIndex(c => c.name === name)
-      if (idx >= 0) {
-        savedCharacters.value[idx] = entry
-      } else {
-        savedCharacters.value.push(entry)
-      }
+      if (idx >= 0) savedCharacters.value[idx] = entry
+      else savedCharacters.value.push(entry)
       persistSaves()
       saveMessage.value = `✅ 已儲存「${name}」`
       setTimeout(() => { saveMessage.value = '' }, 2000)
@@ -234,13 +320,15 @@ createApp({
       if (!key) return
       const entry = savedCharacters.value.find(c => c.name === key)
       if (!entry) return
-      selectedGroup.value = entry.group
-      selectedJobId.value = entry.jobId
+      selectedGroup.value      = entry.group
+      selectedJobId.value      = entry.jobId
       selectedWeaponName.value = entry.weaponName
-      coefficient.value = entry.coefficient
-      // 使用 Object.assign，舊存檔缺少的新欄位保留預設值
+      coefficient.value        = entry.coefficient
       Object.assign(stats.value, entry.stats)
+      if (entry.tab1Buffs) tab1Buffs.value = entry.tab1Buffs
+      else initTab1Buffs()
       saveName.value = entry.name
+      equip.initJobSkills(entry.jobId)
     }
 
     function deleteCharacter() {
@@ -260,12 +348,9 @@ createApp({
         group: selectedGroup.value,
         weapon: selectedWeaponName.value,
         coeff: coefficient.value,
-        str: stats.value.STR,
-        dex: stats.value.DEX,
-        int: stats.value.INT,
-        luk: stats.value.LUK,
-        atk: stats.value.atk,
-        atkp: stats.value.atkPct,
+        str: stats.value.STR, dex: stats.value.DEX,
+        int: stats.value.INT, luk: stats.value.LUK,
+        atk: stats.value.atk, atkp: stats.value.atkPct,
         skill: stats.value.skillPct,
         total: stats.value.totalDmgPct,
         boss: stats.value.bossPct,
@@ -293,53 +378,57 @@ createApp({
       const jobId = params.get('job')
       const job = jobs.value.find(j => j.id === jobId)
       if (!job) return
-      selectedGroup.value = params.get('group') || job.group
-      selectedJobId.value = jobId
+      selectedGroup.value      = params.get('group') || job.group
+      selectedJobId.value      = jobId
       selectedWeaponName.value = params.get('weapon') || job.weapons[0]?.name || ''
-      coefficient.value = parseFloat(params.get('coeff')) || job.weapons[0]?.coefficient || 1.0
+      coefficient.value        = parseFloat(params.get('coeff')) || job.weapons[0]?.coefficient || 1.0
       const s = stats.value
-      s.STR = parseInt(params.get('str')) || 0
-      s.DEX = parseInt(params.get('dex')) || 0
-      s.INT = parseInt(params.get('int')) || 0
-      s.LUK = parseInt(params.get('luk')) || 0
-      s.atk = parseInt(params.get('atk')) || 0
+      s.STR = parseInt(params.get('str'))  || 0
+      s.DEX = parseInt(params.get('dex'))  || 0
+      s.INT = parseInt(params.get('int'))  || 0
+      s.LUK = parseInt(params.get('luk'))  || 0
+      s.atk = parseInt(params.get('atk'))  || 0
       s.atkPct = parseFloat(params.get('atkp')) || 0
       const skillRaw = params.get('skill')
       s.skillPct = skillRaw !== null ? parseFloat(skillRaw) : 100
-      s.totalDmgPct = parseFloat(params.get('total')) || 0
-      s.bossPct = parseFloat(params.get('boss')) || 0
-      s.enhancePct = parseFloat(params.get('enhance')) || 0
-      s.bossDefPct = parseFloat(params.get('bdef')) || 0
-      s.ignoreDefPct = parseFloat(params.get('idef')) || 0
-      // 新欄位（若舊連結不含則保留預設值）
-      const masteryRaw = params.get('mastery')
-      if (masteryRaw !== null) s.mastery = parseFloat(masteryRaw)
-      const critRaw = params.get('crit')
-      if (critRaw !== null) s.critRate = parseFloat(critRaw)
-      const minCritRaw = params.get('mincrit')
-      if (minCritRaw !== null) s.minCritBonus = parseFloat(minCritRaw)
-      const maxCritRaw = params.get('maxcrit')
-      if (maxCritRaw !== null) s.maxCritBonus = parseFloat(maxCritRaw)
-      const mdefRaw = params.get('mdef')
-      if (mdefRaw !== null) s.monsterDefPct = parseFloat(mdefRaw)
+      s.totalDmgPct = parseFloat(params.get('total'))   || 0
+      s.bossPct     = parseFloat(params.get('boss'))    || 0
+      s.enhancePct  = parseFloat(params.get('enhance')) || 0
+      s.bossDefPct  = parseFloat(params.get('bdef'))    || 0
+      s.ignoreDefPct = parseFloat(params.get('idef'))   || 0
+      const masteryRaw  = params.get('mastery')
+      if (masteryRaw  !== null) s.mastery      = parseFloat(masteryRaw)
+      const critRaw     = params.get('crit')
+      if (critRaw     !== null) s.critRate      = parseFloat(critRaw)
+      const minCritRaw  = params.get('mincrit')
+      if (minCritRaw  !== null) s.minCritBonus  = parseFloat(minCritRaw)
+      const maxCritRaw  = params.get('maxcrit')
+      if (maxCritRaw  !== null) s.maxCritBonus  = parseFloat(maxCritRaw)
+      const mdefRaw     = params.get('mdef')
+      if (mdefRaw     !== null) s.monsterDefPct = parseFloat(mdefRaw)
     }
 
     return {
-      jobs, loading, loadError,
+      activeTab,
+      jobs, partyBuffs, loading, loadError,
       groups, filteredJobs, selectedJob,
       selectedGroup, selectedJobId, selectedWeaponName, coefficient,
       onGroupChange, onJobChange, onWeaponChange,
       stats, needsStat,
       isValidNumber, formulaValid,
       mainStatValue, subStatValue, subStatLabel,
+      tab1Buffs, tab1BuffTotals, initTab1Buffs,
       step1, step2, step3, step4,
       step5Boss, step5Mob, step6Boss, step6Mob,
       maxDmgBoss, minDmgBoss, avgDmgBoss, avgDmgBossCrit,
       maxDmgMob, minDmgMob, avgDmgMob, avgDmgMobCrit,
-      fmt, fmtFinal,
+      fmt, fmtFinal, fmtM,
       saveName, selectedSaveKey, saveMessage, savedCharacters,
       saveCharacter, loadCharacter, deleteCharacter,
-      shareUrl
+      shareUrl,
+      equip,
+      slotSummary,
+      exportToTab1,
     }
   }
 }).mount('#app')
