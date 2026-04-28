@@ -707,6 +707,17 @@
               <span>+{{ item.gain.toFixed(3) }}%</span>
             </div>
 
+            <!-- 每 +1 點平值效益 -->
+            <div class="panel-sub-title" style="margin-top:8px">📌 每 +1 點屬性效益</div>
+            <div class="efficiency-row">
+              <span>+1 主屬性（平值）</span>
+              <span>+{{ equip.oneMainFlatGain.value > 0 ? equip.oneMainFlatGain.value.toFixed(4) : '-' }}%</span>
+            </div>
+            <div class="efficiency-row">
+              <span>+1 ATK（平值）</span>
+              <span>+{{ equip.oneAtkFlatGain.value > 0 ? equip.oneAtkFlatGain.value.toFixed(4) : '-' }}%</span>
+            </div>
+
             <div class="divider" style="margin:10px 0"></div>
             <div class="panel-sub-title" style="display:flex;align-items:center;justify-content:space-between">
               <span>傷害輸出</span>

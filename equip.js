@@ -245,6 +245,23 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     return r.finalAtk * (1 + r.finalAtkPct / 100) * 0.04 * r.finalMain / r.step1
   })
 
+  // +1 點主屬性（平值）提升傷害%
+  // flat 主屬性會被 pctMain% 放大後進入 step1，所以增益 = 4 × (1+pctMain/100) / step1
+  const oneMainFlatGain = Vue.computed(() => {
+    const r = dmgResult.value
+    const t = totals.value
+    if (!r.step1) return 0
+    return (4 * (1 + t.pctMain / 100) / r.step1) * 100
+  })
+
+  // +1 點 ATK（平值）提升傷害%
+  // flat ATK 被 atkPct% 放大後進入 step3；(1+atkPct%) 在分子分母對消 → 增益 = 1 / finalAtk
+  const oneAtkFlatGain = Vue.computed(() => {
+    const r = dmgResult.value
+    if (!r.finalAtk) return 0
+    return 100 / r.finalAtk
+  })
+
   // 1% 主屬性 ≈ 多少屬性點（平值）
   // 原理：finalMain(rawMain) 增加 1% 乘數，等效於增加 rawMain*0.01 的最終主屬
   //       增加 X 點平主屬，最終主屬增加 X*(1+pctMain/100)
@@ -367,6 +384,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     jobSkills, activeBuffs,
     totals, dmgResult, attackStatRatio, onePercentMainEquivFlat, oneAtkEquivMain,
     upgradeEfficiencyBoss, upgradeEfficiencyMob,
+    oneMainFlatGain, oneAtkFlatGain,
     getState, setState,
     initJobSkills, initPartyBuffs, importFromTab1,
   }
