@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>楓星攻擊力計算機</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="site-header">
+      <h1>⚔️ 楓星攻擊力計算機</h1>
+      <div class="header-actions">
+        <button @click="saveCharacter" class="btn btn-save">💾 存檔</button>
+        <button @click="shareUrl" class="btn btn-share">🔗 分享</button>
+      </div>
+    </header>
+
+    <div v-if="loadError" class="error-banner">
+      資料載入失敗，請重新整理頁面。
+    </div>
+
+    <div v-if="loading" class="loading">載入職業資料中...</div>
+
+    <main v-else class="calculator">
+      <!-- 左欄：輸入 -->
+      <section class="input-panel">
+
+        <div class="field-group">
+          <label>職業群</label>
+          <select v-model="selectedGroup" @change="onGroupChange">
+            <option value="">請選擇職業群</option>
+            <option v-for="g in groups" :key="g" :value="g">{{ g }}</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label>職業</label>
+          <select v-model="selectedJobId" @change="onJobChange" :disabled="!selectedGroup">
+            <option value="">請選擇職業</option>
+            <option v-for="j in filteredJobs" :key="j.id" :value="j.id">{{ j.name }}</option>
+          </select>
+        </div>
+
+        <div class="field-group" v-if="selectedJob">
+          <label>武器</label>
+          <select v-model="selectedWeaponName" @change="onWeaponChange">
+            <option v-for="w in selectedJob.weapons" :key="w.name" :value="w.name">{{ w.name }}</option>
+          </select>
+        </div>
+
+        <div class="field-group" v-if="selectedJob">
+          <label>武器係數（可修改）</label>
+          <input type="number" v-model.number="coefficient" step="0.01" min="0" />
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field-group" v-if="needsStat('STR')">
+          <label>STR{{ selectedJob && selectedJob.mainStat === 'STR' ? '（主屬）' : selectedJob && selectedJob.subStat.includes('STR') ? '（副屬）' : '' }}</label>
+          <input type="number" v-model.number="stats.STR" min="0" :class="{ invalid: !isValidNumber(stats.STR) }" />
+        </div>
+
+        <div class="field-group" v-if="needsStat('DEX')">
+          <label>DEX{{ selectedJob && selectedJob.mainStat === 'DEX' ? '（主屬）' : selectedJob && selectedJob.subStat.includes('DEX') ? '（副屬）' : '' }}</label>
+          <input type="number" v-model.number="stats.DEX" min="0" :class="{ invalid: !isValidNumber(stats.DEX) }" />
+        </div>
+
+        <div class="field-group" v-if="needsStat('INT')">
+          <label>INT{{ selectedJob && selectedJob.mainStat === 'INT' ? '（主屬）' : '' }}</label>
+          <input type="number" v-model.number="stats.INT" min="0" :class="{ invalid: !isValidNumber(stats.INT) }" />
+        </div>
+
+        <div class="field-group" v-if="needsStat('LUK')">
+          <label>LUK{{ selectedJob && selectedJob.mainStat === 'LUK' ? '（主屬）' : selectedJob && selectedJob.subStat.includes('LUK') ? '（副屬）' : '' }}</label>
+          <input type="number" v-model.number="stats.LUK" min="0" :class="{ invalid: !isValidNumber(stats.LUK) }" />
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field-group">
+          <label>{{ selectedJob && selectedJob.attackType === 'magical' ? '魔法' : '物理' }}攻擊力</label>
+          <input type="number" v-model.number="stats.atk" min="0" :class="{ invalid: !isValidNumber(stats.atk) }" />
+        </div>
+
+        <div class="field-group">
+          <label>攻擊力 %</label>
+          <div class="input-suffix">
+            <input type="number" v-model.number="stats.atkPct" min="0" :class="{ invalid: !isValidNumber(stats.atkPct) }" />
+            <span>%</span>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>技能 %</label>
+          <div class="input-suffix">
+            <input type="number" v-model.number="stats.skillPct" min="0" :class="{ invalid: !isValidNumber(stats.skillPct) }" />
+            <span>%</span>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>總傷害 %</label>
+          <div class="input-suffix">
+            <input type="number" v-model.number="stats.totalDmgPct" min="0" :class="{ invalid: !isValidNumber(stats.totalDmgPct) }" />
+            <span>%</span>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>BOSS 傷害 %</label>
+          <div class="input-suffix">
+            <input type="number" v-model.number="stats.bossPct" min="0" :class="{ invalid: !isValidNumber(stats.bossPct) }" />
+            <span>%</span>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>強化傷害 %</label>
+          <div class="input-suffix">
+            <input type="number" v-model.number="stats.enhancePct" min="0" :class="{ invalid: !isValidNumber(stats.enhancePct) }" />
+            <span>%</span>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>BOSS 防禦 %</label>
+          <div class="input-suffix">
+            <input type="number" v-model.number="stats.bossDefPct" min="0" max="100" :class="{ invalid: !isValidNumber(stats.bossDefPct) }" />
+            <span>%</span>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>等效無視防禦 %</label>
+          <div class="input-suffix">
+            <input type="number" v-model.number="stats.ignoreDefPct" min="0" max="100" :class="{ invalid: !isValidNumber(stats.ignoreDefPct) }" />
+            <span>%</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="save-section">
+          <div class="field-group">
+            <label>存檔名稱</label>
+            <input type="text" v-model="saveName" placeholder="例：我的黑騎士" maxlength="20" />
+          </div>
+          <div class="save-actions">
+            <button @click="saveCharacter" class="btn btn-save" :disabled="!saveName.trim()">💾 儲存</button>
+            <select v-model="selectedSaveKey" @change="loadCharacter" v-if="savedCharacters.length > 0">
+              <option value="">載入存檔...</option>
+              <option v-for="c in savedCharacters" :key="c.name" :value="c.name">{{ c.name }}</option>
+            </select>
+            <button @click="deleteCharacter" class="btn btn-delete" v-if="selectedSaveKey" title="刪除此存檔">🗑️</button>
+          </div>
+          <div v-if="saveMessage" class="save-message">{{ saveMessage }}</div>
+        </div>
+
+      </section>
+
+      <!-- 右欄：計算拆解 -->
+      <section class="result-panel">
+        <div v-if="!selectedJob" class="result-placeholder">
+          ← 請先選擇職業並輸入數值
+        </div>
+
+        <div v-else-if="!formulaValid" class="result-placeholder">
+          ⚠️ 請確認所有欄位皆為有效數字
+        </div>
+
+        <div v-else class="breakdown">
+          <div class="breakdown-step">
+            <div class="step-label">Step 1：主副屬加成</div>
+            <div class="step-formula">
+              (4 × {{ selectedJob.mainStat }} + {{ subStatLabel }})
+            </div>
+            <div class="step-value">
+              = (4 × {{ fmt(mainStatValue) }} + {{ fmt(subStatValue) }})
+              = <strong>{{ fmt(step1) }}</strong>
+            </div>
+          </div>
+
+          <div class="breakdown-step">
+            <div class="step-label">Step 2：× 武器係數 {{ coefficient }}</div>
+            <div class="step-value">= <strong>{{ fmt(step2) }}</strong></div>
+          </div>
+
+          <div class="breakdown-step">
+            <div class="step-label">Step 3：攻擊力效果</div>
+            <div class="step-formula">
+              ATK × (1 + 攻擊力%) = {{ fmt(stats.atk) }} × {{ (1 + stats.atkPct / 100).toFixed(2) }}
+            </div>
+            <div class="step-value">= <strong>{{ fmt(step3) }}</strong></div>
+          </div>
+
+          <div class="breakdown-step">
+            <div class="step-label">Step 4：× 0.01 × 技能% {{ stats.skillPct }}%</div>
+            <div class="step-value">= <strong>{{ fmt(step4) }}</strong></div>
+          </div>
+
+          <div class="breakdown-step">
+            <div class="step-label">Step 5：傷害倍率</div>
+            <div class="step-formula">
+              1 + (總傷害% + BOSS% + 強化%) = 1 + ({{ stats.totalDmgPct }} + {{ stats.bossPct }} + {{ stats.enhancePct }}) / 100
+            </div>
+            <div class="step-value">= ×<strong>{{ step5multiplier.toFixed(4) }}</strong></div>
+          </div>
+
+          <div class="breakdown-step">
+            <div class="step-label">Step 6：BOSS 防禦折減</div>
+            <div class="step-formula">
+              1 − {{ stats.bossDefPct }}% × (1 − {{ stats.ignoreDefPct }}%)
+            </div>
+            <div class="step-value">= ×<strong>{{ step6multiplier.toFixed(4) }}</strong></div>
+          </div>
+
+          <div class="final-result">
+            <div class="final-label">最終傷害（單擊）</div>
+            <div class="final-value">{{ fmtFinal(finalDamage) }}</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

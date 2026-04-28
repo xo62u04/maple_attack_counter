@@ -1,0 +1,259 @@
+/* ── CSS Variables ── */
+:root {
+  --bg: #0f0f1a;
+  --bg-panel: #1a1a2e;
+  --bg-input: #16213e;
+  --border: #2a2a4a;
+  --accent: #ffd700;
+  --accent-dim: #b8960a;
+  --text: #e0e0e0;
+  --text-dim: #8888aa;
+  --success: #4ade80;
+  --danger: #f87171;
+  --step-bg: #1e1e35;
+  --step-border: #2e2e50;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', '微軟正黑體', sans-serif;
+  font-size: 14px;
+  min-height: 100vh;
+}
+
+/* ── Header ── */
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: var(--bg-panel);
+  border-bottom: 2px solid var(--accent);
+}
+
+.site-header h1 {
+  font-size: 20px;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+
+.header-actions { display: flex; gap: 8px; }
+
+/* ── Buttons ── */
+.btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-save { background: var(--accent); color: #000; }
+.btn-share { background: #4a90d9; color: #fff; }
+.btn-delete { background: var(--danger); color: #fff; padding: 6px 10px; }
+
+/* ── Layout ── */
+.calculator {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 0;
+  min-height: calc(100vh - 60px);
+}
+
+/* ── Input Panel ── */
+.input-panel {
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.field-group {
+  margin-bottom: 12px;
+}
+
+.field-group label {
+  display: block;
+  color: var(--text-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.field-group input,
+.field-group select {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 8px 10px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.field-group input:focus,
+.field-group select:focus {
+  border-color: var(--accent);
+}
+
+.field-group input.invalid {
+  border-color: var(--danger);
+}
+
+.field-group select:disabled {
+  opacity: 0.4;
+}
+
+.input-suffix {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.input-suffix input { flex: 1; }
+.input-suffix span { color: var(--text-dim); font-size: 14px; }
+
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 16px 0;
+}
+
+/* ── Save Section ── */
+.save-section { margin-top: 8px; }
+
+.save-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.save-actions select {
+  flex: 1;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.save-message {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--success);
+}
+
+/* ── Result Panel ── */
+.result-panel {
+  padding: 24px;
+  background: var(--bg);
+  overflow-y: auto;
+}
+
+.result-placeholder {
+  color: var(--text-dim);
+  font-size: 16px;
+  margin-top: 60px;
+  text-align: center;
+}
+
+/* ── Breakdown ── */
+.breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 560px;
+}
+
+.breakdown-step {
+  background: var(--step-bg);
+  border: 1px solid var(--step-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.step-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.step-formula {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.step-value {
+  font-size: 15px;
+  color: var(--text);
+}
+
+.step-value strong {
+  color: #7ec8e3;
+  font-size: 17px;
+}
+
+/* ── Final Result ── */
+.final-result {
+  background: #0d4d3a;
+  border: 2px solid var(--accent);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.final-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.final-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+
+/* ── Error / Loading ── */
+.error-banner {
+  background: #4a0000;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  padding: 12px 24px;
+  text-align: center;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px;
+  color: var(--text-dim);
+  font-size: 16px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .calculator {
+    grid-template-columns: 1fr;
+  }
+  .input-panel {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+}
