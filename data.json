@@ -101,8 +101,8 @@
         { "name": "弓", "coefficient": 1.30 }
       ],
       "skills": [
-        { "name": "會心之眼 (Sharp Eyes) 爆擊率", "type": "critRate", "value": 30, "enabled": true },
-        { "name": "會心之眼 (Sharp Eyes) 爆傷", "type": "critDmg", "value": 30, "enabled": true }
+        { "name": "會心之眼 (Sharp Eyes) 爆擊率", "type": "critRate", "value": 15, "enabled": true },
+        { "name": "會心之眼 (Sharp Eyes) 爆傷", "type": "critDmg", "value": 20, "enabled": true }
       ]
     },
     {
@@ -116,8 +116,8 @@
         { "name": "弩", "coefficient": 1.35 }
       ],
       "skills": [
-        { "name": "會心之眼 (Sharp Eyes) 爆擊率", "type": "critRate", "value": 30, "enabled": true },
-        { "name": "會心之眼 (Sharp Eyes) 爆傷", "type": "critDmg", "value": 30, "enabled": true }
+        { "name": "會心之眼 (Sharp Eyes) 爆擊率", "type": "critRate", "value": 15, "enabled": true },
+        { "name": "會心之眼 (Sharp Eyes) 爆傷", "type": "critDmg", "value": 20, "enabled": true }
       ]
     },
     {
@@ -228,8 +228,7 @@
         { "name": "長杖", "coefficient": 1.20 }
       ],
       "skills": [
-        { "name": "黑暗光環 (Dark Aura) ATK%", "type": "atkPct", "value": 20, "enabled": true },
-        { "name": "三繩技能", "type": "atkFlat", "value": 0, "enabled": false }
+        { "name": "黑暗光環 (Dark Aura) ATK%", "type": "atkPct", "value": 8, "enabled": true }
       ]
     },
     {
@@ -291,8 +290,8 @@
         { "name": "手杖", "coefficient": 1.30 }
       ],
       "skills": [
-        { "name": "會心之眼（複製）爆擊率", "type": "critRate", "value": 30, "enabled": true },
-        { "name": "會心之眼（複製）爆傷", "type": "critDmg", "value": 30, "enabled": true }
+        { "name": "會心之眼（複製）爆擊率", "type": "critRate", "value": 15, "enabled": true },
+        { "name": "會心之眼（複製）爆傷", "type": "critDmg", "value": 20, "enabled": true }
       ]
     },
     {
@@ -326,8 +325,8 @@
       "name": "會心之眼",
       "source": "箭神 / 神射手",
       "effects": [
-        { "type": "critRate", "value": 30 },
-        { "type": "critDmg", "value": 30 }
+        { "type": "critRate", "value": 15 },
+        { "type": "critDmg", "value": 20 }
       ]
     },
     {
@@ -340,19 +339,13 @@
       "id": "advBlessing",
       "name": "進階祝福",
       "source": "主教",
-      "effects": [{ "type": "atkFlat", "value": 30 }]
+      "effects": [{ "type": "atkFlat", "value": 25 }]
     },
     {
       "id": "darkAura",
       "name": "黑暗光環",
       "source": "煉獄巫師",
-      "effects": [{ "type": "atkPct", "value": 20 }]
-    },
-    {
-      "id": "battleMageRope",
-      "name": "三繩技能",
-      "source": "煉獄巫師",
-      "effects": [{ "type": "atkFlat", "value": 0 }]
+      "effects": [{ "type": "atkPct", "value": 8 }]
     },
     {
       "id": "mapleWarrior",
