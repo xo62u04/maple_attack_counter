@@ -586,13 +586,24 @@
               </div>
               <div class="skill-detail-row">
                 <select v-model="sk.type" class="skill-type-sel">
-                  <option value="atkFlat">ATK+（平）</option>
-                  <option value="atkPct">ATK %+</option>
-                  <option value="mainStatPct">主屬性 %+</option>
-                  <option value="critRate">爆擊率 %+</option>
-                  <option value="critDmg">爆擊傷害 %+</option>
-                  <option value="bossDmg">BOSS傷 %+</option>
-                  <option value="totalDmg">總傷 %+</option>
+                  <optgroup label="── 屬性（平值）">
+                    <option value="mainStatFlat">主屬性+（平）</option>
+                    <option value="subStatFlat">副屬性+（平）</option>
+                    <option value="allStatFlat">全屬性+（平）</option>
+                    <option value="atkFlat">ATK+（平）</option>
+                  </optgroup>
+                  <optgroup label="── 屬性（%）">
+                    <option value="mainStatPct">主屬性 %+</option>
+                    <option value="subStatPct">副屬性 %+</option>
+                    <option value="allStatPct">全屬性 %+</option>
+                    <option value="atkPct">ATK %+</option>
+                  </optgroup>
+                  <optgroup label="── 爆擊 / 傷害">
+                    <option value="critRate">爆擊率 %+</option>
+                    <option value="critDmg">爆擊傷害 %+</option>
+                    <option value="bossDmg">BOSS傷 %+</option>
+                    <option value="totalDmg">總傷 %+</option>
+                  </optgroup>
                 </select>
                 <input type="number" v-model.number="sk.value" class="buff-val" />
               </div>

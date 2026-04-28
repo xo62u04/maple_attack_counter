@@ -66,13 +66,16 @@ function makeSlot(def) {
 }
 
 function applySkillEffect(type, value, acc) {
-  if      (type === 'atkFlat')      acc.flatAtk  += value
+  if      (type === 'mainStatFlat') acc.flatMain += value
+  else if (type === 'subStatFlat')  acc.flatSub  += value
+  else if (type === 'allStatFlat')  { acc.flatMain += value; acc.flatSub += value }
+  else if (type === 'atkFlat')      acc.flatAtk  += value
+  else if (type === 'mainStatPct')  acc.pctMain  += value
+  else if (type === 'subStatPct')   acc.pctSub   += value
+  else if (type === 'allStatPct')   { acc.pctMain += value; acc.pctSub += value }
   else if (type === 'atkPct')       acc.pctAtk   += value
   else if (type === 'critRate')     acc.critRate  += value
   else if (type === 'critDmg')      acc.critDmg   += value
-  else if (type === 'mainStatPct')  acc.pctMain   += value
-  else if (type === 'subStatPct')   acc.pctSub    += value
-  else if (type === 'allStatPct')   { acc.pctMain += value; acc.pctSub += value }
   else if (type === 'bossDmg')      acc.bossDmg   += value
   else if (type === 'totalDmg')     acc.totalDmg  += value
 }
