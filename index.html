@@ -562,8 +562,9 @@
             <div class="stat-row"><span>總傷害+</span><span class="stat-val">+{{ equip.totals.value.totalDmg.toFixed(1) }}%</span></div>
             <div class="stat-row"><span>無視防禦（合計）</span><span class="stat-val">{{ equip.totals.value.ignoreDefTotal.toFixed(1) }}%</span></div>
             <div class="divider" style="margin:8px 0"></div>
-            <div class="stat-row"><span>最終主屬性</span><span class="stat-val">{{ Math.round(equip.dmgResult.value.finalMain) }}</span></div>
-            <div class="stat-row"><span>最終副屬性</span><span class="stat-val">{{ Math.round(equip.dmgResult.value.finalSub) }}</span></div>
+            <div class="stat-row"><span>裝備主屬性合計</span><span class="stat-val">+{{ Math.round(equip.totals.value.flatMain) }}</span></div>
+            <div class="stat-row"><span>最終主屬性（含%）</span><span class="stat-val">{{ Math.round(equip.dmgResult.value.realFinalMain) }}</span></div>
+            <div class="stat-row"><span>最終副屬性（含%）</span><span class="stat-val">{{ Math.round(equip.dmgResult.value.realFinalSub) }}</span></div>
             <div class="stat-row"><span>最終攻擊力</span><span class="stat-val">{{ Math.round(equip.dmgResult.value.finalAtk) }}</span></div>
           </div>
 
@@ -655,6 +656,14 @@
               <div></div>
               <div class="dps-col-head boss-col">⚔️ 打王</div>
               <div class="dps-col-head mob-col">🐾 小怪</div>
+
+              <div class="dps-row-label">表攻（max）</div>
+              <div class="dps-val">{{ fmt(equip.dmgResult.value.maxBoss) }}</div>
+              <div class="dps-val">{{ fmt(equip.dmgResult.value.maxMob) }}</div>
+
+              <div class="dps-row-label">表攻（min）</div>
+              <div class="dps-val">{{ fmt(equip.dmgResult.value.minBoss) }}</div>
+              <div class="dps-val">{{ fmt(equip.dmgResult.value.minMob) }}</div>
 
               <div class="dps-row-label">平均單擊</div>
               <div class="dps-val">{{ fmt(equip.dmgResult.value.avgBoss) }}</div>

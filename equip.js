@@ -173,13 +173,17 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     const finalAtk    = (Number(baseStats.value.atk)      || 0) + t.flatAtk
     const finalAtkPct = t.pctAtk
 
+    const realFinalMain = finalMain * (1 + t.pctMain / 100)
+    const realFinalSub  = finalSub  * (1 + t.pctSub  / 100)
+
     if (finalMain <= 0 || finalAtk <= 0) {
       return { maxBoss:0, minBoss:0, avgBoss:0, maxMob:0, minMob:0, avgMob:0,
                dpsBoss:0, mdpsBoss:0, dpsMob:0, mdpsMob:0,
-               finalMain, finalSub, finalAtk, finalAtkPct, step1:0, coeff }
+               finalMain, finalSub, finalAtk, finalAtkPct, step1:0, step4:0, coeff,
+               realFinalMain:0, realFinalSub:0 }
     }
 
-    const step1 = 4 * finalMain * (1 + t.pctMain / 100) + finalSub * (1 + t.pctSub / 100)
+    const step1 = 4 * realFinalMain + realFinalSub
     const step3 = finalAtk * (1 + finalAtkPct / 100)
     const step4 = step1 * coeff * step3 * 0.01 * (Number(s.skillPct) || 100) / 100
 
@@ -215,7 +219,8 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
       maxBoss, minBoss, avgBoss, maxMob, minMob, avgMob,
       dpsBoss: avgBoss * hps, mdpsBoss: avgBoss * hps * 60,
       dpsMob:  avgMob  * hps, mdpsMob:  avgMob  * hps * 60,
-      finalMain, finalSub, finalAtk, finalAtkPct, step1, coeff,
+      finalMain, finalSub, finalAtk, finalAtkPct, step1, step4, coeff,
+      realFinalMain, realFinalSub,
     }
   })
 
