@@ -5,6 +5,17 @@ createApp({
     // ── Tab 切換 ──
     const activeTab = ref('calc')
 
+    // ── 裝備模擬器字體縮放 ──
+    const equipZoom = ref(1)
+    function changeEquipZoom(delta, reset = false) {
+      if (reset) {
+        equipZoom.value = 1
+      } else {
+        equipZoom.value = Math.round(Math.max(0.5, Math.min(2, equipZoom.value + delta)) * 10) / 10
+      }
+      document.documentElement.style.setProperty('--equip-zoom', equipZoom.value)
+    }
+
     // ── 資料載入 ──
     const jobs      = ref([])
     const partyBuffs = ref([])
@@ -422,7 +433,7 @@ createApp({
     }
 
     return {
-      activeTab,
+      activeTab, equipZoom, changeEquipZoom,
       jobs, partyBuffs, loading, loadError,
       groups, filteredJobs, selectedJob,
       selectedGroup, selectedJobId, selectedWeaponName, coefficient,

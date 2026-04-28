@@ -371,7 +371,15 @@
     </main>
 
     <!-- ══════════════════════════════════════════ Tab 2：裝備模擬器 ══ -->
-    <main v-else-if="activeTab === 'equip'" class="equip-main">
+    <div v-else-if="activeTab === 'equip'">
+    <div class="equip-zoom-bar">
+      <span>字體大小</span>
+      <button class="btn-zoom" @click="changeEquipZoom(-0.1)">A－</button>
+      <span>{{ Math.round(equipZoom * 100) }}%</span>
+      <button class="btn-zoom" @click="changeEquipZoom(0.1)">A＋</button>
+      <button class="btn-zoom" style="margin-left:6px" @click="changeEquipZoom(0, true)">重設</button>
+    </div>
+    <main class="equip-main">
 
       <!-- 左欄：裝備槽清單 + 裸裝設定 + 存檔 -->
       <section class="equip-sidebar">
@@ -696,6 +704,7 @@
         </div><!-- end equip-bottom-grid -->
       </section>
     </main>
+    </div><!-- end equip wrapper -->
 
   </div><!-- end #app -->
 
