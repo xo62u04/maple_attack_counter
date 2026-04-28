@@ -11,7 +11,7 @@
     <header class="site-header">
       <h1>⚔️ 楓星攻擊力計算機</h1>
       <div class="header-actions">
-        <button @click="saveCharacter" class="btn btn-save">💾 存檔</button>
+        <button @click="saveCharacter" class="btn btn-save" :disabled="!saveName.trim()">💾 存檔</button>
         <button @click="shareUrl" class="btn btn-share">🔗 分享</button>
       </div>
     </header>

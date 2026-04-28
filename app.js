@@ -1,4 +1,7 @@
-const { createApp, ref, computed, watch, onMounted } = Vue
+const { createApp, ref, computed, onMounted } = Vue
+
+// Stub — full logic implemented when Task 3 replaces this file.
+// Page will show "載入職業資料中..." indefinitely until Task 3 lands.
 
 createApp({
   setup() {
