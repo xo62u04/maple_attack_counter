@@ -853,6 +853,33 @@ body {
 .pot-winner { color: var(--accent); font-weight: 700; font-size: 13px; }
 .pot-diff   { color: var(--text-dim); font-weight: 400; font-size: 12px; }
 
+.pot-subtitle { font-size: 12px; color: var(--text-dim); font-weight: 400; margin-left: 6px; }
+
+/* 左側唯讀顯示 */
+.pot-line-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  margin-bottom: 5px;
+  font-size: 13px;
+}
+.pot-cur-type { color: var(--text-dim); flex: 1; }
+.pot-cur-val  { color: var(--accent); font-weight: 700; margin-left: 8px; }
+.pot-cur-val.dim { color: var(--text-dim); font-weight: 400; }
+
+/* 貢獻提示行 */
+.pot-gain-hint {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 4px;
+  text-align: center;
+}
+.pot-gain-hint strong { color: var(--text); }
+
 /* ══════════════════════════════════════════════════════════════
    Responsive
    ════════════════════════════════════════════════════════════ */

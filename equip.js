@@ -356,40 +356,80 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
   }
 
   // ── 潛能比較器 ──
+  // 可選的潛能詞條類型（右側「換成」輸入欄用）
   const POT_COMPARE_TYPES = [
     { value: 'none',         label: '（不選）' },
     { value: 'mainStatPct',  label: '主屬性 %' },
+    { value: 'subStatPct',   label: '副屬性 %' },
     { value: 'allStatPct',   label: '全屬性 %' },
+    { value: 'mainStatFlat', label: '主屬性+（平）' },
+    { value: 'subStatFlat',  label: '副屬性+（平）' },
+    { value: 'allStatFlat',  label: '全屬性+（平）' },
     { value: 'atkPct',       label: 'ATK %' },
+    { value: 'atkFlat',      label: 'ATK+（平）' },
     { value: 'bossDmg',      label: 'BOSS傷害 %' },
     { value: 'totalDmg',     label: '總傷害 %' },
-    { value: 'mainStatFlat', label: '主屬性+（平）' },
-    { value: 'atkFlat',      label: 'ATK+（平）' },
+    { value: 'critRate',     label: '爆擊率 %' },
+    { value: 'critDmg',      label: '爆擊傷害 %' },
+    { value: 'ignoreDef',    label: '無視防禦 %' },
   ]
 
-  const potCompareA = Vue.ref([
-    { type: 'atkPct',  value: 9  },
-    { type: 'none',    value: 0  },
-    { type: 'none',    value: 0  },
-  ])
-  const potCompareB = Vue.ref([
-    { type: 'bossDmg', value: 30 },
-    { type: 'none',    value: 0  },
-    { type: 'none',    value: 0  },
+  // 使用者輸入的「想換成的潛能」（最多 3 行）
+  const potCompareNew = Vue.ref([
+    { type: 'none', value: 0 },
+    { type: 'none', value: 0 },
+    { type: 'none', value: 0 },
   ])
 
-  function _calcPotGain(lines, r, t) {
+  // 把目前選中裝備槽的潛能貢獻從 totals 中扣除 → 算出「沒有這組潛能」的基底
+  function _subtractPotLines(t, potLines) {
+    const adj = {
+      flatMain: t.flatMain, flatSub: t.flatSub, flatAtk: t.flatAtk,
+      pctMain:  t.pctMain,  pctSub:  t.pctSub,  pctAtk:  t.pctAtk,
+      critRate: t.critRate, critDmg: t.critDmg,
+      bossDmg:  t.bossDmg,  totalDmg: t.totalDmg,
+      ignoreDefTotal: t.ignoreDefTotal,
+    }
+    for (const line of potLines) {
+      const v = Number(line.value) || 0
+      if (!v || line.type === 'none') continue
+      switch (line.type) {
+        case 'mainStatPct':  adj.pctMain  -= v; break
+        case 'subStatPct':   adj.pctSub   -= v; break
+        case 'allStatPct':   adj.pctMain  -= v; adj.pctSub -= v; break
+        case 'mainStatFlat': adj.flatMain -= v; break
+        case 'subStatFlat':  adj.flatSub  -= v; break
+        case 'allStatFlat':  adj.flatMain -= v; adj.flatSub -= v; break
+        case 'atkFlat':      adj.flatAtk  -= v; break
+        case 'atkPct':       adj.pctAtk   -= v; break
+        case 'critRate':     adj.critRate -= v; break
+        case 'critDmg':      adj.critDmg  -= v; break
+        case 'bossDmg':      adj.bossDmg  -= v; break
+        case 'totalDmg':     adj.totalDmg -= v; break
+        // ignoreDef 用乘法堆疊，暫略（誤差極小）
+      }
+    }
+    return adj
+  }
+
+  // 從扣除後的 totals 重推關鍵戰鬥數值（_calcPotGain 需要的欄位）
+  function _derivedR(t_adj) {
+    const finalMain     = (Number(baseStats.value.mainStat) || 0) + t_adj.flatMain
+    const finalSub      = (Number(baseStats.value.subStat)  || 0) + t_adj.flatSub
+    const finalAtk      = (Number(baseStats.value.atk)      || 0) + t_adj.flatAtk
+    const finalAtkPct   = t_adj.pctAtk
+    const realFinalMain = Math.floor(finalMain * (1 + t_adj.pctMain / 100))
+    const realFinalSub  = Math.floor(finalSub  * (1 + t_adj.pctSub  / 100))
+    const step1         = 4 * realFinalMain + realFinalSub
+    return { finalMain, finalSub, finalAtk, finalAtkPct, step1 }
+  }
+
+  // 計算一組潛能詞條對傷害的邊際增益（以基底 r, t 為參考點）
+  function _calcPotGain(lines, r, t, s) {
     if (!r.step1 || !r.finalAtk) return { bossPct: 0, mobPct: 0 }
-    const step1    = r.step1
-    const finalMain = r.finalMain
-    const finalSub  = r.finalSub
-    const finalAtk  = r.finalAtk
-    const atkPctNow = r.finalAtkPct
-    const pctMain   = t.pctMain
-    const bossDmgNow = t.bossDmg
-    const totalDmgNow = t.totalDmg
+    const { step1, finalMain, finalSub, finalAtk, finalAtkPct } = r
+    const { pctMain, pctSub, bossDmg: bossDmgNow, totalDmg: totalDmgNow } = t
 
-    // 先把同類型的值加總（例如：三行都是 ATK% 就合在一起算）
     const agg = {}
     for (const line of lines) {
       const v = Number(line.value) || 0
@@ -401,22 +441,22 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     for (const [type, val] of Object.entries(agg)) {
       switch (type) {
         case 'mainStatPct': {
-          // d(step1)/d(pctMain) × N/100 / step1
           const g = step1 > 0 ? (4 * finalMain * val / 100 / step1) * 100 : 0
           bossPct += g; mobPct += g; break
         }
+        case 'subStatPct': {
+          const g = step1 > 0 ? (finalSub * val / 100 / step1) * 100 : 0
+          bossPct += g; mobPct += g; break
+        }
         case 'allStatPct': {
-          // 主副屬性都受影響
           const g = step1 > 0 ? ((4 * finalMain + finalSub) * val / 100 / step1) * 100 : 0
           bossPct += g; mobPct += g; break
         }
         case 'atkPct': {
-          // val/(100+目前ATK%)
-          const g = (100 + atkPctNow) > 0 ? (val / (100 + atkPctNow)) * 100 : 0
+          const g = (100 + finalAtkPct) > 0 ? (val / (100 + finalAtkPct)) * 100 : 0
           bossPct += g; mobPct += g; break
         }
         case 'bossDmg': {
-          // 只對 BOSS 有效，分母含 bossDmg+totalDmg
           const base = 100 + bossDmgNow + totalDmgNow
           bossPct += base > 0 ? (val / base) * 100 : 0
           break
@@ -429,26 +469,79 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
           break
         }
         case 'mainStatFlat': {
-          // flat 主屬 被 pctMain% 放大
           const g = step1 > 0 ? (4 * (1 + pctMain / 100) * val / step1) * 100 : 0
           bossPct += g; mobPct += g; break
         }
+        case 'subStatFlat': {
+          const g = step1 > 0 ? ((1 + pctSub / 100) * val / step1) * 100 : 0
+          bossPct += g; mobPct += g; break
+        }
+        case 'allStatFlat': {
+          const g = step1 > 0 ? ((4 * (1 + pctMain / 100) + (1 + pctSub / 100)) * val / step1) * 100 : 0
+          bossPct += g; mobPct += g; break
+        }
         case 'atkFlat': {
-          // 1/finalAtk per point
           const g = finalAtk > 0 ? (val / finalAtk) * 100 : 0
           bossPct += g; mobPct += g; break
+        }
+        case 'critRate': {
+          if (!s) break
+          const totalCR  = Math.min(100, (Number(s.critRate) || 0) + (t.critRate || 0))
+          const totalCDM = (Number(s.maxCritBonus) || 0) + (t.critDmg || 0)
+          const minC     = Number(s.minCritBonus) || 0
+          const critM    = 1 + totalCR / 100 * (minC + totalCDM) / 200
+          const addedCR  = Math.min(val, 100 - totalCR)
+          const newCritM = 1 + (totalCR + addedCR) / 100 * (minC + totalCDM) / 200
+          const g = critM > 0 ? (newCritM / critM - 1) * 100 : 0
+          bossPct += g; mobPct += g; break
+        }
+        case 'critDmg': {
+          if (!s) break
+          const totalCR  = Math.min(100, (Number(s.critRate) || 0) + (t.critRate || 0))
+          const totalCDM = (Number(s.maxCritBonus) || 0) + (t.critDmg || 0)
+          const minC     = Number(s.minCritBonus) || 0
+          const critM    = 1 + totalCR / 100 * (minC + totalCDM) / 200
+          const newCritM = 1 + totalCR / 100 * (minC + totalCDM + val) / 200
+          const g = critM > 0 ? (newCritM / critM - 1) * 100 : 0
+          bossPct += g; mobPct += g; break
+        }
+        case 'ignoreDef': {
+          if (!s) break
+          const ignEff        = (t.ignoreDefTotal || 0) / 100
+          const bossDefPct    = (Number(s.bossDefPct)    || 0) / 100
+          const monsterDefPct = (Number(s.monsterDefPct) || 0) / 100
+          const step6Boss     = 1 - bossDefPct    * (1 - ignEff)
+          const step6Mob      = 1 - monsterDefPct * (1 - ignEff)
+          const newIgnEff     = 1 - (1 - ignEff) * (1 - val / 100)
+          const newStep6Boss  = 1 - bossDefPct    * (1 - newIgnEff)
+          const newStep6Mob   = 1 - monsterDefPct * (1 - newIgnEff)
+          bossPct += step6Boss > 0 ? (newStep6Boss / step6Boss - 1) * 100 : 0
+          mobPct  += step6Mob  > 0 ? (newStep6Mob  / step6Mob  - 1) * 100 : 0
+          break
         }
       }
     }
     return { bossPct, mobPct }
   }
 
+  // 比較結果：目前選中裝備槽的潛能 vs 使用者輸入的新潛能
+  // 基底（t_base / r_base）先扣除目前潛能，確保兩者在同一起跑線比較
   const potCompareResult = Vue.computed(() => {
-    const r = dmgResult.value
-    const t = totals.value
+    const t   = totals.value
+    const s   = equipSettings.value
+    const currentPot = selectedSlot.value?.potential || []
+    const t_base = _subtractPotLines(t, currentPot)
+    const r_base = _derivedR(t_base)
+    const currentGain = _calcPotGain(currentPot,           r_base, t_base, s)
+    const newGain     = _calcPotGain(potCompareNew.value,  r_base, t_base, s)
     return {
-      a: _calcPotGain(potCompareA.value, r, t),
-      b: _calcPotGain(potCompareB.value, r, t),
+      slotName: selectedSlot.value?.name || '',
+      current:  currentGain,
+      new:      newGain,
+      net: {
+        bossPct: newGain.bossPct - currentGain.bossPct,
+        mobPct:  newGain.mobPct  - currentGain.mobPct,
+      },
     }
   })
 
@@ -482,7 +575,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     totals, dmgResult, attackStatRatio, onePercentMainEquivFlat, oneAtkEquivMain,
     upgradeEfficiencyBoss, upgradeEfficiencyMob,
     oneMainFlatGain, oneAtkFlatGain,
-    POT_COMPARE_TYPES, potCompareA, potCompareB, potCompareResult,
+    POT_COMPARE_TYPES, potCompareNew, potCompareResult,
     getState, setState,
     initJobSkills, initPartyBuffs, importFromTab1,
   }
