@@ -339,7 +339,7 @@
       "id": "advBlessing",
       "name": "進階祝福",
       "source": "主教",
-      "effects": [{ "type": "atkFlat", "value": 25 }]
+      "effects": [{ "type": "atkFlat", "value": 15 }]
     },
     {
       "id": "darkAura",

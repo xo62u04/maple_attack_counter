@@ -664,6 +664,30 @@
               </div>
             </div>
 
+            <!-- 藥水 -->
+            <div class="panel-sub-title" style="margin-top:10px">💊 藥水（不套用%屬性）</div>
+            <div class="potion-hint">藥水加成直接加在屬性%乘算之後，不享受%加成</div>
+            <div v-for="pot in equip.potions.value" :key="pot.id" class="potion-row">
+              <label class="potion-label">
+                <input type="checkbox" v-model="pot.enabled" />
+                <span class="potion-name">{{ pot.name }}</span>
+                <span class="potion-type-tag" :class="pot.statType === 'main' ? 'tag-main' : 'tag-atk'">
+                  {{ pot.statType === 'main' ? '主屬' : 'ATK' }}
+                </span>
+              </label>
+              <div class="potion-val-wrap">
+                <span v-if="pot.fixed" class="potion-fixed-val">+{{ pot.value }}</span>
+                <input v-else type="number" v-model.number="pot.value" class="potion-val-input"
+                       :disabled="!pot.enabled" min="0" />
+              </div>
+            </div>
+            <div class="potion-total-row" v-if="equip.potionTotals.value.mainBypass > 0 || equip.potionTotals.value.atkBypass > 0">
+              合計：
+              <span v-if="equip.potionTotals.value.mainBypass > 0">主屬 +{{ equip.potionTotals.value.mainBypass }}</span>
+              <span v-if="equip.potionTotals.value.mainBypass > 0 && equip.potionTotals.value.atkBypass > 0"> ／ </span>
+              <span v-if="equip.potionTotals.value.atkBypass > 0">ATK +{{ equip.potionTotals.value.atkBypass }}</span>
+            </div>
+
             <div class="panel-sub-title" style="margin-top:10px">隊伍 BUFF</div>
             <div v-for="buf in equip.activeBuffs.value" :key="buf.id" class="buff-item">
               <label class="buff-label">

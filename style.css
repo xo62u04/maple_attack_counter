@@ -861,6 +861,62 @@ body {
 .pot-winner { color: var(--accent); font-weight: 700; font-size: 13px; }
 .pot-diff   { color: var(--text-dim); font-weight: 400; font-size: 12px; }
 
+/* ── 藥水 ── */
+.potion-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 5px;
+  font-style: italic;
+}
+.potion-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+.potion-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  cursor: pointer;
+}
+.potion-name { color: var(--text); }
+.potion-type-tag {
+  font-size: 11px;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-weight: 600;
+}
+.tag-main { background: #1a3a5a; color: #7ec8e3; }
+.tag-atk  { background: #3a2a1a; color: var(--accent); }
+.potion-val-wrap { display: flex; align-items: center; }
+.potion-val-input {
+  width: 54px;
+  font-size: 13px;
+  text-align: right;
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+.potion-val-input:disabled { opacity: 0.35; }
+.potion-fixed-val {
+  font-size: 13px;
+  color: var(--text-dim);
+  width: 54px;
+  text-align: right;
+}
+.potion-total-row {
+  font-size: 12px;
+  color: var(--success);
+  text-align: right;
+  margin-top: 2px;
+  margin-bottom: 4px;
+}
+
 .pot-subtitle { font-size: 12px; color: var(--text-dim); font-weight: 400; margin-left: 6px; }
 
 /* 左側唯讀顯示 */

@@ -102,6 +102,27 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
   const jobSkills      = Vue.ref([])
   const activeBuffs    = Vue.ref([])
 
+  // ── 藥水（不套用%屬性，加在乘算之後）──
+  const potions = Vue.ref([
+    { id: 'mainStat', name: '主屬藥水',  statType: 'main', value: 0,  fixed: false, enabled: false },
+    { id: 'atk',      name: '攻擊藥水',  statType: 'atk',  value: 0,  fixed: false, enabled: false },
+    { id: 'bless1',   name: '祝福密藥1', statType: 'main', value: 0,  fixed: false, enabled: false },
+    { id: 'bless2',   name: '祝福密藥2', statType: 'main', value: 0,  fixed: false, enabled: false },
+    { id: 'weather',  name: '天氣',      statType: 'atk',  value: 30, fixed: true,  enabled: false },
+  ])
+
+  // 藥水加總（bypass pct，獨立累計）
+  const potionTotals = Vue.computed(() => {
+    let mainBypass = 0, atkBypass = 0
+    for (const pot of potions.value) {
+      if (!pot.enabled) continue
+      const v = Number(pot.value) || 0
+      if      (pot.statType === 'main') mainBypass += v
+      else if (pot.statType === 'atk')  atkBypass  += v
+    }
+    return { mainBypass, atkBypass }
+  })
+
   const totals = Vue.computed(() => {
     let flatMain = 0, flatSub = 0, flatAtk = 0
     let pctMain = 0, pctSub = 0, pctAtk = 0
@@ -190,9 +211,11 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
                realFinalMain:0, realFinalSub:0, tableAtkMax:0, tableAtkMin:0 }
     }
 
-    const step1 = 4 * realFinalMain + realFinalSub
-    // realFinalAtk：遊戲在 ATK 乘上 ATK% 後也做 floor（整數運算）
-    const realFinalAtk = Math.floor(finalAtk * (1 + finalAtkPct / 100))
+    // 藥水：不套用%屬性，直接加在乘算之後
+    const pot = potionTotals.value
+    const step1 = 4 * (realFinalMain + pot.mainBypass) + realFinalSub
+    // realFinalAtk：遊戲在 ATK 乘上 ATK% 後也做 floor（整數運算），再加藥水 ATK
+    const realFinalAtk = Math.floor(finalAtk * (1 + finalAtkPct / 100)) + pot.atkBypass
     const step3 = realFinalAtk
     const step4 = step1 * coeff * step3 * 0.01 * (Number(s.skillPct) || 100) / 100
 
@@ -333,6 +356,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
       jobSkills:     JSON.parse(JSON.stringify(jobSkills.value)),
       activeBuffs:   JSON.parse(JSON.stringify(activeBuffs.value)),
       useEquipSlots: useEquipSlots.value,
+      potions:       JSON.parse(JSON.stringify(potions.value)),
     }
   }
 
@@ -344,6 +368,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     if (state.jobSkills)     jobSkills.value   = state.jobSkills
     if (state.activeBuffs)   activeBuffs.value = state.activeBuffs
     if (state.useEquipSlots !== undefined) useEquipSlots.value = state.useEquipSlots
+    if (state.potions)       potions.value     = state.potions
   }
 
   function initJobSkills(jobId) {
@@ -573,6 +598,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     slots, selectedSlotId, selectedSlot,
     jobSkills, activeBuffs,
     totals, dmgResult, attackStatRatio, onePercentMainEquivFlat, oneAtkEquivMain,
+    potions, potionTotals,
     upgradeEfficiencyBoss, upgradeEfficiencyMob,
     oneMainFlatGain, oneAtkFlatGain,
     POT_COMPARE_TYPES, potCompareNew, potCompareResult,
