@@ -1,0 +1,281 @@
+{
+  "jobs": [
+    {
+      "id": "hero",
+      "name": "英雄",
+      "group": "冒險家 - 劍士系",
+      "mainStat": "STR",
+      "subStat": "DEX",
+      "attackType": "physical",
+      "weapons": [
+        { "name": "單手劍", "coefficient": 1.20 },
+        { "name": "雙手劍", "coefficient": 1.34 },
+        { "name": "單手斧", "coefficient": 1.20 },
+        { "name": "雙手斧", "coefficient": 1.34 }
+      ]
+    },
+    {
+      "id": "paladin",
+      "name": "聖騎士",
+      "group": "冒險家 - 劍士系",
+      "mainStat": "STR",
+      "subStat": "DEX",
+      "attackType": "physical",
+      "weapons": [
+        { "name": "單手劍", "coefficient": 1.20 },
+        { "name": "雙手劍", "coefficient": 1.34 },
+        { "name": "單手斧", "coefficient": 1.20 },
+        { "name": "雙手斧", "coefficient": 1.34 },
+        { "name": "單手棍", "coefficient": 1.20 },
+        { "name": "雙手棍", "coefficient": 1.34 }
+      ]
+    },
+    {
+      "id": "darkKnight",
+      "name": "黑騎士",
+      "group": "冒險家 - 劍士系",
+      "mainStat": "STR",
+      "subStat": "DEX",
+      "attackType": "physical",
+      "weapons": [
+        { "name": "長槍", "coefficient": 1.49 },
+        { "name": "矛",   "coefficient": 1.49 }
+      ]
+    },
+    {
+      "id": "firePoisonMage",
+      "name": "火毒大魔導士",
+      "group": "冒險家 - 魔法使系",
+      "mainStat": "INT",
+      "subStat": "LUK",
+      "attackType": "magical",
+      "weapons": [
+        { "name": "長杖", "coefficient": 1.20 },
+        { "name": "短杖", "coefficient": 1.20 }
+      ]
+    },
+    {
+      "id": "iceLightningMage",
+      "name": "冰雷大魔導士",
+      "group": "冒險家 - 魔法使系",
+      "mainStat": "INT",
+      "subStat": "LUK",
+      "attackType": "magical",
+      "weapons": [
+        { "name": "長杖", "coefficient": 1.20 },
+        { "name": "短杖", "coefficient": 1.20 }
+      ]
+    },
+    {
+      "id": "bishop",
+      "name": "主教",
+      "group": "冒險家 - 魔法使系",
+      "mainStat": "INT",
+      "subStat": "LUK",
+      "attackType": "magical",
+      "weapons": [
+        { "name": "長杖", "coefficient": 1.20 },
+        { "name": "短杖", "coefficient": 1.20 }
+      ]
+    },
+    {
+      "id": "bowmaster",
+      "name": "箭神",
+      "group": "冒險家 - 弓箭手系",
+      "mainStat": "DEX",
+      "subStat": "STR",
+      "attackType": "physical",
+      "weapons": [
+        { "name": "弓", "coefficient": 1.30 }
+      ]
+    },
+    {
+      "id": "marksman",
+      "name": "神射手",
+      "group": "冒險家 - 弓箭手系",
+      "mainStat": "DEX",
+      "subStat": "STR",
+      "attackType": "physical",
+      "weapons": [
+        { "name": "弩", "coefficient": 1.35 }
+      ]
+    },
+    {
+      "id": "nightLord",
+      "name": "夜使者",
+      "group": "冒險家 - 盜賊系",
+      "mainStat": "LUK",
+      "subStat": "DEX",
+      "attackType": "physical",
+      "weapons": [
+        { "name": "拳套（爪型）", "coefficient": 1.75 }
+      ]
+    },
+    {
+      "id": "shadower",
+      "name": "暗影神偷",
+      "group": "冒險家 - 盜賊系",
+      "mainStat": "LUK",
+      "subStat": "DEX+STR",
+      "attackType": "physical",
+      "weapons": [
+        { "name": "短劍", "coefficient": 1.30 }
+      ]
+    },
+    {
+      "id": "dualBlade",
+      "name": "影武者",
+      "group": "冒險家 - 盜賊系",
+      "mainStat": "LUK",
+      "subStat": "DEX+STR",
+      "attackType": "physical",
+      "weapons": [
+        { "name": "雙刀", "coefficient": 1.30 }
+      ]
+    },
+    {
+      "id": "buccaneer",
+      "name": "拳霸",
+      "group": "冒險家 - 海賊系",
+      "mainStat": "STR",
+      "subStat": "DEX",
+      "attackType": "physical",
+      "weapons": [
+        { "name": "拳套", "coefficient": 1.70 }
+      ]
+    },
+    {
+      "id": "corsair",
+      "name": "槍神",
+      "group": "冒險家 - 海賊系",
+      "mainStat": "DEX",
+      "subStat": "STR",
+      "attackType": "physical",
+      "weapons": [
+        { "name": "手槍", "coefficient": 1.50 }
+      ]
+    },
+    {
+      "id": "cannoneer",
+      "name": "重砲指揮官",
+      "group": "冒險家 - 海賊系",
+      "mainStat": "STR",
+      "subStat": "DEX",
+      "attackType": "physical",
+      "weapons": [
+        { "name": "大砲", "coefficient": 1.50 }
+      ]
+    },
+    {
+      "id": "aran",
+      "name": "狂狼勇士",
+      "group": "英雄傳說",
+      "mainStat": "STR",
+      "subStat": "DEX",
+      "attackType": "physical",
+      "weapons": [
+        { "name": "矛", "coefficient": 1.49 }
+      ]
+    },
+    {
+      "id": "evan",
+      "name": "龍魔導士",
+      "group": "英雄傳說",
+      "mainStat": "INT",
+      "subStat": "LUK",
+      "attackType": "magical",
+      "weapons": [
+        { "name": "長杖", "coefficient": 1.20 },
+        { "name": "短杖", "coefficient": 1.20 }
+      ]
+    },
+    {
+      "id": "battleMage",
+      "name": "煉獄巫師",
+      "group": "末日反抗軍",
+      "mainStat": "INT",
+      "subStat": "LUK",
+      "attackType": "magical",
+      "weapons": [
+        { "name": "長杖", "coefficient": 1.20 }
+      ]
+    },
+    {
+      "id": "wildHunter",
+      "name": "狂豹獵人",
+      "group": "末日反抗軍",
+      "mainStat": "DEX",
+      "subStat": "STR",
+      "attackType": "physical",
+      "weapons": [
+        { "name": "弩", "coefficient": 1.35 }
+      ]
+    },
+    {
+      "id": "mechanic",
+      "name": "機甲戰神",
+      "group": "末日反抗軍",
+      "mainStat": "DEX",
+      "subStat": "STR",
+      "attackType": "physical",
+      "weapons": [
+        { "name": "火槍", "coefficient": 1.50 }
+      ]
+    },
+    {
+      "id": "demonSlayer",
+      "name": "惡魔殺手",
+      "group": "惡魔",
+      "mainStat": "STR",
+      "subStat": "DEX",
+      "attackType": "physical",
+      "weapons": [
+        { "name": "單手棍", "coefficient": 1.20 }
+      ]
+    },
+    {
+      "id": "mercedes",
+      "name": "精靈遊俠",
+      "group": "精靈",
+      "mainStat": "DEX",
+      "subStat": "STR",
+      "attackType": "physical",
+      "weapons": [
+        { "name": "雙弩", "coefficient": 1.30 }
+      ]
+    },
+    {
+      "id": "phantom",
+      "name": "幻影",
+      "group": "幻影",
+      "mainStat": "LUK",
+      "subStat": "DEX",
+      "attackType": "physical",
+      "weapons": [
+        { "name": "手杖", "coefficient": 1.30 }
+      ]
+    },
+    {
+      "id": "hayato",
+      "name": "劍豪",
+      "group": "劍豪",
+      "mainStat": "STR",
+      "subStat": "DEX",
+      "attackType": "physical",
+      "weapons": [
+        { "name": "武士刀", "coefficient": 1.25 }
+      ]
+    },
+    {
+      "id": "kanna",
+      "name": "陰陽師",
+      "group": "陰陽師",
+      "mainStat": "INT",
+      "subStat": "LUK",
+      "attackType": "magical",
+      "weapons": [
+        { "name": "扇子", "coefficient": 1.35 }
+      ]
+    }
+  ]
+}
