@@ -313,6 +313,42 @@ createApp({
         const raw = localStorage.getItem(STORAGE_KEY)
         savedCharacters.value = raw ? JSON.parse(raw) : []
       } catch { savedCharacters.value = [] }
+
+      // ── 一次性搬移：把舊裝備模擬器的存檔（maple_calc_equipment）合併進來 ──
+      try {
+        const oldRaw = localStorage.getItem('maple_calc_equipment')
+        if (oldRaw) {
+          const oldSets = JSON.parse(oldRaw)
+          let changed = false
+          for (const old of oldSets) {
+            if (!old.name) continue
+            const alreadyExists = savedCharacters.value.some(c => c.name === old.name)
+            if (!alreadyExists) {
+              // 包裝成統一格式：Tab1 欄位留空，裝備資料放進 equipData
+              savedCharacters.value.push({
+                name:      old.name,
+                jobId:     '',
+                group:     '',
+                weaponName:'',
+                coefficient: 1,
+                stats:     {},
+                tab1Buffs: [],
+                equipData: {
+                  baseStats:     old.baseStats     || {},
+                  equipSettings: old.equipSettings || {},
+                  slots:         old.slots         || {},
+                  jobSkills:     old.jobSkills      || [],
+                  activeBuffs:   old.activeBuffs    || [],
+                }
+              })
+              changed = true
+            }
+          }
+          if (changed) persistSaves()
+          // 搬移完畢後刪除舊資料，避免重複搬
+          localStorage.removeItem('maple_calc_equipment')
+        }
+      } catch (e) { /* 搬移失敗不影響主功能 */ }
     }
 
     function persistSaves() {
