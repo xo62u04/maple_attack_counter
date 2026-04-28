@@ -10,9 +10,17 @@
   <div id="app">
     <header class="site-header">
       <h1>⚔️ 楓星攻擊力計算機</h1>
+      <div class="tab-bar">
+        <button class="tab-btn" :class="{ active: activeTab === 'calc' }" @click="activeTab = 'calc'">
+          ⚔️ 攻擊力計算機
+        </button>
+        <button class="tab-btn" :class="{ active: activeTab === 'equip' }" @click="activeTab = 'equip'">
+          🎒 裝備模擬器
+        </button>
+      </div>
       <div class="header-actions">
-        <button @click="saveCharacter" class="btn btn-save" :disabled="!saveName.trim()">💾 存檔</button>
-        <button @click="shareUrl" class="btn btn-share">🔗 分享</button>
+        <button v-if="activeTab === 'calc'" @click="saveCharacter" class="btn btn-save" :disabled="!saveName.trim()">💾 存檔</button>
+        <button v-if="activeTab === 'calc'" @click="shareUrl" class="btn btn-share">🔗 分享</button>
       </div>
     </header>
 
@@ -22,7 +30,8 @@
 
     <div v-if="loading" class="loading">載入職業資料中...</div>
 
-    <main v-else class="calculator">
+    <!-- ══════════════════════════════════════════ Tab 1：攻擊力計算機 ══ -->
+    <main v-else-if="activeTab === 'calc'" class="calculator">
       <!-- 左欄：輸入 -->
       <section class="input-panel">
 
@@ -133,7 +142,6 @@
         </div>
 
         <div class="divider"></div>
-
         <div class="section-title">防禦設定</div>
 
         <div class="field-group">
@@ -164,7 +172,6 @@
         </div>
 
         <div class="divider"></div>
-
         <div class="section-title">爆擊設定（2016 年前分開計算）</div>
 
         <div class="field-group">
@@ -193,6 +200,26 @@
             <span>%</span>
           </div>
         </div>
+
+        <!-- Tab 1 隊伍 BUFF -->
+        <div class="divider"></div>
+        <div class="section-title">隊伍 BUFF</div>
+        <div class="buff-list" v-if="tab1Buffs.length > 0">
+          <div v-for="buf in tab1Buffs" :key="buf.id" class="buff-item">
+            <label class="buff-label">
+              <input type="checkbox" v-model="buf.enabled" />
+              <span class="buff-name">{{ buf.name }}</span>
+              <span class="buff-source">{{ buf.source }}</span>
+            </label>
+            <div v-if="buf.enabled" class="buff-effects">
+              <div v-for="eff in buf.effects" :key="eff.type" class="buff-effect-row">
+                <span class="buff-effect-type">{{ eff.type }}</span>
+                <input type="number" v-model.number="eff.value" class="buff-val" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="result-placeholder" style="padding:8px;font-size:11px;">載入中...</div>
 
         <div class="divider"></div>
 
@@ -338,9 +365,292 @@
         </div>
       </section>
     </main>
-  </div>
+
+    <!-- ══════════════════════════════════════════ Tab 2：裝備模擬器 ══ -->
+    <main v-else-if="activeTab === 'equip'" class="equip-main">
+
+      <!-- 左欄：裝備槽清單 + 裸裝設定 + 存檔 -->
+      <section class="equip-sidebar">
+
+        <div class="equip-import-bar">
+          <button class="btn btn-import" @click="equip.importFromTab1(stats, selectedJob ? selectedJob.mainStat : 'STR')">
+            📥 從攻擊力計算機匯入裸裝
+          </button>
+        </div>
+
+        <!-- 裝備槽清單 -->
+        <div class="equip-slot-groups">
+          <template v-for="group in ['weapon','armor','accessory','special']" :key="group">
+            <div class="slot-group-label">
+              {{ { weapon:'⚔️ 武器類', armor:'🛡️ 防具類', accessory:'💍 飾品類', special:'⚙️ 特殊類' }[group] }}
+            </div>
+            <div
+              v-for="def in equip.SLOT_DEFS.filter(d => d.group === group)"
+              :key="def.id"
+              class="slot-list-item"
+              :class="{ active: equip.selectedSlotId.value === def.id }"
+              @click="equip.selectedSlotId.value = def.id"
+            >
+              <span>{{ def.name }}</span>
+              <span class="slot-summary">{{ slotSummary(equip.slots.value[def.id]) }}</span>
+            </div>
+          </template>
+        </div>
+
+        <!-- 裸裝屬性 -->
+        <div class="divider"></div>
+        <div class="section-title">裸裝屬性（未穿裝備基底）</div>
+        <div class="field-group">
+          <label>裸裝主屬性</label>
+          <input type="number" v-model.number="equip.baseStats.value.mainStat" min="0" />
+        </div>
+        <div class="field-group">
+          <label>裸裝副屬性</label>
+          <input type="number" v-model.number="equip.baseStats.value.subStat" min="0" />
+        </div>
+        <div class="field-group">
+          <label>裸裝攻擊力</label>
+          <input type="number" v-model.number="equip.baseStats.value.atk" min="0" />
+        </div>
+
+        <!-- 技能 & 戰鬥設定 -->
+        <div class="divider"></div>
+        <div class="section-title">技能 & 戰鬥設定</div>
+        <div class="field-group">
+          <label>技能 %</label>
+          <input type="number" v-model.number="equip.equipSettings.value.skillPct" min="0" />
+        </div>
+        <div class="field-group">
+          <label>熟練度 %</label>
+          <input type="number" v-model.number="equip.equipSettings.value.mastery" min="0" max="100" />
+        </div>
+        <div class="field-group">
+          <label>基礎爆擊率 %</label>
+          <input type="number" v-model.number="equip.equipSettings.value.critRate" min="0" max="100" />
+        </div>
+        <div class="field-group">
+          <label>最小爆傷加成 %</label>
+          <input type="number" v-model.number="equip.equipSettings.value.minCritBonus" min="0" />
+        </div>
+        <div class="field-group">
+          <label>最大爆傷加成 %</label>
+          <input type="number" v-model.number="equip.equipSettings.value.maxCritBonus" min="0" />
+        </div>
+        <div class="field-group">
+          <label>每秒打擊數</label>
+          <input type="number" v-model.number="equip.equipSettings.value.hitsPerSec" min="0" step="0.1" />
+        </div>
+        <div class="field-group">
+          <label>BOSS 防禦率 %</label>
+          <input type="number" v-model.number="equip.equipSettings.value.bossDefPct" min="0" max="100" />
+        </div>
+        <div class="field-group">
+          <label>小怪防禦率 %</label>
+          <input type="number" v-model.number="equip.equipSettings.value.monsterDefPct" min="0" max="100" />
+        </div>
+        <div class="field-group">
+          <label>無視防禦（設定值）%</label>
+          <input type="number" v-model.number="equip.equipSettings.value.ignoreDefPct" min="0" max="100" />
+        </div>
+
+        <!-- 存檔區 -->
+        <div class="divider"></div>
+        <div class="save-section">
+          <div class="field-group">
+            <label>組合名稱</label>
+            <input type="text" v-model="equip.equipSaveName.value" placeholder="例：我的黑騎士配置" maxlength="20" />
+          </div>
+          <div class="save-actions">
+            <button class="btn btn-save" @click="equip.saveEquipSet()" :disabled="!equip.equipSaveName.value.trim()">💾 儲存</button>
+            <select v-model="equip.selectedEquipSave.value" @change="equip.loadEquipSet()" v-if="equip.equipSets.value.length > 0">
+              <option value="">載入組合...</option>
+              <option v-for="e in equip.equipSets.value" :key="e.name" :value="e.name">{{ e.name }}</option>
+            </select>
+            <button class="btn btn-delete" @click="equip.deleteEquipSet()" v-if="equip.selectedEquipSave.value">🗑️</button>
+          </div>
+          <div v-if="equip.equipSaveMsg.value" class="save-message">{{ equip.equipSaveMsg.value }}</div>
+        </div>
+
+      </section>
+
+      <!-- 右欄：裝備詳細 + 全裝統計 -->
+      <section class="equip-content">
+
+        <!-- 選中裝備詳細輸入 -->
+        <div class="equip-slot-detail" v-if="equip.selectedSlot.value">
+          <div class="slot-detail-header">{{ equip.selectedSlot.value.name }}</div>
+
+          <!-- 本體屬性 -->
+          <div class="detail-section">
+            <div class="detail-section-title">⬜ 本體屬性</div>
+            <div class="detail-grid">
+              <div class="field-group">
+                <label>主屬性+</label>
+                <input type="number" v-model.number="equip.selectedSlot.value.base.mainStat" min="0" />
+              </div>
+              <div class="field-group">
+                <label>副屬性+</label>
+                <input type="number" v-model.number="equip.selectedSlot.value.base.subStat" min="0" />
+              </div>
+              <div class="field-group">
+                <label>ATK / MATK+</label>
+                <input type="number" v-model.number="equip.selectedSlot.value.base.atk" min="0" />
+              </div>
+              <div class="field-group">
+                <label>全屬性+</label>
+                <input type="number" v-model.number="equip.selectedSlot.value.base.allStat" min="0" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 衝捲 -->
+          <div class="detail-section">
+            <div class="detail-section-title">📜 衝捲</div>
+            <div class="detail-grid">
+              <div class="field-group">
+                <label>成功次數</label>
+                <input type="number" v-model.number="equip.selectedSlot.value.scroll.count" min="0" />
+              </div>
+              <div class="field-group">
+                <label>每次獲得</label>
+                <div class="input-suffix">
+                  <input type="number" v-model.number="equip.selectedSlot.value.scroll.perScroll" min="0" style="flex:1" />
+                  <select v-model="equip.selectedSlot.value.scroll.stat" style="width:auto;margin-left:4px">
+                    <option value="mainStat">主屬性</option>
+                    <option value="atk">ATK</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="scroll-total">
+              合計：<strong>+{{ (equip.selectedSlot.value.scroll.count * equip.selectedSlot.value.scroll.perScroll) || 0 }}</strong>
+              {{ equip.selectedSlot.value.scroll.stat === 'atk' ? 'ATK' : '主屬性' }}
+            </div>
+          </div>
+
+          <!-- 潛能 -->
+          <div class="detail-section">
+            <div class="detail-section-title">✨ 潛能（最多 3 行）</div>
+            <div v-for="(pot, i) in equip.selectedSlot.value.potential" :key="i" class="potential-row">
+              <select v-model="pot.type" class="potential-type-sel">
+                <option v-for="t in equip.POTENTIAL_TYPES" :key="t.value" :value="t.value">{{ t.label }}</option>
+              </select>
+              <input type="number" v-model.number="pot.value" min="0" class="potential-val" :disabled="pot.type === 'none'" placeholder="值" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部三格：統計 + BUFF + 攻屬比 & DPS -->
+        <div class="equip-bottom-grid">
+
+          <!-- 全裝合計 -->
+          <div class="bottom-panel">
+            <div class="panel-title">📊 全裝合計</div>
+            <div class="stat-row"><span>主屬性（平）+</span><span class="stat-val">+{{ Math.round(equip.totals.value.flatMain) }}</span></div>
+            <div class="stat-row"><span>主屬性 %+</span><span class="stat-val">+{{ equip.totals.value.pctMain.toFixed(1) }}%</span></div>
+            <div class="stat-row"><span>副屬性（平）+</span><span class="stat-val">+{{ Math.round(equip.totals.value.flatSub) }}</span></div>
+            <div class="stat-row"><span>副屬性 %+</span><span class="stat-val">+{{ equip.totals.value.pctSub.toFixed(1) }}%</span></div>
+            <div class="stat-row"><span>ATK（平）+</span><span class="stat-val">+{{ Math.round(equip.totals.value.flatAtk) }}</span></div>
+            <div class="stat-row"><span>ATK %+</span><span class="stat-val">+{{ equip.totals.value.pctAtk.toFixed(1) }}%</span></div>
+            <div class="stat-row"><span>爆擊率+</span><span class="stat-val">+{{ equip.totals.value.critRate.toFixed(1) }}%</span></div>
+            <div class="stat-row"><span>爆擊傷害+</span><span class="stat-val">+{{ equip.totals.value.critDmg.toFixed(1) }}%</span></div>
+            <div class="stat-row"><span>BOSS 傷害+</span><span class="stat-val">+{{ equip.totals.value.bossDmg.toFixed(1) }}%</span></div>
+            <div class="stat-row"><span>總傷害+</span><span class="stat-val">+{{ equip.totals.value.totalDmg.toFixed(1) }}%</span></div>
+            <div class="stat-row"><span>無視防禦（合計）</span><span class="stat-val">{{ equip.totals.value.ignoreDefTotal.toFixed(1) }}%</span></div>
+            <div class="divider" style="margin:8px 0"></div>
+            <div class="stat-row"><span>最終主屬性</span><span class="stat-val">{{ Math.round(equip.dmgResult.value.finalMain) }}</span></div>
+            <div class="stat-row"><span>最終副屬性</span><span class="stat-val">{{ Math.round(equip.dmgResult.value.finalSub) }}</span></div>
+            <div class="stat-row"><span>最終攻擊力</span><span class="stat-val">{{ Math.round(equip.dmgResult.value.finalAtk) }}</span></div>
+          </div>
+
+          <!-- 職業技能 + 隊伍 BUFF -->
+          <div class="bottom-panel">
+            <div class="panel-title">⚡ 技能 & 隊伍 BUFF</div>
+
+            <div class="panel-sub-title">職業技能（可修改數值）</div>
+            <div v-if="equip.jobSkills.value.length === 0" style="color:#666;font-size:11px;margin-bottom:8px">
+              請先選擇職業
+            </div>
+            <div v-for="sk in equip.jobSkills.value" :key="sk.name" class="buff-item">
+              <label class="buff-label">
+                <input type="checkbox" v-model="sk.enabled" />
+                <span class="buff-name">{{ sk.name }}</span>
+              </label>
+              <div v-if="sk.enabled" class="buff-effects">
+                <div class="buff-effect-row">
+                  <span class="buff-effect-type">{{ sk.type }}</span>
+                  <input type="number" v-model.number="sk.value" class="buff-val" />
+                </div>
+              </div>
+            </div>
+
+            <div class="panel-sub-title" style="margin-top:10px">隊伍 BUFF</div>
+            <div v-for="buf in equip.activeBuffs.value" :key="buf.id" class="buff-item">
+              <label class="buff-label">
+                <input type="checkbox" v-model="buf.enabled" />
+                <span class="buff-name">{{ buf.name }}</span>
+                <span class="buff-source">{{ buf.source }}</span>
+              </label>
+              <div v-if="buf.enabled" class="buff-effects">
+                <div v-for="eff in buf.effects" :key="eff.type" class="buff-effect-row">
+                  <span class="buff-effect-type">{{ eff.type }}</span>
+                  <input type="number" v-model.number="eff.value" class="buff-val" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 攻屬比 + DPS -->
+          <div class="bottom-panel">
+            <div class="panel-title">📈 攻屬比 & DPS</div>
+
+            <div class="ratio-box">
+              <div class="ratio-label">1% 主屬性 ≈ 等效 ATK</div>
+              <div class="ratio-value">{{ equip.attackStatRatio.value > 0 ? Math.round(equip.attackStatRatio.value) : '-' }}</div>
+            </div>
+
+            <div class="panel-sub-title" style="margin-top:10px">效益排名（每 +1%）</div>
+            <div v-for="(item, i) in equip.upgradeEfficiency.value" :key="item.label"
+                 class="efficiency-row" :class="{ top: i === 0 }">
+              <span>{{ i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉' }} {{ item.label }}</span>
+              <span>+{{ item.gain.toFixed(3) }}%</span>
+            </div>
+
+            <div class="divider" style="margin:10px 0"></div>
+            <div class="panel-sub-title">傷害輸出</div>
+            <div class="dps-grid">
+              <div></div>
+              <div class="dps-col-head boss-col">⚔️ 打王</div>
+              <div class="dps-col-head mob-col">🐾 小怪</div>
+
+              <div class="dps-row-label">平均單擊</div>
+              <div class="dps-val">{{ fmt(equip.dmgResult.value.avgBoss) }}</div>
+              <div class="dps-val">{{ fmt(equip.dmgResult.value.avgMob) }}</div>
+
+              <div class="dps-row-label">DPS（/秒）</div>
+              <div class="dps-val">{{ fmtM(equip.dmgResult.value.dpsBoss) }}</div>
+              <div class="dps-val">{{ fmtM(equip.dmgResult.value.dpsMob) }}</div>
+
+              <div class="dps-row-label final-row">MDPS（/分）</div>
+              <div class="dps-val final-val">{{ fmtM(equip.dmgResult.value.mdpsBoss) }}</div>
+              <div class="dps-val final-val">{{ fmtM(equip.dmgResult.value.mdpsMob) }}</div>
+            </div>
+
+            <div style="margin-top:12px">
+              <button class="btn btn-share" style="width:100%" @click="exportToTab1()">
+                📤 匯出到攻擊力計算機
+              </button>
+            </div>
+          </div>
+
+        </div><!-- end equip-bottom-grid -->
+      </section>
+    </main>
+
+  </div><!-- end #app -->
 
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="equip.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
