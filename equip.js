@@ -215,15 +215,15 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     }
     const hps = (Number(s.hitsPerSec) || 0) + hitsBonus
 
+    // 遊戲表攻範圍：不含技能%、不含boss/mob傷害、不含防禦折減
+    // 包含技能加攻（Rage 等 atkFlat buff 已計入 finalAtk）
+    const tableAtkMax = step1 * coeff * step3 * 0.01
+    const tableAtkMin = Math.floor(tableAtkMax * (Number(s.mastery) || 0) / 100)
+
     return {
       maxBoss, minBoss, avgBoss, maxMob, minMob, avgMob,
       dpsBoss: avgBoss * hps, mdpsBoss: avgBoss * hps * 60,
       dpsMob:  avgMob  * hps, mdpsMob:  avgMob  * hps * 60,
-      // 遊戲表攻範圍：不含技能%、不含boss/mob傷害、不含防禦折減
-      // 包含技能加攻（Rage 等 atkFlat buff 已計入 finalAtk）
-      const tableAtkMax = step1 * coeff * step3 * 0.01
-      const tableAtkMin = Math.floor(tableAtkMax * (Number(s.mastery) || 0) / 100)
-
       finalMain, finalSub, finalAtk, finalAtkPct, step1, step4, coeff,
       realFinalMain, realFinalSub,
       tableAtkMax, tableAtkMin,
