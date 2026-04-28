@@ -151,7 +151,11 @@ createApp({
     }
 
     function persistSaves() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(savedCharacters.value))
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedCharacters.value))
+      } catch {
+        saveMessage.value = '⚠️ 儲存失敗（瀏覽器儲存空間不足）'
+      }
     }
 
     function saveCharacter() {
@@ -249,7 +253,8 @@ createApp({
       s.LUK = parseInt(params.get('luk')) || 0
       s.atk = parseInt(params.get('atk')) || 0
       s.atkPct = parseFloat(params.get('atkp')) || 0
-      s.skillPct = parseFloat(params.get('skill')) || 100
+      const skillRaw = params.get('skill')
+      s.skillPct = skillRaw !== null ? parseFloat(skillRaw) : 100
       s.totalDmgPct = parseFloat(params.get('total')) || 0
       s.bossPct = parseFloat(params.get('boss')) || 0
       s.enhancePct = parseFloat(params.get('enhance')) || 0
