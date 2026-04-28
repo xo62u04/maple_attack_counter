@@ -738,6 +738,121 @@ body {
 .final-row { color: var(--text); font-weight: 700; font-size: 20px; }
 .final-val { color: var(--accent) !important; font-size: 23px !important; font-weight: 700 !important; }
 
+/* ── 潛能比較器 ── */
+.pot-compare-section {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-top: 14px;
+}
+
+.pot-compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 40px 1fr;
+  gap: 10px;
+  align-items: start;
+  margin: 10px 0 12px;
+}
+
+.pot-vs {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--accent);
+  text-align: center;
+  padding-top: 26px;
+}
+
+.pot-option-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.pot-line {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.pot-type-sel {
+  flex: 1;
+  font-size: 13px;
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 5px;
+}
+
+.pot-val-wrap {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.pot-val-input {
+  width: 52px;
+  font-size: 13px;
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 5px;
+  text-align: right;
+}
+
+.pot-val-input:disabled { opacity: 0.35; }
+
+.pot-unit {
+  font-size: 12px;
+  color: var(--text-dim);
+  width: 16px;
+}
+
+/* 比較結果表 */
+.pot-result-table {
+  display: grid;
+  grid-template-rows: auto auto auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 14px;
+}
+
+.pot-result-header,
+.pot-result-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 1fr 1fr;
+  gap: 0;
+}
+
+.pot-result-header {
+  background: var(--step-bg);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.pot-result-header > div,
+.pot-result-row > div {
+  padding: 7px 10px;
+  border-right: 1px solid var(--border);
+  text-align: center;
+}
+.pot-result-header > div:last-child,
+.pot-result-row > div:last-child { border-right: none; }
+
+.pot-result-row { border-top: 1px solid var(--border); }
+.pot-result-scene { text-align: left !important; color: var(--text-dim); font-size: 13px; }
+
+.pot-win  { color: var(--success); font-weight: 700; }
+.pot-lose { color: var(--text-dim); }
+
+.pot-winner { color: var(--accent); font-weight: 700; font-size: 13px; }
+.pot-diff   { color: var(--text-dim); font-weight: 400; font-size: 12px; }
+
 /* ══════════════════════════════════════════════════════════════
    Responsive
    ════════════════════════════════════════════════════════════ */

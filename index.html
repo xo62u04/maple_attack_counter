@@ -753,6 +753,95 @@
           </div>
 
         </div><!-- end equip-bottom-grid -->
+
+        <!-- ⚖️ 潛能比較器 -->
+        <div class="pot-compare-section">
+          <div class="panel-title">⚖️ 潛能比較器</div>
+          <div class="pot-compare-grid">
+
+            <!-- 潛能 A -->
+            <div class="pot-option">
+              <div class="pot-option-label">潛能 A</div>
+              <div v-for="(line, i) in equip.potCompareA.value" :key="'a'+i" class="pot-line">
+                <select v-model="line.type" class="pot-type-sel">
+                  <option v-for="pt in equip.POT_COMPARE_TYPES" :key="pt.value" :value="pt.value">{{ pt.label }}</option>
+                </select>
+                <div class="pot-val-wrap">
+                  <input type="number" v-model.number="line.value" class="pot-val-input"
+                         :disabled="line.type === 'none'" min="0" />
+                  <span class="pot-unit">{{ line.type === 'mainStatFlat' || line.type === 'atkFlat' ? '點' : '%' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- VS -->
+            <div class="pot-vs">VS</div>
+
+            <!-- 潛能 B -->
+            <div class="pot-option">
+              <div class="pot-option-label">潛能 B</div>
+              <div v-for="(line, i) in equip.potCompareB.value" :key="'b'+i" class="pot-line">
+                <select v-model="line.type" class="pot-type-sel">
+                  <option v-for="pt in equip.POT_COMPARE_TYPES" :key="pt.value" :value="pt.value">{{ pt.label }}</option>
+                </select>
+                <div class="pot-val-wrap">
+                  <input type="number" v-model.number="line.value" class="pot-val-input"
+                         :disabled="line.type === 'none'" min="0" />
+                  <span class="pot-unit">{{ line.type === 'mainStatFlat' || line.type === 'atkFlat' ? '點' : '%' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 比較結果 -->
+          <div class="pot-result-table">
+            <div class="pot-result-header">
+              <div></div>
+              <div>潛能 A</div>
+              <div>潛能 B</div>
+              <div>勝出</div>
+            </div>
+            <!-- 打王 -->
+            <div class="pot-result-row">
+              <div class="pot-result-scene">⚔️ 打王</div>
+              <div :class="equip.potCompareResult.value.a.bossPct >= equip.potCompareResult.value.b.bossPct ? 'pot-win' : 'pot-lose'">
+                +{{ equip.potCompareResult.value.a.bossPct.toFixed(2) }}%
+              </div>
+              <div :class="equip.potCompareResult.value.b.bossPct >= equip.potCompareResult.value.a.bossPct ? 'pot-win' : 'pot-lose'">
+                +{{ equip.potCompareResult.value.b.bossPct.toFixed(2) }}%
+              </div>
+              <div class="pot-winner">
+                <template v-if="equip.potCompareResult.value.a.bossPct > equip.potCompareResult.value.b.bossPct">
+                  A 勝 <span class="pot-diff">(+{{ (equip.potCompareResult.value.a.bossPct - equip.potCompareResult.value.b.bossPct).toFixed(2) }}%)</span>
+                </template>
+                <template v-else-if="equip.potCompareResult.value.b.bossPct > equip.potCompareResult.value.a.bossPct">
+                  B 勝 <span class="pot-diff">(+{{ (equip.potCompareResult.value.b.bossPct - equip.potCompareResult.value.a.bossPct).toFixed(2) }}%)</span>
+                </template>
+                <template v-else>平手</template>
+              </div>
+            </div>
+            <!-- 打小怪 -->
+            <div class="pot-result-row">
+              <div class="pot-result-scene">🐾 小怪</div>
+              <div :class="equip.potCompareResult.value.a.mobPct >= equip.potCompareResult.value.b.mobPct ? 'pot-win' : 'pot-lose'">
+                +{{ equip.potCompareResult.value.a.mobPct.toFixed(2) }}%
+              </div>
+              <div :class="equip.potCompareResult.value.b.mobPct >= equip.potCompareResult.value.a.mobPct ? 'pot-win' : 'pot-lose'">
+                +{{ equip.potCompareResult.value.b.mobPct.toFixed(2) }}%
+              </div>
+              <div class="pot-winner">
+                <template v-if="equip.potCompareResult.value.a.mobPct > equip.potCompareResult.value.b.mobPct">
+                  A 勝 <span class="pot-diff">(+{{ (equip.potCompareResult.value.a.mobPct - equip.potCompareResult.value.b.mobPct).toFixed(2) }}%)</span>
+                </template>
+                <template v-else-if="equip.potCompareResult.value.b.mobPct > equip.potCompareResult.value.a.mobPct">
+                  B 勝 <span class="pot-diff">(+{{ (equip.potCompareResult.value.b.mobPct - equip.potCompareResult.value.a.mobPct).toFixed(2) }}%)</span>
+                </template>
+                <template v-else>平手</template>
+              </div>
+            </div>
+          </div>
+        </div><!-- end pot-compare-section -->
+
       </section>
     </main>
     </div><!-- end equip wrapper -->

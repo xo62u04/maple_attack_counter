@@ -355,6 +355,103 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     }
   }
 
+  // ── 潛能比較器 ──
+  const POT_COMPARE_TYPES = [
+    { value: 'none',         label: '（不選）' },
+    { value: 'mainStatPct',  label: '主屬性 %' },
+    { value: 'allStatPct',   label: '全屬性 %' },
+    { value: 'atkPct',       label: 'ATK %' },
+    { value: 'bossDmg',      label: 'BOSS傷害 %' },
+    { value: 'totalDmg',     label: '總傷害 %' },
+    { value: 'mainStatFlat', label: '主屬性+（平）' },
+    { value: 'atkFlat',      label: 'ATK+（平）' },
+  ]
+
+  const potCompareA = Vue.ref([
+    { type: 'atkPct',  value: 9  },
+    { type: 'none',    value: 0  },
+    { type: 'none',    value: 0  },
+  ])
+  const potCompareB = Vue.ref([
+    { type: 'bossDmg', value: 30 },
+    { type: 'none',    value: 0  },
+    { type: 'none',    value: 0  },
+  ])
+
+  function _calcPotGain(lines, r, t) {
+    if (!r.step1 || !r.finalAtk) return { bossPct: 0, mobPct: 0 }
+    const step1    = r.step1
+    const finalMain = r.finalMain
+    const finalSub  = r.finalSub
+    const finalAtk  = r.finalAtk
+    const atkPctNow = r.finalAtkPct
+    const pctMain   = t.pctMain
+    const bossDmgNow = t.bossDmg
+    const totalDmgNow = t.totalDmg
+
+    // 先把同類型的值加總（例如：三行都是 ATK% 就合在一起算）
+    const agg = {}
+    for (const line of lines) {
+      const v = Number(line.value) || 0
+      if (!v || line.type === 'none') continue
+      agg[line.type] = (agg[line.type] || 0) + v
+    }
+
+    let bossPct = 0, mobPct = 0
+    for (const [type, val] of Object.entries(agg)) {
+      switch (type) {
+        case 'mainStatPct': {
+          // d(step1)/d(pctMain) × N/100 / step1
+          const g = step1 > 0 ? (4 * finalMain * val / 100 / step1) * 100 : 0
+          bossPct += g; mobPct += g; break
+        }
+        case 'allStatPct': {
+          // 主副屬性都受影響
+          const g = step1 > 0 ? ((4 * finalMain + finalSub) * val / 100 / step1) * 100 : 0
+          bossPct += g; mobPct += g; break
+        }
+        case 'atkPct': {
+          // val/(100+目前ATK%)
+          const g = (100 + atkPctNow) > 0 ? (val / (100 + atkPctNow)) * 100 : 0
+          bossPct += g; mobPct += g; break
+        }
+        case 'bossDmg': {
+          // 只對 BOSS 有效，分母含 bossDmg+totalDmg
+          const base = 100 + bossDmgNow + totalDmgNow
+          bossPct += base > 0 ? (val / base) * 100 : 0
+          break
+        }
+        case 'totalDmg': {
+          const bossBase = 100 + bossDmgNow + totalDmgNow
+          const mobBase  = 100 + totalDmgNow
+          bossPct += bossBase > 0 ? (val / bossBase) * 100 : 0
+          mobPct  += mobBase  > 0 ? (val / mobBase)  * 100 : 0
+          break
+        }
+        case 'mainStatFlat': {
+          // flat 主屬 被 pctMain% 放大
+          const g = step1 > 0 ? (4 * (1 + pctMain / 100) * val / step1) * 100 : 0
+          bossPct += g; mobPct += g; break
+        }
+        case 'atkFlat': {
+          // 1/finalAtk per point
+          const g = finalAtk > 0 ? (val / finalAtk) * 100 : 0
+          bossPct += g; mobPct += g; break
+        }
+      }
+    }
+    return { bossPct, mobPct }
+  }
+
+  const potCompareResult = Vue.computed(() => {
+    const r = dmgResult.value
+    const t = totals.value
+    return {
+      a: _calcPotGain(potCompareA.value, r, t),
+      b: _calcPotGain(potCompareB.value, r, t),
+    }
+  })
+
   function initPartyBuffs() {
     activeBuffs.value = (partyBuffsRef.value || []).map(b => Object.assign({}, b, {
       enabled: false,
@@ -385,6 +482,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     totals, dmgResult, attackStatRatio, onePercentMainEquivFlat, oneAtkEquivMain,
     upgradeEfficiencyBoss, upgradeEfficiencyMob,
     oneMainFlatGain, oneAtkFlatGain,
+    POT_COMPARE_TYPES, potCompareA, potCompareB, potCompareResult,
     getState, setState,
     initJobSkills, initPartyBuffs, importFromTab1,
   }
