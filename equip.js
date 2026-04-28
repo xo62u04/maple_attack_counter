@@ -225,6 +225,30 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     return r.finalAtk * (1 + r.finalAtkPct / 100) * 0.04 * r.finalMain / r.step1
   })
 
+  // 1% 主屬性 ≈ 多少屬性點（平值）
+  // 原理：finalMain(rawMain) 增加 1% 乘數，等效於增加 rawMain*0.01 的最終主屬
+  //       增加 X 點平主屬，最終主屬增加 X*(1+pctMain/100)
+  //       因此 X = rawMain * 0.01 / (1 + pctMain/100)
+  const onePercentMainEquivFlat = Vue.computed(() => {
+    const r = dmgResult.value
+    const t = totals.value
+    if (!r.finalMain) return 0
+    const pctMult = 1 + t.pctMain / 100
+    return r.finalMain * 0.01 / pctMult
+  })
+
+  // 1 ATK（平）≈ 多少點主屬性（平值）
+  // 原理：step4 ∝ step1 * step3；∂step4/∂flatAtk ∝ step1*(1+atkPct/100)
+  //       ∂step4/∂flatMain ∝ 4*(1+pctMain/100)*step3
+  //       令兩者相等 → X = step1 / (4*(1+pctMain/100)*finalAtk)
+  const oneAtkEquivMain = Vue.computed(() => {
+    const r = dmgResult.value
+    const t = totals.value
+    if (!r.step1 || !r.finalAtk) return 0
+    const pctMult = 1 + t.pctMain / 100
+    return r.step1 / (4 * pctMult * r.finalAtk)
+  })
+
   const upgradeEfficiency = Vue.computed(() => {
     const r = dmgResult.value
     const t = totals.value
@@ -339,7 +363,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     baseStats, equipSettings,
     slots, selectedSlotId, selectedSlot,
     jobSkills, activeBuffs,
-    totals, dmgResult, attackStatRatio, upgradeEfficiency,
+    totals, dmgResult, attackStatRatio, onePercentMainEquivFlat, oneAtkEquivMain, upgradeEfficiency,
     equipSets, equipSaveName, selectedEquipSave, equipSaveMsg,
     loadEquipSets, saveEquipSet, loadEquipSet, deleteEquipSet,
     initJobSkills, initPartyBuffs, importFromTab1,
