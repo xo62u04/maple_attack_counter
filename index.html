@@ -712,7 +712,7 @@
             <div class="table-atk-box" v-if="equip.dmgResult.value.tableAtkMax > 0">
               <div class="table-atk-label">🎯 遊戲表攻（含技能加攻）</div>
               <div class="table-atk-range">
-                {{ fmt(equip.dmgResult.value.tableAtkMin) }} ~ {{ fmt(equip.dmgResult.value.tableAtkMax) }}
+                {{ equip.dmgResult.value.tableAtkMin.toLocaleString('zh-TW') }} ~ {{ equip.dmgResult.value.tableAtkMax.toLocaleString('zh-TW') }}
               </div>
             </div>
 
