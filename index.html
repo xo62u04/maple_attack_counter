@@ -25,6 +25,11 @@
       <div class="header-actions">
         <button v-if="activeTab === 'calc'" @click="saveCharacter" class="btn btn-save" :disabled="!saveName.trim()">💾 存檔</button>
         <button v-if="activeTab === 'calc'" @click="shareUrl" class="btn btn-share">🔗 分享</button>
+        <button @click="exportSaves" class="btn btn-export">📤 匯出</button>
+        <label class="btn btn-import-file" title="從 JSON 匯入存檔">
+          📥 匯入
+          <input type="file" accept=".json" style="display:none" @change="importSaves($event)" />
+        </label>
       </div>
     </header>
 
@@ -397,6 +402,13 @@
               <option v-for="c in savedCharacters" :key="c.name" :value="c.name">{{ c.name }}</option>
             </select>
             <button @click="deleteCharacter" class="btn btn-delete" v-if="selectedSaveKey" title="刪除">🗑️</button>
+          </div>
+          <div class="save-actions" style="margin-top:5px">
+            <button @click="exportSaves" class="btn btn-export" title="下載所有存檔為 JSON">📤 匯出全部</button>
+            <label class="btn btn-import-file" title="從 JSON 匯入存檔（同名覆蓋）">
+              📥 匯入 JSON
+              <input type="file" accept=".json" style="display:none" @change="importSaves($event)" />
+            </label>
           </div>
           <div v-if="saveMessage" class="save-message">{{ saveMessage }}</div>
         </div>

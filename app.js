@@ -424,6 +424,54 @@ createApp({
       else equip.initJobSkills(entry.jobId)
     }
 
+    // ── 匯出所有存檔（下載 JSON 檔）──
+    function exportSaves() {
+      if (savedCharacters.value.length === 0) {
+        saveMessage.value = '⚠️ 目前沒有存檔可匯出'
+        setTimeout(() => { saveMessage.value = '' }, 2000)
+        return
+      }
+      const json = JSON.stringify(savedCharacters.value, null, 2)
+      const blob = new Blob([json], { type: 'application/json' })
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement('a')
+      a.href     = url
+      a.download = `maple_saves_${new Date().toISOString().slice(0, 10)}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      saveMessage.value = `✅ 已匯出 ${savedCharacters.value.length} 筆存檔`
+      setTimeout(() => { saveMessage.value = '' }, 2000)
+    }
+
+    // ── 從 JSON 檔匯入存檔（同名覆蓋，新增不存在的）──
+    function importSaves(event) {
+      const file = event.target.files[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result)
+          if (!Array.isArray(data)) throw new Error('not array')
+          let added = 0, updated = 0
+          for (const entry of data) {
+            if (!entry.name) continue
+            const idx = savedCharacters.value.findIndex(c => c.name === entry.name)
+            if (idx >= 0) { savedCharacters.value[idx] = entry; updated++ }
+            else           { savedCharacters.value.push(entry);  added++   }
+          }
+          persistSaves()
+          saveMessage.value = `✅ 匯入完成：新增 ${added} 筆，更新 ${updated} 筆`
+        } catch {
+          saveMessage.value = '⚠️ 匯入失敗：請確認為正確的楓星存檔 JSON'
+        }
+        setTimeout(() => { saveMessage.value = '' }, 3000)
+      }
+      reader.readAsText(file, 'utf-8')
+      event.target.value = '' // 重設，讓同一檔案可再次匯入
+    }
+
     function deleteCharacter() {
       const key = selectedSaveKey.value
       if (!key) return
@@ -503,7 +551,7 @@ createApp({
 
     return {
       activeTab, equipZoom, changeEquipZoom, saveName, selectedSaveKey, saveMessage, savedCharacters,
-      saveCharacter, loadCharacter, deleteCharacter,
+      saveCharacter, loadCharacter, deleteCharacter, exportSaves, importSaves,
       jobs, partyBuffs, loading, loadError,
       groups, filteredJobs, selectedJob,
       selectedGroup, selectedJobId, selectedWeaponName, coefficient,
