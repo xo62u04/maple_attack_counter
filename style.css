@@ -367,7 +367,7 @@ body {
    Tab 1 — BUFF List
    ════════════════════════════════════════════════════════════ */
 .buff-list { display: flex; flex-direction: column; gap: 5px; }
-.buff-item { font-size: 12px; }
+.buff-item { font-size: 14px; }
 .buff-label {
   display: flex;
   align-items: center;
@@ -376,7 +376,7 @@ body {
   padding: 3px 0;
 }
 .buff-name { color: var(--text); flex: 1; }
-.buff-source { color: var(--text-dim); font-size: 10px; white-space: nowrap; }
+.buff-source { color: var(--text-dim); font-size: 12px; white-space: nowrap; }
 .buff-effects {
   margin-left: 22px;
   margin-top: 3px;
@@ -384,16 +384,16 @@ body {
   flex-direction: column;
   gap: 3px;
 }
-.buff-effect-row { display: flex; gap: 6px; align-items: center; font-size: 11px; }
-.buff-effect-type { color: var(--text-dim); min-width: 100px; font-size: 10px; }
+.buff-effect-row { display: flex; gap: 6px; align-items: center; font-size: 13px; }
+.buff-effect-type { color: var(--text-dim); min-width: 110px; font-size: 12px; }
 .buff-val {
-  width: 70px;
+  width: 72px;
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 3px;
   color: var(--text);
-  padding: 2px 6px;
-  font-size: 12px;
+  padding: 3px 6px;
+  font-size: 13px;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -410,7 +410,7 @@ body {
   border-right: 1px solid var(--border);
   padding: 14px;
   overflow-y: auto;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .equip-content {
@@ -433,13 +433,13 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 5px 8px;
+  padding: 6px 8px;
   border-radius: 4px;
   cursor: pointer;
   border: 1px solid transparent;
   margin-bottom: 2px;
   transition: all 0.15s;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .slot-list-item:hover { background: var(--bg-input); }
@@ -522,6 +522,75 @@ body {
   margin-bottom: 5px;
 }
 
+/* ── 職業技能 新增/刪除 ── */
+.btn-add-skill {
+  background: #1a3a2a;
+  color: var(--success);
+  border: 1px solid #2a5a3a;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-add-skill:hover { background: #2a4a3a; }
+
+.skill-empty-hint { color: #555; font-size: 12px; margin-bottom: 6px; font-style: italic; }
+
+.skill-item {
+  background: var(--bg-input);
+  border-radius: 5px;
+  padding: 6px 8px;
+  margin-bottom: 5px;
+}
+
+.skill-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.skill-name-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-size: 13px;
+  padding: 2px 4px;
+  outline: none;
+}
+.skill-name-input:focus { border-bottom-color: var(--accent); }
+
+.btn-remove-skill {
+  background: none;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  line-height: 1;
+}
+.btn-remove-skill:hover { opacity: 0.7; }
+
+.skill-detail-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-left: 22px;
+}
+
+.skill-type-sel {
+  flex: 1;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 3px 6px;
+  font-size: 12px;
+}
+
 .potential-type-sel {
   flex: 2;
   background: var(--bg-input);
@@ -529,7 +598,7 @@ body {
   border-radius: 4px;
   color: var(--text);
   padding: 5px 7px;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .potential-val {
@@ -539,7 +608,7 @@ body {
   border-radius: 4px;
   color: var(--text);
   padding: 5px 7px;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 /* ── 底部三格 ── */
@@ -557,7 +626,7 @@ body {
 }
 
 .panel-title {
-  font-size: 11px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--accent);
@@ -568,7 +637,7 @@ body {
 }
 
 .panel-sub-title {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -580,7 +649,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 11px;
+  font-size: 13px;
   margin-bottom: 3px;
   color: var(--text-dim);
 }
@@ -588,7 +657,7 @@ body {
 .stat-val {
   color: var(--success);
   font-weight: 600;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 /* ── 攻屬比 ── */
@@ -600,13 +669,13 @@ body {
   text-align: center;
 }
 
-.ratio-label { font-size: 11px; color: var(--text-dim); margin-bottom: 4px; }
-.ratio-value { font-size: 30px; font-weight: 700; color: var(--accent); }
+.ratio-label { font-size: 13px; color: var(--text-dim); margin-bottom: 4px; }
+.ratio-value { font-size: 32px; font-weight: 700; color: var(--accent); }
 
 .efficiency-row {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-dim);
   margin-bottom: 3px;
 }
@@ -625,13 +694,13 @@ body {
 .dps-col-head {
   text-align: center;
   font-weight: 700;
-  font-size: 11px;
+  font-size: 13px;
 }
 
-.dps-row-label { color: var(--text-dim); white-space: nowrap; }
-.dps-val { text-align: center; color: #7ec8e3; font-weight: 600; font-size: 12px; }
-.final-row { color: var(--text); font-weight: 700; }
-.final-val { color: var(--accent) !important; font-size: 14px !important; font-weight: 700 !important; }
+.dps-row-label { color: var(--text-dim); white-space: nowrap; font-size: 13px; }
+.dps-val { text-align: center; color: #7ec8e3; font-weight: 600; font-size: 14px; }
+.final-row { color: var(--text); font-weight: 700; font-size: 14px; }
+.final-val { color: var(--accent) !important; font-size: 17px !important; font-weight: 700 !important; }
 
 /* ══════════════════════════════════════════════════════════════
    Responsive

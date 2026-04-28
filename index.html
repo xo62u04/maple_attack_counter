@@ -571,20 +571,30 @@
           <div class="bottom-panel">
             <div class="panel-title">⚡ 技能 & 隊伍 BUFF</div>
 
-            <div class="panel-sub-title">職業技能（可修改數值）</div>
-            <div v-if="equip.jobSkills.value.length === 0" style="color:#666;font-size:11px;margin-bottom:8px">
-              請先選擇職業
+            <div class="panel-sub-title" style="display:flex;justify-content:space-between;align-items:center">
+              <span>職業技能</span>
+              <button class="btn-add-skill" @click="addCustomSkill()">＋ 新增</button>
             </div>
-            <div v-for="sk in equip.jobSkills.value" :key="sk.name" class="buff-item">
-              <label class="buff-label">
+            <div v-if="equip.jobSkills.value.length === 0" class="skill-empty-hint">
+              （無技能，可點「＋ 新增」手動加入）
+            </div>
+            <div v-for="(sk, idx) in equip.jobSkills.value" :key="idx" class="skill-item">
+              <div class="skill-row">
                 <input type="checkbox" v-model="sk.enabled" />
-                <span class="buff-name">{{ sk.name }}</span>
-              </label>
-              <div v-if="sk.enabled" class="buff-effects">
-                <div class="buff-effect-row">
-                  <span class="buff-effect-type">{{ sk.type }}</span>
-                  <input type="number" v-model.number="sk.value" class="buff-val" />
-                </div>
+                <input type="text" v-model="sk.name" class="skill-name-input" />
+                <button class="btn-remove-skill" @click="removeSkill(idx)" title="刪除">✕</button>
+              </div>
+              <div class="skill-detail-row">
+                <select v-model="sk.type" class="skill-type-sel">
+                  <option value="atkFlat">ATK+（平）</option>
+                  <option value="atkPct">ATK %+</option>
+                  <option value="mainStatPct">主屬性 %+</option>
+                  <option value="critRate">爆擊率 %+</option>
+                  <option value="critDmg">爆擊傷害 %+</option>
+                  <option value="bossDmg">BOSS傷 %+</option>
+                  <option value="totalDmg">總傷 %+</option>
+                </select>
+                <input type="number" v-model.number="sk.value" class="buff-val" />
               </div>
             </div>
 
@@ -610,7 +620,7 @@
 
             <div class="ratio-box">
               <div class="ratio-label">1% 主屬性 ≈ 等效 ATK</div>
-              <div class="ratio-value">{{ equip.attackStatRatio.value > 0 ? Math.round(equip.attackStatRatio.value) : '-' }}</div>
+              <div class="ratio-value">{{ equip.attackStatRatio.value > 0 ? equip.attackStatRatio.value.toFixed(2) : '-' }}</div>
             </div>
 
             <div class="panel-sub-title" style="margin-top:10px">效益排名（每 +1%）</div>

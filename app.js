@@ -1,4 +1,4 @@
-const { createApp, ref, computed, onMounted } = Vue
+const { createApp, ref, computed, onMounted, watch } = Vue
 
 createApp({
   setup() {
@@ -239,6 +239,19 @@ createApp({
     // ── 裝備模擬器 Composable ──
     const equip = useEquip(jobs, partyBuffs, selectedJobId)
 
+    // 職業變更時自動同步裝備模擬器的職業技能
+    watch(selectedJobId, (id) => { equip.initJobSkills(id) })
+
+    // 新增自訂技能
+    function addCustomSkill() {
+      equip.jobSkills.value.push({ name: '自訂技能', type: 'atkFlat', value: 0, enabled: true })
+    }
+
+    // 移除技能
+    function removeSkill(idx) {
+      equip.jobSkills.value.splice(idx, 1)
+    }
+
     // ── 裝備槽摘要（左欄清單顯示用）──
     function slotSummary(slot) {
       if (!slot) return ''
@@ -429,6 +442,8 @@ createApp({
       equip,
       slotSummary,
       exportToTab1,
+      addCustomSkill,
+      removeSkill,
     }
   }
 }).mount('#app')
