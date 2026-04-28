@@ -12,6 +12,8 @@
   --danger: #f87171;
   --step-bg: #1e1e35;
   --step-border: #2e2e50;
+  --boss-color: #ffd700;
+  --mob-color: #7ec8e3;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -127,6 +129,15 @@ body {
   margin: 16px 0;
 }
 
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent-dim);
+  margin-bottom: 10px;
+}
+
 /* ── Save Section ── */
 .save-section { margin-top: 8px; }
 
@@ -172,7 +183,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-width: 560px;
+  max-width: 760px;
 }
 
 .breakdown-step {
@@ -187,13 +198,13 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--accent);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .step-formula {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-dim);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .step-value {
@@ -206,29 +217,101 @@ body {
   font-size: 17px;
 }
 
-/* ── Final Result ── */
-.final-result {
-  background: #0d4d3a;
-  border: 2px solid var(--accent);
-  border-radius: 10px;
-  padding: 20px;
-  text-align: center;
-  margin-top: 8px;
+/* ── Split rows (boss vs mob) ── */
+.split-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 10px;
 }
 
-.final-label {
+.split-tag {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 3px 8px;
+  margin-top: 1px;
+  white-space: nowrap;
+}
+
+.boss-tag {
+  background: #4a2800;
+  color: var(--boss-color);
+  border: 1px solid #7b4000;
+}
+
+.mob-tag {
+  background: #003050;
+  color: var(--mob-color);
+  border: 1px solid #005080;
+}
+
+.split-content {
+  flex: 1;
+}
+
+/* ── Comparison Table ── */
+.comparison-table {
+  background: var(--step-bg);
+  border: 1px solid var(--step-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ct-header {
+  display: grid;
+  grid-template-columns: 1fr 160px 160px;
+  background: #16213e;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--step-border);
+}
+
+.ct-col-head {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.boss-col { color: var(--boss-color); }
+.mob-col { color: var(--mob-color); }
+
+.ct-row {
+  display: grid;
+  grid-template-columns: 1fr 160px 160px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--step-border);
+  align-items: center;
+}
+
+.ct-row-label {
   font-size: 12px;
   color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 8px;
+  padding-right: 8px;
 }
 
-.final-value {
-  font-size: 32px;
+.ct-val {
+  text-align: center;
+  font-size: 16px;
   font-weight: 700;
-  color: var(--accent);
-  letter-spacing: 1px;
+  color: #7ec8e3;
+}
+
+/* 含爆擊的最終行 */
+.ct-final-row {
+  background: #0a3028;
+  border-top: 2px solid var(--accent) !important;
+}
+
+.ct-final-row .ct-row-label {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ct-final-val {
+  font-size: 22px !important;
+  color: var(--accent) !important;
 }
 
 /* ── Error / Loading ── */
@@ -248,7 +331,7 @@ body {
 }
 
 /* ── Responsive ── */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .calculator {
     grid-template-columns: 1fr;
   }
@@ -256,4 +339,22 @@ body {
     border-right: none;
     border-bottom: 1px solid var(--border);
   }
+  .ct-header,
+  .ct-row {
+    grid-template-columns: 1fr 120px 120px;
+  }
+  .ct-val { font-size: 14px; }
+  .ct-final-val { font-size: 18px !important; }
+}
+
+@media (max-width: 560px) {
+  .ct-header,
+  .ct-row {
+    grid-template-columns: 1fr 100px 100px;
+    padding: 8px 10px;
+  }
+  .ct-col-head { font-size: 12px; }
+  .ct-row-label { font-size: 11px; }
+  .ct-val { font-size: 13px; }
+  .ct-final-val { font-size: 16px !important; }
 }

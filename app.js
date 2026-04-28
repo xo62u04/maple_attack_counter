@@ -69,7 +69,14 @@ createApp({
       atk: 0, atkPct: 0,
       skillPct: 100,
       totalDmgPct: 0, bossPct: 0, enhancePct: 0,
-      bossDefPct: 0, ignoreDefPct: 0
+      bossDefPct: 0, ignoreDefPct: 0,
+      // 熟練度 & 爆擊（BigBang era）
+      mastery: 60,
+      critRate: 0,
+      minCritBonus: 20,
+      maxCritBonus: 50,
+      // 小怪防禦率（BigBang PDRate，大部分小怪預設 10%）
+      monsterDefPct: 10
     })
 
     // ── 需要顯示哪些屬性欄位 ──
@@ -108,21 +115,59 @@ createApp({
     const formulaValid = computed(() => {
       if (!selectedJob.value) return false
       const s = stats.value
-      return [s.atk, s.atkPct, s.skillPct, s.totalDmgPct, s.bossPct, s.enhancePct, s.bossDefPct, s.ignoreDefPct]
-        .every(v => isValidNumber(v))
+      return [
+        s.atk, s.atkPct, s.skillPct,
+        s.totalDmgPct, s.bossPct, s.enhancePct,
+        s.bossDefPct, s.ignoreDefPct,
+        s.mastery, s.critRate, s.minCritBonus, s.maxCritBonus, s.monsterDefPct
+      ].every(v => isValidNumber(v))
     })
 
+    // ── 步驟 1–4（共用）──
     const step1 = computed(() => 4 * mainStatValue.value + subStatValue.value)
     const step2 = computed(() => step1.value * coefficient.value)
     const step3 = computed(() => (Number(stats.value.atk) || 0) * (1 + (Number(stats.value.atkPct) || 0) / 100))
     const step4 = computed(() => step2.value * step3.value * 0.01 * (Number(stats.value.skillPct) || 0) / 100)
-    const step5multiplier = computed(() =>
+
+    // ── 步驟 5（打王 vs 打小怪倍率）──
+    const step5Boss = computed(() =>
       1 + ((Number(stats.value.totalDmgPct) || 0) + (Number(stats.value.bossPct) || 0) + (Number(stats.value.enhancePct) || 0)) / 100
     )
-    const step6multiplier = computed(() =>
+    const step5Mob = computed(() =>
+      1 + ((Number(stats.value.totalDmgPct) || 0) + (Number(stats.value.enhancePct) || 0)) / 100
+    )
+
+    // ── 步驟 6（防禦折減）──
+    // 打王：用 BOSS 防禦 %；打小怪：用怪物防禦率 %（BigBang PDRate）
+    const step6Boss = computed(() =>
       1 - (Number(stats.value.bossDefPct) || 0) / 100 * (1 - (Number(stats.value.ignoreDefPct) || 0) / 100)
     )
-    const finalDamage = computed(() => step4.value * step5multiplier.value * step6multiplier.value)
+    const step6Mob = computed(() =>
+      1 - (Number(stats.value.monsterDefPct) || 0) / 100 * (1 - (Number(stats.value.ignoreDefPct) || 0) / 100)
+    )
+
+    // ── 最終傷害（打王）──
+    const finalDmgBoss = computed(() => step4.value * step5Boss.value * step6Boss.value)
+    const maxDmgBoss = computed(() => finalDmgBoss.value)
+    const minDmgBoss = computed(() => finalDmgBoss.value * (Number(stats.value.mastery) || 0) / 100)
+    const avgDmgBoss = computed(() => (maxDmgBoss.value + minDmgBoss.value) / 2)
+
+    // ── 最終傷害（打小怪）──
+    const finalDmgMob = computed(() => step4.value * step5Mob.value * step6Mob.value)
+    const maxDmgMob = computed(() => finalDmgMob.value)
+    const minDmgMob = computed(() => finalDmgMob.value * (Number(stats.value.mastery) || 0) / 100)
+    const avgDmgMob = computed(() => (maxDmgMob.value + minDmgMob.value) / 2)
+
+    // ── 爆擊平均（含爆率 × 平均爆傷）──
+    // BigBang 前 2016 年：最小爆傷與最大爆傷分開計算
+    // avg_with_crit = avg_no_crit × (1 + critRate% × (minCritBonus + maxCritBonus) / 200)
+    const critMult = computed(() => {
+      const rate = (Number(stats.value.critRate) || 0) / 100
+      const avg = ((Number(stats.value.minCritBonus) || 0) + (Number(stats.value.maxCritBonus) || 0)) / 200
+      return 1 + rate * avg
+    })
+    const avgDmgBossCrit = computed(() => avgDmgBoss.value * critMult.value)
+    const avgDmgMobCrit = computed(() => avgDmgMob.value * critMult.value)
 
     // ── 格式化 ──
     function fmt(n) {
@@ -193,6 +238,7 @@ createApp({
       selectedJobId.value = entry.jobId
       selectedWeaponName.value = entry.weaponName
       coefficient.value = entry.coefficient
+      // 使用 Object.assign，舊存檔缺少的新欄位保留預設值
       Object.assign(stats.value, entry.stats)
       saveName.value = entry.name
     }
@@ -225,7 +271,12 @@ createApp({
         boss: stats.value.bossPct,
         enhance: stats.value.enhancePct,
         bdef: stats.value.bossDefPct,
-        idef: stats.value.ignoreDefPct
+        idef: stats.value.ignoreDefPct,
+        mastery: stats.value.mastery,
+        crit: stats.value.critRate,
+        mincrit: stats.value.minCritBonus,
+        maxcrit: stats.value.maxCritBonus,
+        mdef: stats.value.monsterDefPct
       })
       const url = window.location.origin + window.location.pathname + '?' + params.toString()
       navigator.clipboard.writeText(url).then(() => {
@@ -260,6 +311,17 @@ createApp({
       s.enhancePct = parseFloat(params.get('enhance')) || 0
       s.bossDefPct = parseFloat(params.get('bdef')) || 0
       s.ignoreDefPct = parseFloat(params.get('idef')) || 0
+      // 新欄位（若舊連結不含則保留預設值）
+      const masteryRaw = params.get('mastery')
+      if (masteryRaw !== null) s.mastery = parseFloat(masteryRaw)
+      const critRaw = params.get('crit')
+      if (critRaw !== null) s.critRate = parseFloat(critRaw)
+      const minCritRaw = params.get('mincrit')
+      if (minCritRaw !== null) s.minCritBonus = parseFloat(minCritRaw)
+      const maxCritRaw = params.get('maxcrit')
+      if (maxCritRaw !== null) s.maxCritBonus = parseFloat(maxCritRaw)
+      const mdefRaw = params.get('mdef')
+      if (mdefRaw !== null) s.monsterDefPct = parseFloat(mdefRaw)
     }
 
     return {
@@ -270,7 +332,10 @@ createApp({
       stats, needsStat,
       isValidNumber, formulaValid,
       mainStatValue, subStatValue, subStatLabel,
-      step1, step2, step3, step4, step5multiplier, step6multiplier, finalDamage,
+      step1, step2, step3, step4,
+      step5Boss, step5Mob, step6Boss, step6Mob,
+      maxDmgBoss, minDmgBoss, avgDmgBoss, avgDmgBossCrit,
+      maxDmgMob, minDmgMob, avgDmgMob, avgDmgMobCrit,
       fmt, fmtFinal,
       saveName, selectedSaveKey, saveMessage, savedCharacters,
       saveCharacter, loadCharacter, deleteCharacter,

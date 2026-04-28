@@ -54,6 +54,15 @@
           <input type="number" v-model.number="coefficient" step="0.01" min="0" />
         </div>
 
+        <div class="field-group" v-if="selectedJob">
+          <label>熟練度（武器精通）%</label>
+          <div class="input-suffix">
+            <input type="number" v-model.number="stats.mastery" min="0" max="100"
+              :class="{ invalid: !isValidNumber(stats.mastery) }" />
+            <span>%</span>
+          </div>
+        </div>
+
         <div class="divider"></div>
 
         <div class="field-group" v-if="needsStat('STR')">
@@ -67,7 +76,7 @@
         </div>
 
         <div class="field-group" v-if="needsStat('INT')">
-          <label>INT{{ selectedJob && selectedJob.mainStat === 'INT' ? '（主屬）' : '' }}</label>
+          <label>INT（主屬）</label>
           <input type="number" v-model.number="stats.INT" min="0" :class="{ invalid: !isValidNumber(stats.INT) }" />
         </div>
 
@@ -123,10 +132,24 @@
           </div>
         </div>
 
+        <div class="divider"></div>
+
+        <div class="section-title">防禦設定</div>
+
         <div class="field-group">
-          <label>BOSS 防禦 %</label>
+          <label>BOSS 防禦率 %</label>
           <div class="input-suffix">
-            <input type="number" v-model.number="stats.bossDefPct" min="0" max="100" :class="{ invalid: !isValidNumber(stats.bossDefPct) }" />
+            <input type="number" v-model.number="stats.bossDefPct" min="0" max="100"
+              :class="{ invalid: !isValidNumber(stats.bossDefPct) }" />
+            <span>%</span>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>小怪防禦率 %（BigBang PDRate，預設 10%）</label>
+          <div class="input-suffix">
+            <input type="number" v-model.number="stats.monsterDefPct" min="0" max="100"
+              :class="{ invalid: !isValidNumber(stats.monsterDefPct) }" />
             <span>%</span>
           </div>
         </div>
@@ -134,7 +157,39 @@
         <div class="field-group">
           <label>等效無視防禦 %</label>
           <div class="input-suffix">
-            <input type="number" v-model.number="stats.ignoreDefPct" min="0" max="100" :class="{ invalid: !isValidNumber(stats.ignoreDefPct) }" />
+            <input type="number" v-model.number="stats.ignoreDefPct" min="0" max="100"
+              :class="{ invalid: !isValidNumber(stats.ignoreDefPct) }" />
+            <span>%</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="section-title">爆擊設定（2016 年前分開計算）</div>
+
+        <div class="field-group">
+          <label>爆擊率 %</label>
+          <div class="input-suffix">
+            <input type="number" v-model.number="stats.critRate" min="0" max="100"
+              :class="{ invalid: !isValidNumber(stats.critRate) }" />
+            <span>%</span>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>最小爆傷加成 %（預設 +20%）</label>
+          <div class="input-suffix">
+            <input type="number" v-model.number="stats.minCritBonus" min="0"
+              :class="{ invalid: !isValidNumber(stats.minCritBonus) }" />
+            <span>%</span>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>最大爆傷加成 %（預設 +50%）</label>
+          <div class="input-suffix">
+            <input type="number" v-model.number="stats.maxCritBonus" min="0"
+              :class="{ invalid: !isValidNumber(stats.maxCritBonus) }" />
             <span>%</span>
           </div>
         </div>
@@ -170,6 +225,8 @@
         </div>
 
         <div v-else class="breakdown">
+
+          <!-- 共用步驟 1–4 -->
           <div class="breakdown-step">
             <div class="step-label">Step 1：主副屬加成</div>
             <div class="step-formula">
@@ -199,26 +256,85 @@
             <div class="step-value">= <strong>{{ fmt(step4) }}</strong></div>
           </div>
 
+          <!-- 步驟 5：打王 vs 打小怪分流 -->
           <div class="breakdown-step">
             <div class="step-label">Step 5：傷害倍率</div>
-            <div class="step-formula">
-              1 + (總傷害% + BOSS% + 強化%) = 1 + ({{ stats.totalDmgPct }} + {{ stats.bossPct }} + {{ stats.enhancePct }}) / 100
+            <div class="split-row">
+              <span class="split-tag boss-tag">打王</span>
+              <div class="split-content">
+                <div class="step-formula">
+                  1 + (總傷{{ stats.totalDmgPct }}% + BOSS{{ stats.bossPct }}% + 強化{{ stats.enhancePct }}%) / 100
+                </div>
+                <div class="step-value">= ×<strong>{{ step5Boss.toFixed(4) }}</strong></div>
+              </div>
             </div>
-            <div class="step-value">= ×<strong>{{ step5multiplier.toFixed(4) }}</strong></div>
+            <div class="split-row">
+              <span class="split-tag mob-tag">小怪</span>
+              <div class="split-content">
+                <div class="step-formula">
+                  1 + (總傷{{ stats.totalDmgPct }}% + 強化{{ stats.enhancePct }}%) / 100
+                </div>
+                <div class="step-value">= ×<strong>{{ step5Mob.toFixed(4) }}</strong></div>
+              </div>
+            </div>
           </div>
 
+          <!-- 步驟 6：防禦折減分流 -->
           <div class="breakdown-step">
-            <div class="step-label">Step 6：BOSS 防禦折減</div>
-            <div class="step-formula">
-              1 − {{ stats.bossDefPct }}% × (1 − {{ stats.ignoreDefPct }}%)
+            <div class="step-label">Step 6：防禦折減</div>
+            <div class="split-row">
+              <span class="split-tag boss-tag">打王</span>
+              <div class="split-content">
+                <div class="step-formula">
+                  1 − {{ stats.bossDefPct }}% × (1 − {{ stats.ignoreDefPct }}%)
+                </div>
+                <div class="step-value">= ×<strong>{{ step6Boss.toFixed(4) }}</strong></div>
+              </div>
             </div>
-            <div class="step-value">= ×<strong>{{ step6multiplier.toFixed(4) }}</strong></div>
+            <div class="split-row">
+              <span class="split-tag mob-tag">小怪</span>
+              <div class="split-content">
+                <div class="step-formula">
+                  1 − {{ stats.monsterDefPct }}% × (1 − {{ stats.ignoreDefPct }}%)
+                </div>
+                <div class="step-value">= ×<strong>{{ step6Mob.toFixed(4) }}</strong></div>
+              </div>
+            </div>
           </div>
 
-          <div class="final-result">
-            <div class="final-label">最終傷害（單擊）</div>
-            <div class="final-value">{{ fmtFinal(finalDamage) }}</div>
+          <!-- 最終比較表 -->
+          <div class="comparison-table">
+            <div class="ct-header">
+              <div class="ct-row-label"></div>
+              <div class="ct-col-head boss-col">⚔️ 打王</div>
+              <div class="ct-col-head mob-col">🐾 打小怪</div>
+            </div>
+
+            <div class="ct-row">
+              <div class="ct-row-label">最大傷害（熟練度 100%）</div>
+              <div class="ct-val">{{ fmtFinal(maxDmgBoss) }}</div>
+              <div class="ct-val">{{ fmtFinal(maxDmgMob) }}</div>
+            </div>
+
+            <div class="ct-row">
+              <div class="ct-row-label">最小傷害（熟練度 {{ stats.mastery }}%）</div>
+              <div class="ct-val">{{ fmtFinal(minDmgBoss) }}</div>
+              <div class="ct-val">{{ fmtFinal(minDmgMob) }}</div>
+            </div>
+
+            <div class="ct-row">
+              <div class="ct-row-label">平均傷害（無爆擊）</div>
+              <div class="ct-val">{{ fmtFinal(avgDmgBoss) }}</div>
+              <div class="ct-val">{{ fmtFinal(avgDmgMob) }}</div>
+            </div>
+
+            <div class="ct-row ct-final-row">
+              <div class="ct-row-label">平均傷害（含爆擊 {{ stats.critRate }}%）</div>
+              <div class="ct-val ct-final-val">{{ fmtFinal(avgDmgBossCrit) }}</div>
+              <div class="ct-val ct-final-val">{{ fmtFinal(avgDmgMobCrit) }}</div>
+            </div>
           </div>
+
         </div>
       </section>
     </main>
