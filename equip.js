@@ -173,8 +173,8 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     const finalAtk    = (Number(baseStats.value.atk)      || 0) + t.flatAtk
     const finalAtkPct = t.pctAtk
 
-    const realFinalMain = finalMain * (1 + t.pctMain / 100)
-    const realFinalSub  = finalSub  * (1 + t.pctSub  / 100)
+    const realFinalMain = Math.floor(finalMain * (1 + t.pctMain / 100))
+    const realFinalSub  = Math.floor(finalSub  * (1 + t.pctSub  / 100))
 
     if (finalMain <= 0 || finalAtk <= 0) {
       return { maxBoss:0, minBoss:0, avgBoss:0, maxMob:0, minMob:0, avgMob:0,

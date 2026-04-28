@@ -563,8 +563,8 @@
             <div class="stat-row"><span>無視防禦（合計）</span><span class="stat-val">{{ equip.totals.value.ignoreDefTotal.toFixed(1) }}%</span></div>
             <div class="divider" style="margin:8px 0"></div>
             <div class="stat-row"><span>裝備主屬性合計</span><span class="stat-val">+{{ Math.round(equip.totals.value.flatMain) }}</span></div>
-            <div class="stat-row"><span>最終主屬性（含%）</span><span class="stat-val">{{ Math.round(equip.dmgResult.value.realFinalMain) }}</span></div>
-            <div class="stat-row"><span>最終副屬性（含%）</span><span class="stat-val">{{ Math.round(equip.dmgResult.value.realFinalSub) }}</span></div>
+            <div class="stat-row"><span>最終主屬性（含%，捨去）</span><span class="stat-val">{{ equip.dmgResult.value.realFinalMain }}</span></div>
+            <div class="stat-row"><span>最終副屬性（含%，捨去）</span><span class="stat-val">{{ equip.dmgResult.value.realFinalSub }}</span></div>
             <div class="stat-row"><span>最終攻擊力</span><span class="stat-val">{{ Math.round(equip.dmgResult.value.finalAtk) }}</span></div>
           </div>
 
