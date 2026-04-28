@@ -708,23 +708,30 @@
             </div>
 
             <div class="divider" style="margin:10px 0"></div>
-            <div class="panel-sub-title">傷害輸出</div>
+            <div class="panel-sub-title" style="display:flex;align-items:center;justify-content:space-between">
+              <span>傷害輸出</span>
+              <button class="btn-zoom" @click="cycleDpsFormat()"
+                title="切換數字格式：萬 / K / 純數字"
+                style="font-size:11px;padding:1px 7px;min-width:36px">
+                {{ DPS_FORMAT_LABELS[dpsFormat] }}
+              </button>
+            </div>
             <div class="dps-grid">
               <div></div>
               <div class="dps-col-head boss-col">⚔️ 打王</div>
               <div class="dps-col-head mob-col">🐾 小怪</div>
 
               <div class="dps-row-label">平均單擊</div>
-              <div class="dps-val">{{ fmt(equip.dmgResult.value.avgBoss) }}</div>
-              <div class="dps-val">{{ fmt(equip.dmgResult.value.avgMob) }}</div>
+              <div class="dps-val">{{ fmtDps(equip.dmgResult.value.avgBoss) }}</div>
+              <div class="dps-val">{{ fmtDps(equip.dmgResult.value.avgMob) }}</div>
 
               <div class="dps-row-label">DPS（/秒）</div>
-              <div class="dps-val">{{ fmtM(equip.dmgResult.value.dpsBoss) }}</div>
-              <div class="dps-val">{{ fmtM(equip.dmgResult.value.dpsMob) }}</div>
+              <div class="dps-val">{{ fmtDps(equip.dmgResult.value.dpsBoss) }}</div>
+              <div class="dps-val">{{ fmtDps(equip.dmgResult.value.dpsMob) }}</div>
 
               <div class="dps-row-label final-row">MDPS（/分）</div>
-              <div class="dps-val final-val">{{ fmtM(equip.dmgResult.value.mdpsBoss) }}</div>
-              <div class="dps-val final-val">{{ fmtM(equip.dmgResult.value.mdpsMob) }}</div>
+              <div class="dps-val final-val">{{ fmtDps(equip.dmgResult.value.mdpsBoss) }}</div>
+              <div class="dps-val final-val">{{ fmtDps(equip.dmgResult.value.mdpsMob) }}</div>
             </div>
 
             <div style="margin-top:12px">

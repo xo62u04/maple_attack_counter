@@ -245,6 +245,30 @@ createApp({
       return Math.round(n).toLocaleString('zh-TW')
     }
 
+    // ── DPS 數字格式切換：'wan'（萬）| 'k'（K）| 'raw'（純數字）──
+    const dpsFormat = ref('wan')
+    const DPS_FORMAT_LABELS = { wan: '萬', k: 'K', raw: '#' }
+    function cycleDpsFormat() {
+      const order = ['wan', 'k', 'raw']
+      const idx = order.indexOf(dpsFormat.value)
+      dpsFormat.value = order[(idx + 1) % order.length]
+    }
+    function fmtDps(n) {
+      if (!n) return '0'
+      if (dpsFormat.value === 'k') {
+        if (n >= 1e6) return (n / 1e6).toFixed(2) + ' M'
+        if (n >= 1e3) return (n / 1e3).toFixed(1) + ' K'
+        return Math.round(n).toString()
+      }
+      if (dpsFormat.value === 'raw') {
+        return Math.round(n).toLocaleString('zh-TW')
+      }
+      // 'wan' — 預設
+      if (n >= 1e8) return (n / 1e8).toFixed(2) + ' 億'
+      if (n >= 1e4) return (n / 1e4).toFixed(1) + ' 萬'
+      return Math.round(n).toLocaleString('zh-TW')
+    }
+
     // ── 裝備模擬器 Composable ──
     const equip = useEquip(jobs, partyBuffs, selectedJobId)
 
@@ -492,7 +516,7 @@ createApp({
       step5Boss, step5Mob, step6Boss, step6Mob,
       maxDmgBoss, minDmgBoss, avgDmgBoss, avgDmgBossCrit,
       maxDmgMob, minDmgMob, avgDmgMob, avgDmgMobCrit,
-      fmt, fmtFinal, fmtM,
+      fmt, fmtFinal, fmtM, fmtDps, dpsFormat, DPS_FORMAT_LABELS, cycleDpsFormat,
       shareUrl,
       equip,
       slotSummary,

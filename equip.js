@@ -270,10 +270,12 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
   })
 
   function _efficiencyBase(r, t) {
-    return {
-      mainPct: r.step1 > 0 ? (4 * r.finalMain * (1 + t.pctMain / 100) * 0.01 / r.step1) * 100 : 0,
-      atkPct:  (100 + r.finalAtkPct) > 0 ? 100 / (100 + r.finalAtkPct) : 0,
-    }
+    // +1% 主屬性%：step1 增量 = 4 × finalMain（基底）× 0.01，不含 pctMain 乘數
+    // （pctMain 的影響已在分母 step1 中體現，不應再重複相乘）
+    const mainPct = r.step1 > 0 ? (4 * r.finalMain * 0.01 / r.step1) * 100 : 0
+    // +1% ATK%：step3 相對增量 = 1 / (1 + atkPct/100)
+    const atkPct  = (100 + r.finalAtkPct) > 0 ? 100 / (100 + r.finalAtkPct) : 0
+    return { mainPct, atkPct }
   }
 
   // 打 BOSS：總傷與 BOSS傷 分母都包含 bossDmg
