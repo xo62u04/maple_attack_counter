@@ -661,6 +661,17 @@ body {
 }
 
 /* ── 攻屬比 ── */
+.table-atk-box {
+  background: #1a0a00;
+  border: 2px solid #ff9933;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+.table-atk-label { font-size: 13px; color: #ff9933; margin-bottom: 4px; }
+.table-atk-range { font-size: 26px; font-weight: 700; color: #ffcc66; letter-spacing: 2px; }
+
 .ratio-box {
   background: #0a3028;
   border: 2px solid var(--accent);

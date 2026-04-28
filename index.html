@@ -630,6 +630,14 @@
           <div class="bottom-panel">
             <div class="panel-title">📈 攻屬比 & DPS</div>
 
+            <!-- 遊戲表攻範圍 -->
+            <div class="table-atk-box" v-if="equip.dmgResult.value.tableAtkMax > 0">
+              <div class="table-atk-label">🎯 遊戲表攻（含技能加攻）</div>
+              <div class="table-atk-range">
+                {{ fmt(equip.dmgResult.value.tableAtkMin) }} ~ {{ fmt(equip.dmgResult.value.tableAtkMax) }}
+              </div>
+            </div>
+
             <div class="ratio-box">
               <div class="ratio-label">1% 主屬性 ≈ 等效 ATK</div>
               <div class="ratio-value">{{ equip.attackStatRatio.value > 0 ? equip.attackStatRatio.value.toFixed(2) : '-' }}</div>
@@ -656,14 +664,6 @@
               <div></div>
               <div class="dps-col-head boss-col">⚔️ 打王</div>
               <div class="dps-col-head mob-col">🐾 小怪</div>
-
-              <div class="dps-row-label">表攻（max）</div>
-              <div class="dps-val">{{ fmt(equip.dmgResult.value.maxBoss) }}</div>
-              <div class="dps-val">{{ fmt(equip.dmgResult.value.maxMob) }}</div>
-
-              <div class="dps-row-label">表攻（min）</div>
-              <div class="dps-val">{{ fmt(equip.dmgResult.value.minBoss) }}</div>
-              <div class="dps-val">{{ fmt(equip.dmgResult.value.minMob) }}</div>
 
               <div class="dps-row-label">平均單擊</div>
               <div class="dps-val">{{ fmt(equip.dmgResult.value.avgBoss) }}</div>

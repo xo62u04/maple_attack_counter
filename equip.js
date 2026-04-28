@@ -180,7 +180,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
       return { maxBoss:0, minBoss:0, avgBoss:0, maxMob:0, minMob:0, avgMob:0,
                dpsBoss:0, mdpsBoss:0, dpsMob:0, mdpsMob:0,
                finalMain, finalSub, finalAtk, finalAtkPct, step1:0, step4:0, coeff,
-               realFinalMain:0, realFinalSub:0 }
+               realFinalMain:0, realFinalSub:0, tableAtkMax:0, tableAtkMin:0 }
     }
 
     const step1 = 4 * realFinalMain + realFinalSub
@@ -219,8 +219,14 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
       maxBoss, minBoss, avgBoss, maxMob, minMob, avgMob,
       dpsBoss: avgBoss * hps, mdpsBoss: avgBoss * hps * 60,
       dpsMob:  avgMob  * hps, mdpsMob:  avgMob  * hps * 60,
+      // 遊戲表攻範圍：不含技能%、不含boss/mob傷害、不含防禦折減
+      // 包含技能加攻（Rage 等 atkFlat buff 已計入 finalAtk）
+      const tableAtkMax = step1 * coeff * step3 * 0.01
+      const tableAtkMin = Math.floor(tableAtkMax * (Number(s.mastery) || 0) / 100)
+
       finalMain, finalSub, finalAtk, finalAtkPct, step1, step4, coeff,
       realFinalMain, realFinalSub,
+      tableAtkMax, tableAtkMin,
     }
   })
 
