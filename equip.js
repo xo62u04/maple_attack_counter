@@ -184,7 +184,9 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     }
 
     const step1 = 4 * realFinalMain + realFinalSub
-    const step3 = finalAtk * (1 + finalAtkPct / 100)
+    // realFinalAtk：遊戲在 ATK 乘上 ATK% 後也做 floor（整數運算）
+    const realFinalAtk = Math.floor(finalAtk * (1 + finalAtkPct / 100))
+    const step3 = realFinalAtk
     const step4 = step1 * coeff * step3 * 0.01 * (Number(s.skillPct) || 100) / 100
 
     const step5Boss = 1 + (t.totalDmg + t.bossDmg) / 100
@@ -216,8 +218,8 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     const hps = (Number(s.hitsPerSec) || 0) + hitsBonus
 
     // 遊戲表攻範圍：不含技能%、不含boss/mob傷害、不含防禦折減
-    // 包含技能加攻（Rage 等 atkFlat buff 已計入 finalAtk）
-    const tableAtkMax = step1 * coeff * step3 * 0.01
+    // ATK 與最終結果均 floor，模擬遊戲整數運算
+    const tableAtkMax = Math.floor(step1 * coeff * realFinalAtk / 100)
     const tableAtkMin = Math.floor(tableAtkMax * (Number(s.mastery) || 0) / 100)
 
     return {
