@@ -273,7 +273,7 @@ createApp({
     // ── 裝備模擬器 Composable ──
     const equip = useEquip(jobs, partyBuffs, selectedJobId)
     // ── 分錢系統 ──
-    const loot = useLoot()
+    const loot = Vue.reactive(useLoot())
 
     // 職業變更時：更新武器係數；只在 Tab2 技能清單為空時才自動載入（避免覆蓋已設定的技能）
     watch(selectedJobId, (id) => {
