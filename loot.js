@@ -79,6 +79,7 @@ function useLoot() {
       session.value.soldItems.push({
         id: nextId(),
         itemName,
+        qty: 1,
         pickedBy: '',
         status: 'pending',
         price: 0,
@@ -138,11 +139,11 @@ function useLoot() {
       i => i.status === 'sold' || i.status === 'selfuse'
     )
 
-    const totalRevenue = validItems.reduce((sum, i) => sum + (Number(i.price) || 0), 0)
+    const totalRevenue = validItems.reduce((sum, i) => sum + (Number(i.qty) || 1) * (Number(i.price) || 0), 0)
 
     const totalScissorCost = validItems.reduce((sum, i) => {
       if (!i.scissorType) return sum
-      return sum + (i.scissorType / mileageRate.value * 1000)
+      return sum + (Number(i.qty) || 1) * (i.scissorType / mileageRate.value * 1000)
     }, 0)
 
     const netRevenue = totalRevenue - totalScissorCost
@@ -165,7 +166,7 @@ function useLoot() {
 
     for (const item of validItems) {
       if (memberMap[item.pickedBy]) {
-        memberMap[item.pickedBy].earned += (Number(item.price) || 0)
+        memberMap[item.pickedBy].earned += (Number(item.qty) || 1) * (Number(item.price) || 0)
       }
     }
 

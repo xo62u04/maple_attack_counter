@@ -963,7 +963,7 @@
           <h3>物品明細</h3>
           <div class="loot-item-table">
             <div class="loot-item-header">
-              <span>物品</span><span>撿的人</span><span>狀態</span><span>成交價(萬)</span><span>剪刀</span><span></span>
+              <span>物品</span><span>撿的人</span><span>狀態</span><span>數量</span><span>單價(萬)</span><span>剪刀</span><span></span>
             </div>
             <div v-for="item in loot.session.soldItems" :key="item.id" class="loot-item-row">
               <span class="loot-item-name">{{ item.itemName }}</span>
@@ -976,6 +976,7 @@
                 <option value="sold">已賣</option>
                 <option value="selfuse">自用</option>
               </select>
+              <input type="number" v-model.number="item.qty" min="1" class="loot-input-qty" placeholder="1" />
               <input
                 v-if="item.status !== 'pending'"
                 type="number"

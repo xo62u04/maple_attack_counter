@@ -1139,7 +1139,7 @@ body {
 .loot-item-table { display: flex; flex-direction: column; gap: 4px; }
 .loot-item-header, .loot-item-row {
   display: grid;
-  grid-template-columns: 140px 100px 80px 100px 120px 32px;
+  grid-template-columns: 130px 95px 75px 52px 95px 110px 32px;
   align-items: center;
   gap: 6px;
 }
@@ -1157,6 +1157,15 @@ body {
   color: var(--text);
   font-size: 12px;
   padding: 3px 4px;
+}
+.loot-input-qty {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 12px;
+  padding: 3px 6px;
+  width: 48px;
 }
 .loot-input-price {
   background: var(--bg-input);
