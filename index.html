@@ -21,6 +21,9 @@
         <button class="tab-btn" :class="{ active: activeTab === 'equip' }" @click="activeTab = 'equip'">
           🎒 裝備模擬器
         </button>
+        <button class="tab-btn" :class="{ active: activeTab === 'loot' }" @click="activeTab = 'loot'">
+          💰 分錢系統
+        </button>
       </div>
       <div class="header-actions">
         <button v-if="activeTab === 'calc'" @click="saveCharacter" class="btn btn-save" :disabled="!saveName.trim()">💾 存檔</button>
@@ -872,10 +875,233 @@
     </main>
     </div><!-- end equip wrapper -->
 
+    <!-- ══════════════════════════════════════════ Tab 3：分錢系統 ══ -->
+    <main v-else-if="activeTab === 'loot'" class="loot-tab">
+
+      <!-- ① 匯率設定 -->
+      <section class="loot-section loot-rates">
+        <h2 class="loot-section-title">⚙️ 匯率設定</h2>
+        <div class="loot-rate-row">
+          <label>1000萬楓幣 =</label>
+          <input type="number" v-model.number="loot.mileageRate.value" min="1" @change="saveLootSettings" />
+          <span>里程</span>
+        </div>
+        <div class="loot-rate-info">
+          3900里程剪刀 ≈ <strong>{{ loot.scissorCost3900.value.toFixed(1) }} 萬</strong>
+          &nbsp;&nbsp;
+          7100里程剪刀 ≈ <strong>{{ loot.scissorCost7100.value.toFixed(1) }} 萬</strong>
+        </div>
+        <div class="loot-rate-row" style="margin-top:8px">
+          <label>奇幻方塊單價</label>
+          <input type="number" v-model.number="loot.cubePrice.value" min="0" @change="saveLootSettings" />
+          <span>萬楓幣/顆</span>
+        </div>
+      </section>
+
+      <!-- ② 本次結算 -->
+      <section class="loot-section loot-session">
+        <h2 class="loot-section-title">🎯 本次結算</h2>
+
+        <!-- 隊員設定 -->
+        <div class="loot-subsection">
+          <h3>隊員與分配比例</h3>
+          <div class="loot-preset-list">
+            <button
+              v-for="preset in loot.memberPresets.value"
+              :key="preset.id"
+              class="btn loot-preset-btn"
+              :class="{ active: loot.session.value.members.some(m => m.name === preset.name) }"
+              @click="loot.addSessionMemberFromPreset(preset)"
+            >{{ preset.name }}</button>
+            <button class="btn loot-add-temp-btn" @click="loot.addSessionMemberManual()">＋ 臨時隊員</button>
+          </div>
+          <div class="loot-member-rows">
+            <div v-for="(m, idx) in loot.session.value.members" :key="idx" class="loot-member-row">
+              <input type="text" v-model="m.name" class="loot-input-name" placeholder="名稱" />
+              <label>比例</label>
+              <input type="number" v-model.number="m.share" min="0" class="loot-input-share" />
+              <span class="loot-pct">
+                ({{ loot.session.value.members.reduce((s,x)=>s+(Number(x.share)||0),0) > 0
+                  ? (((Number(m.share)||0) / loot.session.value.members.reduce((s,x)=>s+(Number(x.share)||0),0)) * 100).toFixed(0)
+                  : 0 }}%)
+              </span>
+              <button class="btn btn-delete loot-btn-sm" @click="loot.removeSessionMember(idx)">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 選王 + 掉落勾選 -->
+        <div class="loot-subsection">
+          <h3>掉落物品</h3>
+          <div v-for="boss in loot.bossDropTables.value" :key="boss.id" class="loot-boss-block">
+            <div class="loot-boss-name">{{ boss.bossName }}</div>
+            <div class="loot-drop-grid">
+              <label
+                v-for="drop in boss.drops"
+                :key="drop.id"
+                class="loot-drop-chip"
+                :class="{ selected: loot.isDropInSession(drop.itemName) }"
+              >
+                <input
+                  type="checkbox"
+                  :checked="loot.isDropInSession(drop.itemName)"
+                  @change="loot.toggleDropInSession(drop.itemName, drop.needsScissors, drop.scissorType)"
+                  style="display:none"
+                />
+                {{ drop.itemName }}
+                <span v-if="drop.needsScissors" class="loot-scissors-badge">✂</span>
+              </label>
+            </div>
+          </div>
+          <div v-if="loot.bossDropTables.value.length === 0" class="loot-empty-hint">
+            請先在下方設定區新增王的掉落表
+          </div>
+        </div>
+
+        <!-- 物品明細 -->
+        <div class="loot-subsection" v-if="loot.session.value.soldItems.length > 0">
+          <h3>物品明細</h3>
+          <div class="loot-item-table">
+            <div class="loot-item-header">
+              <span>物品</span><span>撿的人</span><span>狀態</span><span>成交價(萬)</span><span>剪刀</span><span></span>
+            </div>
+            <div v-for="item in loot.session.value.soldItems" :key="item.id" class="loot-item-row">
+              <span class="loot-item-name">{{ item.itemName }}</span>
+              <select v-model="item.pickedBy" class="loot-select-sm">
+                <option value="">-</option>
+                <option v-for="m in loot.session.value.members" :key="m.name" :value="m.name">{{ m.name }}</option>
+              </select>
+              <select v-model="item.status" class="loot-select-sm">
+                <option value="pending">未賣</option>
+                <option value="sold">已賣</option>
+                <option value="selfuse">自用</option>
+              </select>
+              <input
+                v-if="item.status !== 'pending'"
+                type="number"
+                v-model.number="item.price"
+                min="0"
+                class="loot-input-price"
+                placeholder="0"
+              />
+              <span v-else class="loot-item-na">-</span>
+              <select v-if="item.scissorType > 0" v-model.number="item.scissorType" class="loot-select-sm">
+                <option :value="3900">普通(3900)</option>
+                <option :value="7100">高級(7100)</option>
+              </select>
+              <span v-else class="loot-item-na">-</span>
+              <button class="btn btn-delete loot-btn-sm" @click="loot.removeSessionItem(item.id)">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 結算結果 -->
+        <div class="loot-subsection" v-if="loot.settlementResult.value">
+          <h3>💰 結算結果</h3>
+          <div class="loot-summary">
+            <div class="loot-summary-row">
+              <span>總收入</span><span>{{ loot.settlementResult.value.totalRevenue.toFixed(1) }} 萬</span>
+            </div>
+            <div class="loot-summary-row danger">
+              <span>剪刀成本</span><span>-{{ loot.settlementResult.value.totalScissorCost.toFixed(1) }} 萬</span>
+            </div>
+            <div class="loot-summary-row accent">
+              <span>淨收入</span><span>{{ loot.settlementResult.value.netRevenue.toFixed(1) }} 萬</span>
+            </div>
+            <div class="loot-divider"></div>
+            <div class="loot-member-summary-header">
+              <span>隊員</span><span>應得</span><span>實收</span><span>差額</span>
+            </div>
+            <div
+              v-for="m in loot.settlementResult.value.members"
+              :key="m.name"
+              class="loot-member-summary-row"
+              :class="{ 'owes': m.diff > 0.01, 'owed': m.diff < -0.01 }"
+            >
+              <span>{{ m.name }}（{{ (m.pct*100).toFixed(0) }}%）</span>
+              <span>{{ m.due.toFixed(1) }} 萬</span>
+              <span>{{ (m.earned + (loot.settlementResult.value.totalScissorCost / loot.session.value.members.length)).toFixed(1) }} 萬</span>
+              <span :class="m.diff > 0.01 ? 'text-danger' : m.diff < -0.01 ? 'text-success' : ''">
+                {{ m.diff > 0.01 ? '+' : '' }}{{ m.diff.toFixed(1) }} 萬
+              </span>
+            </div>
+            <div class="loot-divider" v-if="loot.settlementResult.value.transfers.length > 0"></div>
+            <div class="loot-transfers">
+              <div
+                v-for="(t, i) in loot.settlementResult.value.transfers"
+                :key="i"
+                class="loot-transfer-row"
+              >
+                <span class="text-danger">{{ t.from }}</span>
+                <span> 給 </span>
+                <span class="text-success">{{ t.to }}</span>
+                <span class="loot-transfer-amount"> {{ t.amount }} {{ t.unit }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else-if="loot.session.value.members.length > 0" class="loot-empty-hint">
+          請設定物品狀態和成交價後即可結算
+        </div>
+
+        <button class="btn loot-clear-btn" @click="loot.clearSession()">🗑️ 清空本次結算</button>
+      </section>
+
+      <!-- ③ 設定區（摺疊）-->
+      <section class="loot-section loot-settings">
+        <div class="loot-settings-header" @click="loot.settingsOpen.value = !loot.settingsOpen.value">
+          <h2 class="loot-section-title">🛠️ 設定</h2>
+          <span>{{ loot.settingsOpen.value ? '▲' : '▼' }}</span>
+        </div>
+        <div v-if="loot.settingsOpen.value" class="loot-settings-body">
+
+          <!-- 隊員管理 -->
+          <div class="loot-subsection">
+            <h3>常用隊員</h3>
+            <div v-for="preset in loot.memberPresets.value" :key="preset.id" class="loot-preset-edit-row">
+              <input type="text" v-model="preset.name" class="loot-input-name" @change="saveLootSettings" />
+              <label>預設比例</label>
+              <input type="number" v-model.number="preset.defaultShare" min="0" class="loot-input-share" @change="saveLootSettings" />
+              <button class="btn btn-delete loot-btn-sm" @click="loot.removeMemberPreset(preset.id); saveLootSettings()">✕</button>
+            </div>
+            <button class="btn loot-add-btn" @click="loot.addMemberPreset(); saveLootSettings()">＋ 新增隊員</button>
+          </div>
+
+          <!-- 掉落表管理 -->
+          <div class="loot-subsection">
+            <h3>王掉落表</h3>
+            <div v-for="boss in loot.bossDropTables.value" :key="boss.id" class="loot-boss-edit-block">
+              <div class="loot-boss-edit-header">
+                <input type="text" v-model="boss.bossName" class="loot-input-boss" @change="saveLootSettings" />
+                <button class="btn btn-delete loot-btn-sm" @click="loot.removeBoss(boss.id); saveLootSettings()">刪王</button>
+              </div>
+              <div v-for="drop in boss.drops" :key="drop.id" class="loot-drop-edit-row">
+                <input type="text" v-model="drop.itemName" class="loot-input-name" @change="saveLootSettings" />
+                <label>
+                  <input type="checkbox" v-model="drop.needsScissors" @change="saveLootSettings" />
+                  需剪刀
+                </label>
+                <select v-if="drop.needsScissors" v-model.number="drop.scissorType" class="loot-select-sm" @change="saveLootSettings">
+                  <option :value="3900">普通(3900)</option>
+                  <option :value="7100">高級(7100)</option>
+                </select>
+                <button class="btn btn-delete loot-btn-sm" @click="loot.removeDrop(boss.id, drop.id); saveLootSettings()">✕</button>
+              </div>
+              <button class="btn loot-add-btn" @click="loot.addDrop(boss.id); saveLootSettings()">＋ 新增物品</button>
+            </div>
+            <button class="btn loot-add-btn" style="margin-top:8px" @click="loot.addBoss(); saveLootSettings()">＋ 新增王</button>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
   </div><!-- end #app -->
 
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="equip.js"></script>
+  <script src="loot.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

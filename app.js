@@ -38,6 +38,7 @@ createApp({
       loadSavedCharacters()
       initTab1Buffs()
       equip.initPartyBuffs()
+      loadLootSettings()
     })
 
     // ── 選擇狀態 ──
@@ -271,6 +272,8 @@ createApp({
 
     // ── 裝備模擬器 Composable ──
     const equip = useEquip(jobs, partyBuffs, selectedJobId)
+    // ── 分錢系統 ──
+    const loot = useLoot()
 
     // 職業變更時：更新武器係數；只在 Tab2 技能清單為空時才自動載入（避免覆蓋已設定的技能）
     watch(selectedJobId, (id) => {
@@ -549,6 +552,27 @@ createApp({
       if (mdefRaw     !== null) s.monsterDefPct = parseFloat(mdefRaw)
     }
 
+    // ── 分錢系統設定存檔 ──
+    const LOOT_SETTINGS_KEY = 'maple_loot_settings'
+
+    function saveLootSettings() {
+      const s = loot.getState()
+      const { session: _session, ...toSave } = s
+      try {
+        localStorage.setItem(LOOT_SETTINGS_KEY, JSON.stringify(toSave))
+      } catch {}
+    }
+
+    function loadLootSettings() {
+      try {
+        const raw = localStorage.getItem(LOOT_SETTINGS_KEY)
+        if (raw) {
+          const s = JSON.parse(raw)
+          loot.setState(s)
+        }
+      } catch {}
+    }
+
     return {
       activeTab, equipZoom, changeEquipZoom, saveName, selectedSaveKey, saveMessage, savedCharacters,
       saveCharacter, loadCharacter, deleteCharacter, exportSaves, importSaves,
@@ -571,6 +595,7 @@ createApp({
       exportToTab1,
       addCustomSkill,
       removeSkill,
+      loot, saveLootSettings,
     }
   }
 }).mount('#app')
