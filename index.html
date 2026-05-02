@@ -1021,13 +1021,13 @@
           <h3>💰 結算結果 <span v-if="loot.session.date" class="loot-date-label">{{ loot.session.date }}</span></h3>
           <div class="loot-summary">
             <div class="loot-summary-row">
-              <span>總收入</span><span>{{ loot.settlementResult.totalRevenue.toFixed(1) }} 萬</span>
+              <span>總收入</span><span>{{ (loot.settlementResult.totalRevenue ?? 0).toFixed(1) }} 萬</span>
             </div>
             <div class="loot-summary-row danger">
-              <span>剪刀成本</span><span>-{{ loot.settlementResult.totalScissorCost.toFixed(1) }} 萬</span>
+              <span>剪刀成本</span><span>-{{ (loot.settlementResult.totalScissorCost ?? 0).toFixed(1) }} 萬</span>
             </div>
             <div class="loot-summary-row accent">
-              <span>淨收入</span><span>{{ loot.settlementResult.netRevenue.toFixed(1) }} 萬</span>
+              <span>淨收入</span><span>{{ (loot.settlementResult.netRevenue ?? 0).toFixed(1) }} 萬</span>
             </div>
             <div class="loot-divider"></div>
             <div class="loot-member-summary-header">
@@ -1039,13 +1039,13 @@
               class="loot-member-summary-row"
               :class="{ 'owes': m.diff > 0.01, 'owed': m.diff < -0.01 }"
             >
-              <span>{{ m.name }}（{{ (m.pct*100).toFixed(0) }}%）</span>
-              <span>{{ m.due.toFixed(1) }} 萬</span>
-              <span>{{ m.soldEarned.toFixed(1) }} 萬</span>
-              <span class="text-accent">{{ m.selfuseCost > 0.01 ? m.selfuseCost.toFixed(1) : '-' }}</span>
-              <span class="text-danger">{{ m.scissorPaid > 0.01 ? '-' + m.scissorPaid.toFixed(1) : '-' }}</span>
-              <span :class="m.diff > 0.01 ? 'text-danger' : m.diff < -0.01 ? 'text-success' : ''">
-                {{ m.diff > 0.01 ? '+' : '' }}{{ m.diff.toFixed(1) }} 萬
+              <span>{{ m.name }}（{{ ((m.pct ?? 0)*100).toFixed(0) }}%）</span>
+              <span>{{ (m.due ?? 0).toFixed(1) }} 萬</span>
+              <span>{{ (m.soldEarned ?? 0).toFixed(1) }} 萬</span>
+              <span class="text-accent">{{ (m.selfuseCost ?? 0) > 0.01 ? (m.selfuseCost).toFixed(1) : '-' }}</span>
+              <span class="text-danger">{{ (m.scissorPaid ?? 0) > 0.01 ? '-' + (m.scissorPaid).toFixed(1) : '-' }}</span>
+              <span :class="(m.diff ?? 0) > 0.01 ? 'text-danger' : (m.diff ?? 0) < -0.01 ? 'text-success' : ''">
+                {{ (m.diff ?? 0) > 0.01 ? '+' : '' }}{{ (m.diff ?? 0).toFixed(1) }} 萬
               </span>
             </div>
             <div class="loot-divider" v-if="loot.settlementResult.transfers.length > 0"></div>

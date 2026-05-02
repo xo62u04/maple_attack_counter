@@ -181,10 +181,10 @@ function useLoot() {
     }
 
     for (const m of Object.values(memberMap)) {
-      m.grossEarned = m.soldEarned + m.selfuseCost
-      m.earned      = m.grossEarned - m.scissorPaid
-      m.due         = netRevenue * m.pct
-      m.diff        = m.earned - m.due
+      m.grossEarned = Number(m.soldEarned)  + Number(m.selfuseCost)
+      m.earned      = Number(m.grossEarned) - Number(m.scissorPaid)
+      m.due         = Number(netRevenue)    * Number(m.pct)
+      m.diff        = Number(m.earned)      - Number(m.due)
     }
 
     const transfers = calcTransfers(Object.values(memberMap), cubePrice.value)
