@@ -896,6 +896,14 @@
           <input type="number" v-model.number="loot.cubePrice" min="0" @change="saveLootSettings" />
           <span>萬楓幣/顆</span>
         </div>
+        <div class="loot-rate-row" style="margin-top:8px">
+          <label>拍賣手續費</label>
+          <button class="loot-fee-quick" :class="{ active: loot.auctionFee === 0 }" @click="loot.auctionFee = 0">免費</button>
+          <button class="loot-fee-quick" :class="{ active: loot.auctionFee === 3 }" @click="loot.auctionFee = 3">3%</button>
+          <button class="loot-fee-quick" :class="{ active: loot.auctionFee === 6 }" @click="loot.auctionFee = 6">6%</button>
+          <input type="number" v-model.number="loot.auctionFee" min="0" max="100" style="width:70px" />
+          <span>%（預設，每筆可調）</span>
+        </div>
       </section>
 
       <!-- ② 本次結算 -->
@@ -965,7 +973,7 @@
           <h3>物品明細</h3>
           <div class="loot-item-table">
             <div class="loot-item-header">
-              <span>物品</span><span>撿的人</span><span>狀態</span><span>數量</span><span>單價(萬)</span><span>剪刀</span><span></span>
+              <span>物品</span><span>撿的人</span><span>狀態</span><span>數量</span><span>單價(萬)</span><span>費%</span><span>剪刀</span><span></span>
             </div>
             <div v-for="item in loot.session.soldItems" :key="item.id" class="loot-item-row">
               <span class="loot-item-name">{{ item.itemName }}</span>
@@ -985,6 +993,16 @@
                 v-model.number="item.price"
                 min="0"
                 class="loot-input-price"
+                placeholder="0"
+              />
+              <span v-else class="loot-item-na">-</span>
+              <input
+                v-if="item.status === 'sold'"
+                type="number"
+                v-model.number="item.fee"
+                min="0"
+                max="100"
+                class="loot-input-fee"
                 placeholder="0"
               />
               <span v-else class="loot-item-na">-</span>

@@ -1038,6 +1038,20 @@ body {
   color: var(--text-dim);
   padding: 4px 0;
 }
+.loot-fee-quick {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 18px;
+  padding: 4px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.loot-fee-quick.active {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+}
 .loot-rate-info strong {
   color: var(--accent);
 }
@@ -1174,7 +1188,7 @@ body {
 .loot-item-table { display: flex; flex-direction: column; gap: 4px; }
 .loot-item-header, .loot-item-row {
   display: grid;
-  grid-template-columns: 160px 120px 100px 68px 120px 145px 36px;
+  grid-template-columns: 150px 115px 95px 64px 115px 68px 135px 36px;
   align-items: center;
   gap: 8px;
 }
@@ -1210,6 +1224,15 @@ body {
   font-size: 18px;
   padding: 5px 6px;
   width: 110px;
+}
+.loot-input-fee {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 18px;
+  padding: 5px 6px;
+  width: 60px;
 }
 .loot-item-na { color: var(--text-dim); font-size: 18px; }
 .loot-btn-sm { padding: 4px 10px; font-size: 16px; }

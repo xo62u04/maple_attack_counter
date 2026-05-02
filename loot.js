@@ -4,6 +4,7 @@ function useLoot() {
   // ── 匯率設定 ──
   const mileageRate = ref(18000)   // 1000萬楓幣 = N里程
   const cubePrice   = ref(100)     // 奇幻方塊單價（萬楓幣/顆）
+  const auctionFee  = ref(3)       // 預設拍賣手續費 %
 
   // ── 里程換算 ──
   const scissorCost3900 = computed(() =>
@@ -80,6 +81,7 @@ function useLoot() {
       pickedBy: '',
       status: 'pending',
       price: 0,
+      fee: auctionFee.value,
       scissorType: needsScissors ? scissorType : 0,
     })
   }
@@ -135,7 +137,12 @@ function useLoot() {
       i => i.status === 'sold' || i.status === 'selfuse'
     )
 
-    const totalRevenue = validItems.reduce((sum, i) => sum + (Number(i.qty) || 1) * (Number(i.price) || 0), 0)
+    const itemNet = (i) => {
+      const gross = (Number(i.qty) || 1) * (Number(i.price) || 0)
+      const feeRate = i.status === 'sold' ? (Number(i.fee) || 0) : 0
+      return gross * (1 - feeRate / 100)
+    }
+    const totalRevenue = validItems.reduce((sum, i) => sum + itemNet(i), 0)
 
     const totalScissorCost = validItems.reduce((sum, i) => {
       if (!i.scissorType) return sum
@@ -162,7 +169,7 @@ function useLoot() {
 
     for (const item of validItems) {
       if (memberMap[item.pickedBy]) {
-        memberMap[item.pickedBy].earned += (Number(item.qty) || 1) * (Number(item.price) || 0)
+        memberMap[item.pickedBy].earned += itemNet(item)
       }
     }
 
@@ -191,6 +198,7 @@ function useLoot() {
     return {
       mileageRate: mileageRate.value,
       cubePrice:   cubePrice.value,
+      auctionFee:  auctionFee.value,
       memberPresets:  JSON.parse(JSON.stringify(memberPresets.value)),
       bossDropTables: JSON.parse(JSON.stringify(bossDropTables.value)),
       session:        JSON.parse(JSON.stringify(session.value)),
@@ -201,6 +209,7 @@ function useLoot() {
     if (!s) return
     if (s.mileageRate != null)  mileageRate.value  = s.mileageRate
     if (s.cubePrice   != null)  cubePrice.value    = s.cubePrice
+    if (s.auctionFee  != null)  auctionFee.value   = s.auctionFee
     if (s.memberPresets)        memberPresets.value  = s.memberPresets
     if (s.bossDropTables)       bossDropTables.value = s.bossDropTables
     if (s.session)              session.value        = s.session
@@ -216,7 +225,7 @@ function useLoot() {
   }
 
   return {
-    mileageRate, cubePrice,
+    mileageRate, cubePrice, auctionFee,
     scissorCost3900, scissorCost7100,
     memberPresets, bossDropTables,
     session, settingsOpen,
