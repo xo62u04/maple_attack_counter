@@ -1031,7 +1031,7 @@
             </div>
             <div class="loot-divider"></div>
             <div class="loot-member-summary-header">
-              <span>隊員</span><span>應得</span><span>實收</span><span>差額</span>
+              <span>隊員</span><span>應得</span><span>撿到</span><span>剪刀↓</span><span>差額</span>
             </div>
             <div
               v-for="m in loot.settlementResult.members"
@@ -1041,7 +1041,8 @@
             >
               <span>{{ m.name }}（{{ (m.pct*100).toFixed(0) }}%）</span>
               <span>{{ m.due.toFixed(1) }} 萬</span>
-              <span>{{ (m.earned + (loot.settlementResult.totalScissorCost / loot.session.members.length)).toFixed(1) }} 萬</span>
+              <span>{{ m.grossEarned.toFixed(1) }} 萬</span>
+              <span class="text-danger">{{ m.scissorPaid > 0.01 ? '-' + m.scissorPaid.toFixed(1) : '-' }}</span>
               <span :class="m.diff > 0.01 ? 'text-danger' : m.diff < -0.01 ? 'text-success' : ''">
                 {{ m.diff > 0.01 ? '+' : '' }}{{ m.diff.toFixed(1) }} 萬
               </span>

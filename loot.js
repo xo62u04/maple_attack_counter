@@ -160,26 +160,27 @@ function useLoot() {
         name: m.name,
         share: Number(m.share) || 0,
         pct: (Number(m.share) || 0) / totalShares,
-        earned: 0,
+        grossEarned: 0,   // 撿到的物品收入（扣AH費後）
+        scissorPaid: 0,   // 自付剪刀成本
+        earned: 0,        // grossEarned - scissorPaid
         due: 0,
         diff: 0,
-        cubes: 0,
       }
     }
 
     for (const item of validItems) {
-      if (memberMap[item.pickedBy]) {
-        memberMap[item.pickedBy].earned += itemNet(item)
+      const mm = memberMap[item.pickedBy]
+      if (!mm) continue
+      mm.grossEarned += itemNet(item)
+      if (item.scissorType) {
+        mm.scissorPaid += (Number(item.qty) || 1) * (item.scissorType / mileageRate.value * 1000)
       }
     }
 
-    const scissorPerPerson = totalScissorCost / members.length
-
     for (const m of Object.values(memberMap)) {
+      m.earned = m.grossEarned - m.scissorPaid
       m.due    = netRevenue * m.pct
-      m.earned = m.earned - scissorPerPerson
       m.diff   = m.earned - m.due
-      m.cubes  = cubePrice.value > 0 ? m.diff / cubePrice.value : 0
     }
 
     const transfers = calcTransfers(Object.values(memberMap), cubePrice.value)

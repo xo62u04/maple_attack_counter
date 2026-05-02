@@ -1259,14 +1259,14 @@ body {
 }
 .loot-member-summary-header {
   display: grid;
-  grid-template-columns: 1fr 100px 100px 100px;
+  grid-template-columns: 1fr 90px 90px 90px 90px;
   font-size: 14px;
   color: var(--text-dim);
   padding: 2px 0;
 }
 .loot-member-summary-row {
   display: grid;
-  grid-template-columns: 1fr 100px 100px 100px;
+  grid-template-columns: 1fr 90px 90px 90px 90px;
   font-size: 20px;
   padding: 4px 0;
 }
