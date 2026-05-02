@@ -21,8 +21,9 @@ function useLoot() {
 
   // ── 當次 session ──
   const session = ref({
+    date: '',
     members: [],     // [{ name, share }]
-    soldItems: [],   // [{ id, itemName, pickedBy, status, price, scissorType }]
+    soldItems: [],   // [{ id, itemName, qty, pickedBy, status, price, scissorType }]
   })
 
   // ── 設定區折疊狀態 ──
@@ -71,30 +72,25 @@ function useLoot() {
   }
 
   // ── session 物品管理 ──
-  function toggleDropInSession(itemName, needsScissors, scissorType) {
-    const existing = session.value.soldItems.find(i => i.itemName === itemName)
-    if (existing) {
-      session.value.soldItems = session.value.soldItems.filter(i => i.itemName !== itemName)
-    } else {
-      session.value.soldItems.push({
-        id: nextId(),
-        itemName,
-        qty: 1,
-        pickedBy: '',
-        status: 'pending',
-        price: 0,
-        scissorType: needsScissors ? scissorType : 0,
-      })
-    }
+  function addDropToSession(itemName, needsScissors, scissorType) {
+    session.value.soldItems.push({
+      id: nextId(),
+      itemName,
+      qty: 1,
+      pickedBy: '',
+      status: 'pending',
+      price: 0,
+      scissorType: needsScissors ? scissorType : 0,
+    })
   }
   function removeSessionItem(id) {
     session.value.soldItems = session.value.soldItems.filter(i => i.id !== id)
   }
   function clearSession() {
-    session.value = { members: [], soldItems: [] }
+    session.value = { date: '', members: [], soldItems: [] }
   }
-  function isDropInSession(itemName) {
-    return session.value.soldItems.some(i => i.itemName === itemName)
+  function dropCount(itemName) {
+    return session.value.soldItems.filter(i => i.itemName === itemName).length
   }
 
   // ── 最小轉帳算法 ──
@@ -228,7 +224,7 @@ function useLoot() {
     addMemberPreset, removeMemberPreset,
     addSessionMemberFromPreset, addSessionMemberManual, removeSessionMember,
     addBoss, removeBoss, addDrop, removeDrop,
-    toggleDropInSession, removeSessionItem, clearSession, isDropInSession,
+    addDropToSession, removeSessionItem, clearSession, dropCount,
     settlementResult,
     getState, setState,
   }

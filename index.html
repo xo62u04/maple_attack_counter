@@ -902,6 +902,12 @@
       <section class="loot-section loot-session">
         <h2 class="loot-section-title">🎯 本次結算</h2>
 
+        <!-- 日期 -->
+        <div class="loot-date-row">
+          <label>打王日期</label>
+          <input type="date" v-model="loot.session.date" class="loot-input-date" />
+        </div>
+
         <!-- 隊員設定 -->
         <div class="loot-subsection">
           <h3>隊員與分配比例</h3>
@@ -936,21 +942,17 @@
           <div v-for="boss in loot.bossDropTables" :key="boss.id" class="loot-boss-block">
             <div class="loot-boss-name">{{ boss.bossName }}</div>
             <div class="loot-drop-grid">
-              <label
+              <button
                 v-for="drop in boss.drops"
                 :key="drop.id"
                 class="loot-drop-chip"
-                :class="{ selected: loot.isDropInSession(drop.itemName) }"
+                :class="{ selected: loot.dropCount(drop.itemName) > 0 }"
+                @click="loot.addDropToSession(drop.itemName, drop.needsScissors, drop.scissorType)"
               >
-                <input
-                  type="checkbox"
-                  :checked="loot.isDropInSession(drop.itemName)"
-                  @change="loot.toggleDropInSession(drop.itemName, drop.needsScissors, drop.scissorType)"
-                  style="display:none"
-                />
                 {{ drop.itemName }}
                 <span v-if="drop.needsScissors" class="loot-scissors-badge">✂</span>
-              </label>
+                <span v-if="loot.dropCount(drop.itemName) > 0" class="loot-drop-count">×{{ loot.dropCount(drop.itemName) }}</span>
+              </button>
             </div>
           </div>
           <div v-if="loot.bossDropTables.length === 0" class="loot-empty-hint">
@@ -998,7 +1000,7 @@
 
         <!-- 結算結果 -->
         <div class="loot-subsection" v-if="loot.settlementResult">
-          <h3>💰 結算結果</h3>
+          <h3>💰 結算結果 <span v-if="loot.session.date" class="loot-date-label">{{ loot.session.date }}</span></h3>
           <div class="loot-summary">
             <div class="loot-summary-row">
               <span>總收入</span><span>{{ loot.settlementResult.totalRevenue.toFixed(1) }} 萬</span>

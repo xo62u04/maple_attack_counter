@@ -984,11 +984,12 @@ body {
 /* ══════════════════════════════ Loot Tab ══ */
 .loot-tab {
   padding: 20px 24px;
-  max-width: 900px;
+  max-width: 1100px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  font-size: 22px;
 }
 
 .loot-section {
@@ -1009,7 +1010,7 @@ body {
   margin-bottom: 16px;
 }
 .loot-subsection h3 {
-  font-size: 13px;
+  font-size: 16px;
   color: var(--text-dim);
   margin-bottom: 8px;
   text-transform: uppercase;
@@ -1024,16 +1025,16 @@ body {
   margin-bottom: 6px;
 }
 .loot-rate-row input {
-  width: 100px;
+  width: 120px;
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 5px;
-  padding: 5px 8px;
+  padding: 6px 10px;
   color: var(--text);
-  font-size: 13px;
+  font-size: 20px;
 }
 .loot-rate-info {
-  font-size: 13px;
+  font-size: 18px;
   color: var(--text-dim);
   padding: 4px 0;
 }
@@ -1052,8 +1053,8 @@ body {
   background: var(--bg-input);
   border: 1px solid var(--border);
   color: var(--text);
-  font-size: 12px;
-  padding: 4px 12px;
+  font-size: 18px;
+  padding: 6px 16px;
   border-radius: 20px;
 }
 .loot-preset-btn.active {
@@ -1065,9 +1066,32 @@ body {
   background: transparent;
   border: 1px dashed var(--border);
   color: var(--text-dim);
-  font-size: 12px;
-  padding: 4px 12px;
+  font-size: 18px;
+  padding: 6px 16px;
   border-radius: 20px;
+}
+
+/* 日期列 */
+.loot-date-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  font-size: 20px;
+}
+.loot-input-date {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-size: 20px;
+  padding: 5px 10px;
+}
+.loot-date-label {
+  font-size: 18px;
+  color: var(--text-dim);
+  font-weight: normal;
+  margin-left: 8px;
 }
 
 /* 隊員比例列 */
@@ -1081,33 +1105,33 @@ body {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 5px;
-  padding: 4px 8px;
+  padding: 5px 10px;
   color: var(--text);
-  font-size: 13px;
-  width: 120px;
+  font-size: 20px;
+  width: 160px;
 }
 .loot-input-share {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 5px;
-  padding: 4px 6px;
+  padding: 5px 8px;
   color: var(--text);
-  font-size: 13px;
-  width: 60px;
+  font-size: 20px;
+  width: 70px;
 }
 .loot-pct {
   color: var(--text-dim);
-  font-size: 12px;
-  min-width: 40px;
+  font-size: 16px;
+  min-width: 50px;
 }
 
 /* 王掉落 */
 .loot-boss-block { margin-bottom: 12px; }
 .loot-boss-name {
-  font-size: 13px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--boss-color);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .loot-drop-grid {
   display: flex;
@@ -1117,13 +1141,15 @@ body {
 .loot-drop-chip {
   background: var(--bg-input);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: 12px;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 20px;
+  color: var(--text);
   cursor: pointer;
   user-select: none;
   transition: background 0.15s, border-color 0.15s;
 }
+.loot-drop-chip:hover { border-color: var(--accent); }
 .loot-drop-chip.selected {
   background: #2a3a1a;
   border-color: var(--success);
@@ -1131,53 +1157,62 @@ body {
 }
 .loot-scissors-badge {
   color: var(--accent);
-  margin-left: 4px;
-  font-size: 11px;
+  margin-left: 5px;
+  font-size: 16px;
+}
+.loot-drop-count {
+  background: var(--success);
+  color: #111;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 2px 7px;
+  margin-left: 5px;
 }
 
 /* 物品明細表 */
 .loot-item-table { display: flex; flex-direction: column; gap: 4px; }
 .loot-item-header, .loot-item-row {
   display: grid;
-  grid-template-columns: 130px 95px 75px 52px 95px 110px 32px;
+  grid-template-columns: 160px 120px 100px 68px 120px 145px 36px;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 .loot-item-header {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--text-dim);
   border-bottom: 1px solid var(--border);
   padding-bottom: 4px;
 }
-.loot-item-name { font-size: 13px; }
+.loot-item-name { font-size: 20px; }
 .loot-select-sm {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text);
-  font-size: 12px;
-  padding: 3px 4px;
+  font-size: 18px;
+  padding: 5px 6px;
 }
 .loot-input-qty {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text);
-  font-size: 12px;
-  padding: 3px 6px;
-  width: 48px;
+  font-size: 18px;
+  padding: 5px 6px;
+  width: 60px;
 }
 .loot-input-price {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text);
-  font-size: 12px;
-  padding: 3px 6px;
-  width: 90px;
+  font-size: 18px;
+  padding: 5px 6px;
+  width: 110px;
 }
-.loot-item-na { color: var(--text-dim); font-size: 12px; }
-.loot-btn-sm { padding: 2px 7px; font-size: 12px; }
+.loot-item-na { color: var(--text-dim); font-size: 18px; }
+.loot-btn-sm { padding: 4px 10px; font-size: 16px; }
 
 /* 結算結果 */
 .loot-summary {
@@ -1191,7 +1226,7 @@ body {
 .loot-summary-row {
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: 20px;
 }
 .loot-summary-row.danger span:last-child { color: var(--danger); }
 .loot-summary-row.accent span:last-child { color: var(--accent); font-weight: 700; }
@@ -1201,40 +1236,40 @@ body {
 }
 .loot-member-summary-header {
   display: grid;
-  grid-template-columns: 1fr 80px 80px 80px;
-  font-size: 11px;
+  grid-template-columns: 1fr 100px 100px 100px;
+  font-size: 14px;
   color: var(--text-dim);
   padding: 2px 0;
 }
 .loot-member-summary-row {
   display: grid;
-  grid-template-columns: 1fr 80px 80px 80px;
-  font-size: 13px;
-  padding: 3px 0;
+  grid-template-columns: 1fr 100px 100px 100px;
+  font-size: 20px;
+  padding: 4px 0;
 }
 .loot-member-summary-row.owes { background: rgba(248,113,113,0.05); }
 .loot-member-summary-row.owed { background: rgba(74,222,128,0.05); }
-.loot-transfers { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.loot-transfers { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
 .loot-transfer-row {
-  font-size: 14px;
+  font-size: 22px;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 .loot-transfer-amount {
   background: var(--accent);
   color: #000;
   border-radius: 5px;
-  padding: 1px 8px;
-  font-size: 13px;
+  padding: 2px 10px;
+  font-size: 20px;
   margin-left: 6px;
 }
 .text-danger { color: var(--danger); }
 .text-success { color: var(--success); }
 .loot-empty-hint {
   color: var(--text-dim);
-  font-size: 13px;
+  font-size: 18px;
   padding: 8px 0;
 }
 
@@ -1244,7 +1279,7 @@ body {
   border: 1px solid var(--danger);
   color: var(--danger);
   margin-top: 8px;
-  font-size: 13px;
+  font-size: 18px;
 }
 .loot-clear-btn:hover { background: rgba(248,113,113,0.1); }
 
@@ -1273,37 +1308,37 @@ body {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 5px;
-  padding: 4px 8px;
+  padding: 5px 10px;
   color: var(--accent);
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 700;
-  width: 180px;
+  width: 220px;
 }
 .loot-drop-edit-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .loot-drop-edit-row label {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: 18px;
   color: var(--text-dim);
 }
 .loot-preset-edit-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .loot-add-btn {
   background: transparent;
   border: 1px dashed var(--border);
   color: var(--text-dim);
-  font-size: 12px;
-  padding: 4px 12px;
+  font-size: 18px;
+  padding: 5px 14px;
   border-radius: 6px;
   margin-top: 4px;
 }

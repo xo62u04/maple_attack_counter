@@ -556,10 +556,8 @@ createApp({
     const LOOT_SETTINGS_KEY = 'maple_loot_settings'
 
     function saveLootSettings() {
-      const s = loot.getState()
-      const { session: _session, ...toSave } = s
       try {
-        localStorage.setItem(LOOT_SETTINGS_KEY, JSON.stringify(toSave))
+        localStorage.setItem(LOOT_SETTINGS_KEY, JSON.stringify(loot.getState()))
       } catch {}
     }
 
@@ -572,6 +570,8 @@ createApp({
         }
       } catch {}
     }
+
+    Vue.watch(() => JSON.stringify(loot.getState()), saveLootSettings)
 
     return {
       activeTab, equipZoom, changeEquipZoom, saveName, selectedSaveKey, saveMessage, savedCharacters,
