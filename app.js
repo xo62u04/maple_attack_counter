@@ -254,10 +254,11 @@ createApp({
     const hitLevelPenalty = computed(() =>
       Math.max(0, (Number(stats.value.monsterLevel) || 0) - (Number(stats.value.characterLevel) || 0)) * 5
     )
-    const hitRateRaw = computed(() =>
-      playerAccuracyRoot.value - monsterAvoidRoot.value + 100 - hitLevelPenalty.value
+    const hitRateBase = computed(() =>
+      Math.min(100, playerAccuracyRoot.value - monsterAvoidRoot.value + 100)
     )
-    const hitRate = computed(() => Math.max(0, Math.min(100, hitRateRaw.value)))
+    const hitRateRaw = computed(() => hitRateBase.value - hitLevelPenalty.value)
+    const hitRate = computed(() => Math.max(0, hitRateRaw.value))
 
     // ── 格式化 ──
     function fmt(n) {
@@ -651,7 +652,7 @@ createApp({
       maxDmgBoss, minDmgBoss, avgDmgBoss, avgDmgBossCrit,
       maxDmgMob, minDmgMob, avgDmgMob, avgDmgMobCrit,
       accuracyMode, rawAccuracy, cappedAccuracy, cappedMonsterAvoid,
-      playerAccuracyRoot, monsterAvoidRoot, hitLevelPenalty, hitRateRaw, hitRate,
+      playerAccuracyRoot, monsterAvoidRoot, hitRateBase, hitLevelPenalty, hitRateRaw, hitRate,
       fmt, fmtFinal, fmtM, fmtDps, dpsFormat, DPS_FORMAT_LABELS, cycleDpsFormat,
       shareUrl,
       equip,

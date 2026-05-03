@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>楓星攻擊力計算機</title>
-  <link rel="stylesheet" href="style.css?v=20260503-5" />
+  <link rel="stylesheet" href="style.css?v=20260503-6" />
 </head>
 <body>
   <div id="app">
@@ -426,6 +426,10 @@
                 <b>{{ monsterAvoidRoot }}</b>
               </div>
               <div>
+                <span>基礎命中率</span>
+                <b>{{ hitRateBase.toFixed(1) }}%</b>
+              </div>
+              <div>
                 <span>等級懲罰</span>
                 <b>-{{ hitLevelPenalty }}%</b>
               </div>
@@ -438,7 +442,7 @@
               <template v-else>
                 LUK + DEX × 1.2 + 額外命中
               </template>
-              ，命中率 = floor(sqrt(命中)) - floor(sqrt(怪物迴避)) + 100 - 等級差懲罰
+              ，基礎命中率先上限 100%，再扣「怪物高於角色等級 × 5%」
             </div>
           </div>
 
@@ -1380,7 +1384,7 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="equip.js"></script>
   <script src="loot.js"></script>
-  <script src="alchemy.js?v=20260503-5"></script>
-  <script src="app.js?v=20260503-5"></script>
+  <script src="alchemy.js?v=20260503-6"></script>
+  <script src="app.js?v=20260503-6"></script>
 </body>
 </html>
