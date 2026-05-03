@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>楓星攻擊力計算機</title>
-  <link rel="stylesheet" href="style.css?v=20260503-4" />
+  <link rel="stylesheet" href="style.css?v=20260503-5" />
 </head>
 <body>
   <div id="app">
@@ -184,6 +184,33 @@
               :class="{ invalid: !isValidNumber(stats.ignoreDefPct) }" />
             <span>%</span>
           </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="section-title">BB 後命中率</div>
+
+        <div class="field-group">
+          <label>角色等級</label>
+          <input type="number" v-model.number="stats.characterLevel" min="1"
+            :class="{ invalid: !isValidNumber(stats.characterLevel) }" />
+        </div>
+
+        <div class="field-group">
+          <label>怪物等級</label>
+          <input type="number" v-model.number="stats.monsterLevel" min="1"
+            :class="{ invalid: !isValidNumber(stats.monsterLevel) }" />
+        </div>
+
+        <div class="field-group">
+          <label>怪物迴避 Avoid</label>
+          <input type="number" v-model.number="stats.monsterAvoid" min="0"
+            :class="{ invalid: !isValidNumber(stats.monsterAvoid) }" />
+        </div>
+
+        <div class="field-group">
+          <label>額外命中 ACC（裝備/技能/藥水）</label>
+          <input type="number" v-model.number="stats.extraAccuracy" min="0"
+            :class="{ invalid: !isValidNumber(stats.extraAccuracy) }" />
         </div>
 
         <div class="divider"></div>
@@ -374,6 +401,44 @@
               <div class="ct-row-label">平均傷害（含爆擊 {{ stats.critRate }}%）</div>
               <div class="ct-val ct-final-val">{{ fmtFinal(avgDmgBossCrit) }}</div>
               <div class="ct-val ct-final-val">{{ fmtFinal(avgDmgMobCrit) }}</div>
+            </div>
+          </div>
+
+          <div class="hit-rate-card">
+            <div class="hit-rate-main">
+              <div>
+                <div class="step-label">BB 後命中率</div>
+                <div class="hit-rate-mode">{{ accuracyMode }}</div>
+              </div>
+              <strong>{{ hitRate.toFixed(1) }}%</strong>
+            </div>
+            <div class="hit-rate-grid">
+              <div>
+                <span>角色命中</span>
+                <b>{{ rawAccuracy.toFixed(1) }}</b>
+              </div>
+              <div>
+                <span>sqrt 命中</span>
+                <b>{{ playerAccuracyRoot }}</b>
+              </div>
+              <div>
+                <span>sqrt 怪物迴避</span>
+                <b>{{ monsterAvoidRoot }}</b>
+              </div>
+              <div>
+                <span>等級懲罰</span>
+                <b>-{{ hitLevelPenalty }}%</b>
+              </div>
+            </div>
+            <div class="step-formula hit-rate-formula">
+              {{ accuracyMode }} =
+              <template v-if="selectedJob && selectedJob.attackType === 'magical'">
+                INT + LUK × 1.2 + 額外命中
+              </template>
+              <template v-else>
+                LUK + DEX × 1.2 + 額外命中
+              </template>
+              ，命中率 = floor(sqrt(命中)) - floor(sqrt(怪物迴避)) + 100 - 等級差懲罰
             </div>
           </div>
 
@@ -1315,7 +1380,7 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="equip.js"></script>
   <script src="loot.js"></script>
-  <script src="alchemy.js?v=20260503-4"></script>
-  <script src="app.js?v=20260503-4"></script>
+  <script src="alchemy.js?v=20260503-5"></script>
+  <script src="app.js?v=20260503-5"></script>
 </body>
 </html>

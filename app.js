@@ -96,7 +96,11 @@ createApp({
       critRate: 0,
       minCritBonus: 20,
       maxCritBonus: 50,
-      monsterDefPct: 10
+      monsterDefPct: 10,
+      characterLevel: 120,
+      monsterLevel: 120,
+      monsterAvoid: 0,
+      extraAccuracy: 0,
     })
 
     function needsStat(stat) {
@@ -164,7 +168,8 @@ createApp({
         s.atk, s.atkPct, s.skillPct,
         s.totalDmgPct, s.bossPct, s.enhancePct,
         s.bossDefPct, s.ignoreDefPct,
-        s.mastery, s.critRate, s.minCritBonus, s.maxCritBonus, s.monsterDefPct
+        s.mastery, s.critRate, s.minCritBonus, s.maxCritBonus, s.monsterDefPct,
+        s.characterLevel, s.monsterLevel, s.monsterAvoid, s.extraAccuracy
       ].every(v => isValidNumber(v))
     })
 
@@ -228,6 +233,31 @@ createApp({
     })
     const avgDmgBossCrit = computed(() => avgDmgBoss.value * critMult.value)
     const avgDmgMobCrit  = computed(() => avgDmgMob.value  * critMult.value)
+
+    const accuracyMode = computed(() =>
+      selectedJob.value?.attackType === 'magical' ? '魔法命中' : '物理命中'
+    )
+    const rawAccuracy = computed(() => {
+      const s = stats.value
+      const extra = Number(s.extraAccuracy) || 0
+      if (selectedJob.value?.attackType === 'magical') {
+        return (Number(s.INT) || 0) + (Number(s.LUK) || 0) * 1.2 + extra
+      }
+      return (Number(s.LUK) || 0) + (Number(s.DEX) || 0) * 1.2 + extra
+    })
+    const cappedAccuracy = computed(() => Math.max(0, Math.min(9999, rawAccuracy.value)))
+    const cappedMonsterAvoid = computed(() =>
+      Math.max(0, Math.min(9999, Number(stats.value.monsterAvoid) || 0))
+    )
+    const playerAccuracyRoot = computed(() => Math.floor(Math.sqrt(cappedAccuracy.value)))
+    const monsterAvoidRoot = computed(() => Math.floor(Math.sqrt(cappedMonsterAvoid.value)))
+    const hitLevelPenalty = computed(() =>
+      Math.max(0, (Number(stats.value.monsterLevel) || 0) - (Number(stats.value.characterLevel) || 0)) * 5
+    )
+    const hitRateRaw = computed(() =>
+      playerAccuracyRoot.value - monsterAvoidRoot.value + 100 - hitLevelPenalty.value
+    )
+    const hitRate = computed(() => Math.max(0, Math.min(100, hitRateRaw.value)))
 
     // ── 格式化 ──
     function fmt(n) {
@@ -507,7 +537,11 @@ createApp({
         crit: stats.value.critRate,
         mincrit: stats.value.minCritBonus,
         maxcrit: stats.value.maxCritBonus,
-        mdef: stats.value.monsterDefPct
+        mdef: stats.value.monsterDefPct,
+        clevel: stats.value.characterLevel,
+        mlevel: stats.value.monsterLevel,
+        mavoid: stats.value.monsterAvoid,
+        acc: stats.value.extraAccuracy
       })
       const url = window.location.origin + window.location.pathname + '?' + params.toString()
       navigator.clipboard.writeText(url).then(() => {
@@ -552,6 +586,14 @@ createApp({
       if (maxCritRaw  !== null) s.maxCritBonus  = parseFloat(maxCritRaw)
       const mdefRaw     = params.get('mdef')
       if (mdefRaw     !== null) s.monsterDefPct = parseFloat(mdefRaw)
+      const clevelRaw   = params.get('clevel')
+      if (clevelRaw   !== null) s.characterLevel = parseFloat(clevelRaw)
+      const mlevelRaw   = params.get('mlevel')
+      if (mlevelRaw   !== null) s.monsterLevel = parseFloat(mlevelRaw)
+      const mavoidRaw   = params.get('mavoid')
+      if (mavoidRaw   !== null) s.monsterAvoid = parseFloat(mavoidRaw)
+      const accRaw      = params.get('acc')
+      if (accRaw      !== null) s.extraAccuracy = parseFloat(accRaw)
     }
 
     // ── 分錢系統設定存檔 ──
@@ -608,6 +650,8 @@ createApp({
       step5Boss, step5Mob, step6Boss, step6Mob,
       maxDmgBoss, minDmgBoss, avgDmgBoss, avgDmgBossCrit,
       maxDmgMob, minDmgMob, avgDmgMob, avgDmgMobCrit,
+      accuracyMode, rawAccuracy, cappedAccuracy, cappedMonsterAvoid,
+      playerAccuracyRoot, monsterAvoidRoot, hitLevelPenalty, hitRateRaw, hitRate,
       fmt, fmtFinal, fmtM, fmtDps, dpsFormat, DPS_FORMAT_LABELS, cycleDpsFormat,
       shareUrl,
       equip,
