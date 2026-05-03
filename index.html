@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>楓星攻擊力計算機</title>
-  <link rel="stylesheet" href="style.css?v=20260503-2" />
+  <link rel="stylesheet" href="style.css?v=20260503-3" />
 </head>
 <body>
   <div id="app">
@@ -1140,6 +1140,10 @@
           <input type="checkbox" v-model="alchemy.expandCraftables" />
           展開可製作材料
         </label>
+        <button class="btn btn-share" @click="alchemy.togglePricePanel()">
+          {{ alchemy.pricePanelOpen ? '收起材料價格' : '設定材料價格' }}
+          ({{ alchemy.pricedMaterialCount || 0 }}/{{ (alchemy.allMaterialRows || []).length }})
+        </button>
         <button class="btn btn-export" @click="alchemy.exportState()">匯出設定</button>
         <label class="btn btn-import-file" title="匯入鍊金價格與製作數">
           匯入設定
@@ -1150,6 +1154,35 @@
         <div v-if="alchemy.importMessage" class="alchemy-message">{{ alchemy.importMessage }}</div>
       </section>
 
+      <section v-if="alchemy.pricePanelOpen" class="alchemy-section alchemy-price-panel">
+        <div class="alchemy-panel-title">
+          <span>材料價格設定</span>
+          <small>{{ alchemy.pricedMaterialCount || 0 }} / {{ (alchemy.allMaterialRows || []).length }} 已輸入</small>
+        </div>
+        <div class="alchemy-price-toolbar">
+          <div class="alchemy-field alchemy-material-search">
+            <label>搜尋材料</label>
+            <input type="text" v-model="alchemy.materialSearchText" placeholder="輸入材料名稱" />
+          </div>
+          <div class="alchemy-price-note">
+            同一個材料只需要在這裡輸入一次，所有配方、分類明細和總成本會自動帶入。
+          </div>
+        </div>
+        <div class="alchemy-price-table">
+          <div class="alchemy-price-row alchemy-table-head">
+            <span>材料</span><span>單價</span><span>用途</span>
+          </div>
+          <div v-for="row in (alchemy.allMaterialRows || [])" :key="row.name" class="alchemy-price-row">
+            <span>
+              {{ row.name }}
+              <em v-if="row.isOil">精油</em>
+            </span>
+            <input type="number" min="0" v-model.number="alchemy.prices[row.name]" />
+            <small>{{ row.categories.join('、') }}</small>
+          </div>
+        </div>
+      </section>
+
       <div class="alchemy-grid">
         <section class="alchemy-section">
           <div class="alchemy-panel-title">
@@ -1158,46 +1191,43 @@
           </div>
           <div class="alchemy-recipe-table">
             <div class="alchemy-recipe-row alchemy-table-head">
-              <span>分類</span><span>等級</span><span>道具</span><span>每次成本</span><span>製作數</span><span></span>
+              <span>分類</span><span>等級</span><span>道具</span><span>每次成本</span><span>製作數</span><span>加入</span><span>材料</span>
             </div>
-            <div v-for="recipe in (alchemy.filteredRecipes || [])" :key="recipe.id" class="alchemy-recipe-row">
-              <span class="alchemy-muted">{{ recipe.category }}</span>
-              <span>{{ recipe.level || '-' }}</span>
-              <span class="alchemy-name">
-                {{ recipe.name }}
-                <small>{{ recipe.materials.map(m => `${m.name} x${m.qty}`).join('、') }}</small>
-              </span>
-              <span class="alchemy-cost">{{ alchemy.formatCost(alchemy.recipeCost(recipe)) }}</span>
-              <input type="number" min="0" v-model.number="alchemy.quantities[recipe.name]" />
-              <button class="alchemy-plus" @click="alchemy.addRecipe(recipe.name, 1)">+1</button>
-            </div>
-          </div>
-        </section>
-
-        <section class="alchemy-section">
-          <div class="alchemy-panel-title">
-            <span>材料價格設定</span>
-            <small>{{ alchemy.pricedMaterialCount || 0 }} / {{ (alchemy.allMaterialRows || []).length }} 已輸入</small>
-          </div>
-          <div class="alchemy-field alchemy-material-search">
-            <label>搜尋材料</label>
-            <input type="text" v-model="alchemy.materialSearchText" placeholder="輸入材料名稱" />
-          </div>
-          <div class="alchemy-price-note">
-            同一個材料只需要在這裡輸入一次，所有配方、分類明細和總成本會自動帶入。
-          </div>
-          <div class="alchemy-price-table">
-            <div class="alchemy-price-row alchemy-table-head">
-              <span>材料</span><span>單價</span><span>用途</span>
-            </div>
-            <div v-for="row in (alchemy.allMaterialRows || [])" :key="row.name" class="alchemy-price-row">
-              <span>
-                {{ row.name }}
-                <em v-if="row.isOil">精油</em>
-              </span>
-              <input type="number" min="0" v-model.number="alchemy.prices[row.name]" />
-              <small>{{ row.categories.join('、') }}</small>
-            </div>
+            <template v-for="recipe in (alchemy.filteredRecipes || [])" :key="recipe.id">
+              <div class="alchemy-recipe-row">
+                <span class="alchemy-muted">{{ recipe.category }}</span>
+                <span>{{ recipe.level || '-' }}</span>
+                <span class="alchemy-name">{{ recipe.name }}</span>
+                <span class="alchemy-cost">{{ alchemy.formatCost(alchemy.recipeCost(recipe)) }}</span>
+                <input type="number" min="0" v-model.number="alchemy.quantities[recipe.name]" />
+                <button class="alchemy-plus" @click="alchemy.addRecipe(recipe.name, 1)">+1</button>
+                <button class="alchemy-detail-toggle" @click="alchemy.toggleRecipeDetails(recipe.name)">
+                  {{ alchemy.isRecipeExpanded(recipe.name) ? '收起' : '展開' }}
+                </button>
+              </div>
+              <div v-if="alchemy.isRecipeExpanded(recipe.name)" class="alchemy-recipe-detail">
+                <div class="alchemy-recipe-detail-head">
+                  <span>{{ recipe.name }}材料</span>
+                  <small>依製作 {{ Number(alchemy.quantities[recipe.name]) || 1 }} 次計算</small>
+                </div>
+                <div class="alchemy-material-row alchemy-table-head">
+                  <span>材料</span><span>數量</span><span>單價</span><span>小計</span>
+                </div>
+                <div
+                  v-for="row in alchemy.recipeMaterialRows(recipe, Number(alchemy.quantities[recipe.name]) || 1)"
+                  :key="`${recipe.id}-${row.name}`"
+                  class="alchemy-material-row"
+                >
+                  <span>
+                    {{ row.name }}
+                    <em v-if="row.isOil">精油</em>
+                  </span>
+                  <span>{{ alchemy.formatQty(row.qty) }}</span>
+                  <input type="number" min="0" v-model.number="alchemy.prices[row.name]" />
+                  <span class="alchemy-cost">{{ alchemy.formatCost(row.subtotal) }}</span>
+                </div>
+              </div>
+            </template>
           </div>
         </section>
 
@@ -1212,33 +1242,18 @@
           </div>
 
           <div v-if="(alchemy.categoryMaterialGroups || []).length" class="alchemy-category-summary">
-            <button
+            <div
               v-for="group in (alchemy.categoryMaterialGroups || [])"
               :key="group.category"
-              class="alchemy-category-card"
-              @click="alchemy.selectedCategory = group.category"
+              class="alchemy-category-block"
             >
-              <span>{{ group.category }}</span>
-              <strong>{{ alchemy.formatCost(group.totalCost) }}</strong>
-              <small>{{ group.recipeCount }} 種配方 / 製作 {{ alchemy.formatQty(group.craftQty) }} 次 / {{ (group.materials || []).length }} 種材料</small>
-            </button>
-          </div>
-
-          <div v-if="(alchemy.selectedRecipes || []).length" class="alchemy-selected-list">
-            <div v-for="row in (alchemy.selectedRecipes || [])" :key="row.recipe.id" class="alchemy-selected-row">
-              <span>{{ row.recipe.name }}</span>
-              <span>x{{ row.qty }}</span>
-              <span>{{ alchemy.formatCost(alchemy.selectedRecipeCost(row.recipe.name) * row.qty) }}</span>
-            </div>
-          </div>
-
-          <div v-if="(alchemy.categoryMaterialGroups || []).length" class="alchemy-category-detail-list">
-            <div v-for="group in (alchemy.categoryMaterialGroups || [])" :key="group.category" class="alchemy-category-detail">
-              <div class="alchemy-category-detail-title">
-                <span>{{ group.category }}材料明細</span>
+              <button class="alchemy-category-card" @click="alchemy.toggleCategoryDetails(group.category)">
+                <span>{{ group.category }}</span>
                 <strong>{{ alchemy.formatCost(group.totalCost) }}</strong>
-              </div>
-              <div class="alchemy-material-table compact">
+                <small>{{ group.recipeCount }} 種配方 / 製作 {{ alchemy.formatQty(group.craftQty) }} 次 / {{ (group.materials || []).length }} 種材料</small>
+                <em>{{ alchemy.isCategoryExpanded(group.category) ? '收起材料' : '展開材料' }}</em>
+              </button>
+              <div v-if="alchemy.isCategoryExpanded(group.category)" class="alchemy-category-detail">
                 <div class="alchemy-material-row alchemy-table-head">
                   <span>材料</span><span>數量</span><span>單價</span><span>小計</span>
                 </div>
@@ -1252,6 +1267,14 @@
                   <span class="alchemy-cost">{{ alchemy.formatCost(row.subtotal) }}</span>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div v-if="(alchemy.selectedRecipes || []).length" class="alchemy-selected-list">
+            <div v-for="row in (alchemy.selectedRecipes || [])" :key="row.recipe.id" class="alchemy-selected-row">
+              <span>{{ row.recipe.name }}</span>
+              <span>x{{ row.qty }}</span>
+              <span>{{ alchemy.formatCost(alchemy.selectedRecipeCost(row.recipe.name) * row.qty) }}</span>
             </div>
           </div>
 
@@ -1281,7 +1304,7 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="equip.js"></script>
   <script src="loot.js"></script>
-  <script src="alchemy.js?v=20260503-2"></script>
-  <script src="app.js?v=20260503-2"></script>
+  <script src="alchemy.js?v=20260503-3"></script>
+  <script src="app.js?v=20260503-3"></script>
 </body>
 </html>

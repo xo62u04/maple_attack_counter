@@ -425,6 +425,9 @@ BUFF藥水跟藥丸
   const selectedCategory = ref('')
   const expandCraftables = ref(true)
   const importMessage = ref('')
+  const pricePanelOpen = ref(false)
+  const expandedRecipes = ref({})
+  const expandedCategories = ref({})
 
   function cleanName(name) {
     return String(name || '')
@@ -527,6 +530,12 @@ BUFF藥水跟藥丸
     }, 0)
     stack.delete(keyOf(recipe.name))
     return total
+  }
+
+  function recipeMaterialRows(recipe, times = 1) {
+    const map = new Map()
+    addRecipeMaterials(map, recipe, Number(times) || 1)
+    return materialRowsFromMap(map)
   }
 
   function addRecipe(name, delta) {
@@ -676,6 +685,34 @@ BUFF藥水跟藥丸
     prices.value = {}
   }
 
+  function togglePricePanel() {
+    pricePanelOpen.value = !pricePanelOpen.value
+  }
+
+  function toggleRecipeDetails(name) {
+    const key = keyOf(name)
+    expandedRecipes.value = {
+      ...expandedRecipes.value,
+      [key]: !expandedRecipes.value[key],
+    }
+  }
+
+  function isRecipeExpanded(name) {
+    return !!expandedRecipes.value[keyOf(name)]
+  }
+
+  function toggleCategoryDetails(category) {
+    const key = keyOf(category)
+    expandedCategories.value = {
+      ...expandedCategories.value,
+      [key]: !expandedCategories.value[key],
+    }
+  }
+
+  function isCategoryExpanded(category) {
+    return !!expandedCategories.value[keyOf(category)]
+  }
+
   function exportState() {
     const payload = {
       type: 'maple_alchemy_cost_settings',
@@ -723,6 +760,9 @@ BUFF藥水跟藥丸
       searchText: searchText.value,
       materialSearchText: materialSearchText.value,
       expandCraftables: expandCraftables.value,
+      pricePanelOpen: pricePanelOpen.value,
+      expandedRecipes: JSON.parse(JSON.stringify(expandedRecipes.value)),
+      expandedCategories: JSON.parse(JSON.stringify(expandedCategories.value)),
     }
   }
 
@@ -734,6 +774,9 @@ BUFF藥水跟藥丸
     searchText.value = state.searchText || ''
     materialSearchText.value = state.materialSearchText || ''
     expandCraftables.value = state.expandCraftables !== false
+    pricePanelOpen.value = !!state.pricePanelOpen
+    expandedRecipes.value = state.expandedRecipes || {}
+    expandedCategories.value = state.expandedCategories || {}
   }
 
   return {
@@ -746,6 +789,9 @@ BUFF藥水跟藥丸
     selectedCategory,
     expandCraftables,
     importMessage,
+    pricePanelOpen,
+    expandedRecipes,
+    expandedCategories,
     filteredRecipes,
     allMaterialRows,
     pricedMaterialCount,
@@ -754,8 +800,14 @@ BUFF藥水跟藥丸
     categoryMaterialGroups,
     totalCost,
     recipeCost,
+    recipeMaterialRows,
     selectedRecipeCost,
     addRecipe,
+    togglePricePanel,
+    toggleRecipeDetails,
+    isRecipeExpanded,
+    toggleCategoryDetails,
+    isCategoryExpanded,
     formatQty,
     formatCost,
     clearQuantities,
