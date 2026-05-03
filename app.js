@@ -259,6 +259,19 @@ createApp({
     )
     const hitRateRaw = computed(() => hitRateBase.value - hitLevelPenalty.value)
     const hitRate = computed(() => Math.max(0, hitRateRaw.value))
+    const hitLevelDiff = computed(() =>
+      Math.max(0, (Number(stats.value.monsterLevel) || 0) - (Number(stats.value.characterLevel) || 0))
+    )
+    const maxHitRateByLevel = computed(() => Math.max(0, 100 - hitLevelPenalty.value))
+    const hitRateNote = computed(() => {
+      if (hitLevelDiff.value > 0 && hitRateBase.value >= 100) {
+        return `基礎命中已達 100%，怪物高 ${hitLevelDiff.value} 等會固定扣 ${hitLevelPenalty.value}%，所以目前最高命中率是 ${maxHitRateByLevel.value.toFixed(1)}%。`
+      }
+      if (hitRateBase.value < 100) {
+        return '目前還沒達到基礎命中 100%，提高命中或降低怪物迴避會提升命中率。'
+      }
+      return '同等或低等怪物在基礎命中達 100% 後不會再 MISS。'
+    })
 
     // ── 格式化 ──
     function fmt(n) {
@@ -652,7 +665,8 @@ createApp({
       maxDmgBoss, minDmgBoss, avgDmgBoss, avgDmgBossCrit,
       maxDmgMob, minDmgMob, avgDmgMob, avgDmgMobCrit,
       accuracyMode, rawAccuracy, cappedAccuracy, cappedMonsterAvoid,
-      playerAccuracyRoot, monsterAvoidRoot, hitRateBase, hitLevelPenalty, hitRateRaw, hitRate,
+      playerAccuracyRoot, monsterAvoidRoot, hitRateBase, hitLevelPenalty, hitLevelDiff,
+      maxHitRateByLevel, hitRateRaw, hitRate, hitRateNote,
       fmt, fmtFinal, fmtM, fmtDps, dpsFormat, DPS_FORMAT_LABELS, cycleDpsFormat,
       shareUrl,
       equip,
