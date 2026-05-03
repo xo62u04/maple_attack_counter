@@ -1176,6 +1176,33 @@
 
         <section class="alchemy-section">
           <div class="alchemy-panel-title">
+            <span>材料價格設定</span>
+            <small>{{ alchemy.pricedMaterialCount }} / {{ alchemy.allMaterialRows.length }} 已輸入</small>
+          </div>
+          <div class="alchemy-field alchemy-material-search">
+            <label>搜尋材料</label>
+            <input type="text" v-model="alchemy.materialSearchText" placeholder="輸入材料名稱" />
+          </div>
+          <div class="alchemy-price-note">
+            同一個材料只需要在這裡輸入一次，所有配方、分類明細和總成本會自動帶入。
+          </div>
+          <div class="alchemy-price-table">
+            <div class="alchemy-price-row alchemy-table-head">
+              <span>材料</span><span>單價</span><span>用途</span>
+            </div>
+            <div v-for="row in alchemy.allMaterialRows" :key="row.name" class="alchemy-price-row">
+              <span>
+                {{ row.name }}
+                <em v-if="row.isOil">精油</em>
+              </span>
+              <input type="number" min="0" v-model.number="alchemy.prices[row.name]" />
+              <small>{{ row.categories.join('、') }}</small>
+            </div>
+          </div>
+        </section>
+
+        <section class="alchemy-section">
+          <div class="alchemy-panel-title">
             <span>材料消耗表</span>
             <small>{{ alchemy.selectedRecipes.length }} 種製作項目</small>
           </div>

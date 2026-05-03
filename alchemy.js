@@ -421,6 +421,7 @@ BUFF藥水跟藥丸
   const prices = ref({})
   const quantities = ref({})
   const searchText = ref('')
+  const materialSearchText = ref('')
   const selectedCategory = ref('')
   const expandCraftables = ref(true)
   const importMessage = ref('')
@@ -550,6 +551,53 @@ BUFF藥水跟藥丸
       .sort((a, b) => b.subtotal - a.subtotal || a.name.localeCompare(b.name, 'zh-Hant'))
   }
 
+  function collectBaseMaterialNames(recipe, target = new Map(), stack = new Set()) {
+    if (!recipe || stack.has(keyOf(recipe.name))) return target
+    stack.add(keyOf(recipe.name))
+    for (const mat of recipe.materials) {
+      const child = recipeByKey.get(keyOf(mat.name))
+      if (expandCraftables.value && child) {
+        collectBaseMaterialNames(child, target, stack)
+      } else {
+        const name = cleanName(mat.name)
+        if (!target.has(name)) {
+          target.set(name, {
+            name,
+            isOil: /精油$/.test(name),
+            recipeCount: 0,
+            categories: new Set(),
+          })
+        }
+        const row = target.get(name)
+        row.recipeCount += 1
+        row.categories.add(recipe.category || '未分類')
+      }
+    }
+    stack.delete(keyOf(recipe.name))
+    return target
+  }
+
+  const allMaterialRows = computed(() => {
+    const map = new Map()
+    for (const recipe of recipes) collectBaseMaterialNames(recipe, map)
+    const q = keyOf(materialSearchText.value)
+    return Array.from(map.values())
+      .map(row => ({
+        ...row,
+        price: unitPrice(row.name),
+        categories: Array.from(row.categories).sort((a, b) => a.localeCompare(b, 'zh-Hant')),
+      }))
+      .filter(row => !q || keyOf(`${row.name} ${row.categories.join(' ')}`).includes(q))
+      .sort((a, b) => {
+        if ((b.price > 0) !== (a.price > 0)) return (b.price > 0) - (a.price > 0)
+        return a.name.localeCompare(b.name, 'zh-Hant')
+      })
+  })
+
+  const pricedMaterialCount = computed(() =>
+    allMaterialRows.value.filter(row => unitPrice(row.name) > 0).length
+  )
+
   function addRecipeMaterials(map, recipe, times, stack = new Set()) {
     if (!recipe || stack.has(keyOf(recipe.name))) return
     stack.add(keyOf(recipe.name))
@@ -673,6 +721,7 @@ BUFF藥水跟藥丸
       quantities: JSON.parse(JSON.stringify(quantities.value)),
       selectedCategory: selectedCategory.value,
       searchText: searchText.value,
+      materialSearchText: materialSearchText.value,
       expandCraftables: expandCraftables.value,
     }
   }
@@ -683,6 +732,7 @@ BUFF藥水跟藥丸
     quantities.value = state.quantities || {}
     selectedCategory.value = state.selectedCategory || ''
     searchText.value = state.searchText || ''
+    materialSearchText.value = state.materialSearchText || ''
     expandCraftables.value = state.expandCraftables !== false
   }
 
@@ -692,10 +742,13 @@ BUFF藥水跟藥丸
     prices,
     quantities,
     searchText,
+    materialSearchText,
     selectedCategory,
     expandCraftables,
     importMessage,
     filteredRecipes,
+    allMaterialRows,
+    pricedMaterialCount,
     selectedRecipes,
     materialRows,
     categoryMaterialGroups,

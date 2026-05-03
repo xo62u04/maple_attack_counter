@@ -1407,7 +1407,8 @@ body {
 .alchemy-field select,
 .alchemy-field input,
 .alchemy-recipe-row input,
-.alchemy-material-row input {
+.alchemy-material-row input,
+.alchemy-price-row input {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -1438,7 +1439,7 @@ body {
 
 .alchemy-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(380px, 0.8fr);
+  grid-template-columns: minmax(0, 1.25fr) minmax(310px, 0.65fr) minmax(380px, 0.85fr);
   gap: 14px;
   align-items: start;
 }
@@ -1516,9 +1517,65 @@ body {
 .alchemy-cost { color: var(--accent); font-weight: 800; text-align: right; }
 
 .alchemy-recipe-row input,
-.alchemy-material-row input {
+.alchemy-material-row input,
+.alchemy-price-row input {
   width: 100%;
   text-align: right;
+}
+
+.alchemy-material-search {
+  margin-bottom: 8px;
+}
+
+.alchemy-price-note {
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.45;
+  margin-bottom: 10px;
+}
+
+.alchemy-price-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: calc(100vh - 275px);
+  overflow: auto;
+}
+
+.alchemy-price-row {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) 90px minmax(95px, 0.85fr);
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 7px;
+  background: rgba(255,255,255,0.02);
+}
+
+.alchemy-price-row span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alchemy-price-row small {
+  color: var(--text-dim);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alchemy-price-row em {
+  display: inline-block;
+  margin-left: 5px;
+  color: #7ec8e3;
+  border: 1px solid #2a5a8a;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-style: normal;
+  font-size: 11px;
 }
 
 .alchemy-plus {
@@ -1681,7 +1738,8 @@ body {
 @media (max-width: 1050px) {
   .alchemy-grid { grid-template-columns: 1fr; }
   .alchemy-recipe-table,
-  .alchemy-material-table { max-height: none; }
+  .alchemy-material-table,
+  .alchemy-price-table { max-height: none; }
 }
 
 @media (max-width: 760px) {
