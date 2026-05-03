@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>楓星攻擊力計算機</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=20260503-2" />
 </head>
 <body>
   <div id="app">
@@ -1154,13 +1154,13 @@
         <section class="alchemy-section">
           <div class="alchemy-panel-title">
             <span>配方清單</span>
-            <small>{{ alchemy.filteredRecipes.length }} / {{ alchemy.recipes.length }}</small>
+            <small>{{ (alchemy.filteredRecipes || []).length }} / {{ (alchemy.recipes || []).length }}</small>
           </div>
           <div class="alchemy-recipe-table">
             <div class="alchemy-recipe-row alchemy-table-head">
               <span>分類</span><span>等級</span><span>道具</span><span>每次成本</span><span>製作數</span><span></span>
             </div>
-            <div v-for="recipe in alchemy.filteredRecipes" :key="recipe.id" class="alchemy-recipe-row">
+            <div v-for="recipe in (alchemy.filteredRecipes || [])" :key="recipe.id" class="alchemy-recipe-row">
               <span class="alchemy-muted">{{ recipe.category }}</span>
               <span>{{ recipe.level || '-' }}</span>
               <span class="alchemy-name">
@@ -1177,7 +1177,7 @@
         <section class="alchemy-section">
           <div class="alchemy-panel-title">
             <span>材料價格設定</span>
-            <small>{{ alchemy.pricedMaterialCount }} / {{ alchemy.allMaterialRows.length }} 已輸入</small>
+            <small>{{ alchemy.pricedMaterialCount || 0 }} / {{ (alchemy.allMaterialRows || []).length }} 已輸入</small>
           </div>
           <div class="alchemy-field alchemy-material-search">
             <label>搜尋材料</label>
@@ -1190,7 +1190,7 @@
             <div class="alchemy-price-row alchemy-table-head">
               <span>材料</span><span>單價</span><span>用途</span>
             </div>
-            <div v-for="row in alchemy.allMaterialRows" :key="row.name" class="alchemy-price-row">
+            <div v-for="row in (alchemy.allMaterialRows || [])" :key="row.name" class="alchemy-price-row">
               <span>
                 {{ row.name }}
                 <em v-if="row.isOil">精油</em>
@@ -1204,36 +1204,36 @@
         <section class="alchemy-section">
           <div class="alchemy-panel-title">
             <span>材料消耗表</span>
-            <small>{{ alchemy.selectedRecipes.length }} 種製作項目</small>
+            <small>{{ (alchemy.selectedRecipes || []).length }} 種製作項目</small>
           </div>
           <div class="alchemy-total">
             <span>總成本</span>
             <strong>{{ alchemy.formatCost(alchemy.totalCost) }}</strong>
           </div>
 
-          <div v-if="alchemy.categoryMaterialGroups.length" class="alchemy-category-summary">
+          <div v-if="(alchemy.categoryMaterialGroups || []).length" class="alchemy-category-summary">
             <button
-              v-for="group in alchemy.categoryMaterialGroups"
+              v-for="group in (alchemy.categoryMaterialGroups || [])"
               :key="group.category"
               class="alchemy-category-card"
               @click="alchemy.selectedCategory = group.category"
             >
               <span>{{ group.category }}</span>
               <strong>{{ alchemy.formatCost(group.totalCost) }}</strong>
-              <small>{{ group.recipeCount }} 種配方 / 製作 {{ alchemy.formatQty(group.craftQty) }} 次 / {{ group.materials.length }} 種材料</small>
+              <small>{{ group.recipeCount }} 種配方 / 製作 {{ alchemy.formatQty(group.craftQty) }} 次 / {{ (group.materials || []).length }} 種材料</small>
             </button>
           </div>
 
-          <div v-if="alchemy.selectedRecipes.length" class="alchemy-selected-list">
-            <div v-for="row in alchemy.selectedRecipes" :key="row.recipe.id" class="alchemy-selected-row">
+          <div v-if="(alchemy.selectedRecipes || []).length" class="alchemy-selected-list">
+            <div v-for="row in (alchemy.selectedRecipes || [])" :key="row.recipe.id" class="alchemy-selected-row">
               <span>{{ row.recipe.name }}</span>
               <span>x{{ row.qty }}</span>
               <span>{{ alchemy.formatCost(alchemy.selectedRecipeCost(row.recipe.name) * row.qty) }}</span>
             </div>
           </div>
 
-          <div v-if="alchemy.categoryMaterialGroups.length" class="alchemy-category-detail-list">
-            <div v-for="group in alchemy.categoryMaterialGroups" :key="group.category" class="alchemy-category-detail">
+          <div v-if="(alchemy.categoryMaterialGroups || []).length" class="alchemy-category-detail-list">
+            <div v-for="group in (alchemy.categoryMaterialGroups || [])" :key="group.category" class="alchemy-category-detail">
               <div class="alchemy-category-detail-title">
                 <span>{{ group.category }}材料明細</span>
                 <strong>{{ alchemy.formatCost(group.totalCost) }}</strong>
@@ -1242,7 +1242,7 @@
                 <div class="alchemy-material-row alchemy-table-head">
                   <span>材料</span><span>數量</span><span>單價</span><span>小計</span>
                 </div>
-                <div v-for="row in group.materials" :key="`${group.category}-${row.name}`" class="alchemy-material-row">
+                <div v-for="row in (group.materials || [])" :key="`${group.category}-${row.name}`" class="alchemy-material-row">
                   <span>
                     {{ row.name }}
                     <em v-if="row.isOil">精油</em>
@@ -1255,11 +1255,11 @@
             </div>
           </div>
 
-          <div v-if="alchemy.materialRows.length" class="alchemy-material-table">
+          <div v-if="(alchemy.materialRows || []).length" class="alchemy-material-table">
             <div class="alchemy-material-row alchemy-table-head">
               <span>全部材料合計</span><span>數量</span><span>單價</span><span>小計</span>
             </div>
-            <div v-for="row in alchemy.materialRows" :key="row.name" class="alchemy-material-row">
+            <div v-for="row in (alchemy.materialRows || [])" :key="row.name" class="alchemy-material-row">
               <span>
                 {{ row.name }}
                 <em v-if="row.isOil">精油</em>
@@ -1281,7 +1281,7 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="equip.js"></script>
   <script src="loot.js"></script>
-  <script src="alchemy.js"></script>
-  <script src="app.js"></script>
+  <script src="alchemy.js?v=20260503-2"></script>
+  <script src="app.js?v=20260503-2"></script>
 </body>
 </html>
