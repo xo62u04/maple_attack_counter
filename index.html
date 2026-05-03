@@ -24,6 +24,9 @@
         <button class="tab-btn" :class="{ active: activeTab === 'loot' }" @click="activeTab = 'loot'">
           💰 分錢系統
         </button>
+        <button class="tab-btn" :class="{ active: activeTab === 'alchemy' }" @click="activeTab = 'alchemy'">
+          鍊金成本
+        </button>
       </div>
       <div class="header-actions">
         <button v-if="activeTab === 'calc'" @click="saveCharacter" class="btn btn-save" :disabled="!saveName.trim()">💾 存檔</button>
@@ -1120,11 +1123,96 @@
 
     </main>
 
+    <main v-else-if="activeTab === 'alchemy'" class="alchemy-tab">
+      <section class="alchemy-section alchemy-toolbar">
+        <div class="alchemy-field">
+          <label>分類</label>
+          <select v-model="alchemy.selectedCategory">
+            <option value="">全部</option>
+            <option v-for="cat in alchemy.categories" :key="cat" :value="cat">{{ cat }}</option>
+          </select>
+        </div>
+        <div class="alchemy-field alchemy-search">
+          <label>搜尋</label>
+          <input type="text" v-model="alchemy.searchText" placeholder="道具或材料名稱" />
+        </div>
+        <label class="alchemy-check">
+          <input type="checkbox" v-model="alchemy.expandCraftables" />
+          展開可製作材料
+        </label>
+        <button class="btn btn-export" @click="alchemy.clearQuantities()">清空製作數</button>
+        <button class="btn btn-delete" @click="alchemy.clearPrices()">清空價格</button>
+      </section>
+
+      <div class="alchemy-grid">
+        <section class="alchemy-section">
+          <div class="alchemy-panel-title">
+            <span>配方清單</span>
+            <small>{{ alchemy.filteredRecipes.length }} / {{ alchemy.recipes.length }}</small>
+          </div>
+          <div class="alchemy-recipe-table">
+            <div class="alchemy-recipe-row alchemy-table-head">
+              <span>分類</span><span>等級</span><span>道具</span><span>每次成本</span><span>製作數</span><span></span>
+            </div>
+            <div v-for="recipe in alchemy.filteredRecipes" :key="recipe.id" class="alchemy-recipe-row">
+              <span class="alchemy-muted">{{ recipe.category }}</span>
+              <span>{{ recipe.level || '-' }}</span>
+              <span class="alchemy-name">
+                {{ recipe.name }}
+                <small>{{ recipe.materials.map(m => `${m.name} x${m.qty}`).join('、') }}</small>
+              </span>
+              <span class="alchemy-cost">{{ alchemy.formatCost(alchemy.recipeCost(recipe)) }}</span>
+              <input type="number" min="0" v-model.number="alchemy.quantities[recipe.name]" />
+              <button class="alchemy-plus" @click="alchemy.addRecipe(recipe.name, 1)">+1</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="alchemy-section">
+          <div class="alchemy-panel-title">
+            <span>材料消耗表</span>
+            <small>{{ alchemy.selectedRecipes.length }} 種製作項目</small>
+          </div>
+          <div class="alchemy-total">
+            <span>總成本</span>
+            <strong>{{ alchemy.formatCost(alchemy.totalCost) }}</strong>
+          </div>
+
+          <div v-if="alchemy.selectedRecipes.length" class="alchemy-selected-list">
+            <div v-for="row in alchemy.selectedRecipes" :key="row.recipe.id" class="alchemy-selected-row">
+              <span>{{ row.recipe.name }}</span>
+              <span>x{{ row.qty }}</span>
+              <span>{{ alchemy.formatCost(alchemy.selectedRecipeCost(row.recipe.name) * row.qty) }}</span>
+            </div>
+          </div>
+
+          <div v-if="alchemy.materialRows.length" class="alchemy-material-table">
+            <div class="alchemy-material-row alchemy-table-head">
+              <span>材料</span><span>數量</span><span>單價</span><span>小計</span>
+            </div>
+            <div v-for="row in alchemy.materialRows" :key="row.name" class="alchemy-material-row">
+              <span>
+                {{ row.name }}
+                <em v-if="row.isOil">精油</em>
+              </span>
+              <span>{{ alchemy.formatQty(row.qty) }}</span>
+              <input type="number" min="0" v-model.number="alchemy.prices[row.name]" />
+              <span class="alchemy-cost">{{ alchemy.formatCost(row.subtotal) }}</span>
+            </div>
+          </div>
+          <div v-else class="alchemy-empty">
+            在左側配方輸入製作數後，這裡會彙總所有材料與成本。
+          </div>
+        </section>
+      </div>
+    </main>
+
   </div><!-- end #app -->
 
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="equip.js"></script>
   <script src="loot.js"></script>
+  <script src="alchemy.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

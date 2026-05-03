@@ -39,6 +39,7 @@ createApp({
       initTab1Buffs()
       equip.initPartyBuffs()
       loadLootSettings()
+      loadAlchemySettings()
     })
 
     // ── 選擇狀態 ──
@@ -274,6 +275,7 @@ createApp({
     const equip = useEquip(jobs, partyBuffs, selectedJobId)
     // ── 分錢系統 ──
     const loot = Vue.reactive(useLoot())
+    const alchemy = Vue.reactive(useAlchemy())
 
     // 職業變更時：更新武器係數；只在 Tab2 技能清單為空時才自動載入（避免覆蓋已設定的技能）
     watch(selectedJobId, (id) => {
@@ -573,6 +575,24 @@ createApp({
 
     Vue.watch(() => JSON.stringify(loot.getState()), saveLootSettings)
 
+    // ── 鍊金成本設定存檔 ──
+    const ALCHEMY_SETTINGS_KEY = 'maple_alchemy_settings'
+
+    function saveAlchemySettings() {
+      try {
+        localStorage.setItem(ALCHEMY_SETTINGS_KEY, JSON.stringify(alchemy.getState()))
+      } catch {}
+    }
+
+    function loadAlchemySettings() {
+      try {
+        const raw = localStorage.getItem(ALCHEMY_SETTINGS_KEY)
+        if (raw) alchemy.setState(JSON.parse(raw))
+      } catch {}
+    }
+
+    Vue.watch(() => JSON.stringify(alchemy.getState()), saveAlchemySettings)
+
     return {
       activeTab, equipZoom, changeEquipZoom, saveName, selectedSaveKey, saveMessage, savedCharacters,
       saveCharacter, loadCharacter, deleteCharacter, exportSaves, importSaves,
@@ -596,6 +616,7 @@ createApp({
       addCustomSkill,
       removeSkill,
       loot, saveLootSettings,
+      alchemy, saveAlchemySettings,
     }
   }
 }).mount('#app')
