@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>楓星攻擊力計算機</title>
-  <link rel="stylesheet" href="style.css?v=20260503-3" />
+  <link rel="stylesheet" href="style.css?v=20260503-4" />
 </head>
 <body>
   <div id="app">
@@ -1164,15 +1164,26 @@
             <label>搜尋材料</label>
             <input type="text" v-model="alchemy.materialSearchText" placeholder="輸入材料名稱" />
           </div>
+          <label class="alchemy-check alchemy-common-only">
+            <input type="checkbox" v-model="alchemy.showOnlyCommonMaterials" />
+            只看常用
+          </label>
           <div class="alchemy-price-note">
             同一個材料只需要在這裡輸入一次，所有配方、分類明細和總成本會自動帶入。
           </div>
         </div>
         <div class="alchemy-price-table">
           <div class="alchemy-price-row alchemy-table-head">
-            <span>材料</span><span>單價</span><span>用途</span>
+            <span>常用</span><span>材料</span><span>單價</span><span>用途</span>
           </div>
           <div v-for="row in (alchemy.allMaterialRows || [])" :key="row.name" class="alchemy-price-row">
+            <button
+              class="alchemy-common-toggle"
+              :class="{ active: row.isCommon }"
+              @click="alchemy.toggleCommonMaterial(row.name)"
+            >
+              {{ row.isCommon ? '常用' : '一般' }}
+            </button>
             <span>
               {{ row.name }}
               <em v-if="row.isOil">精油</em>
@@ -1304,7 +1315,7 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="equip.js"></script>
   <script src="loot.js"></script>
-  <script src="alchemy.js?v=20260503-3"></script>
-  <script src="app.js?v=20260503-3"></script>
+  <script src="alchemy.js?v=20260503-4"></script>
+  <script src="app.js?v=20260503-4"></script>
 </body>
 </html>

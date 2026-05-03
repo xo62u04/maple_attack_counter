@@ -422,12 +422,14 @@ BUFF藥水跟藥丸
   const quantities = ref({})
   const searchText = ref('')
   const materialSearchText = ref('')
+  const showOnlyCommonMaterials = ref(false)
   const selectedCategory = ref('')
   const expandCraftables = ref(true)
   const importMessage = ref('')
   const pricePanelOpen = ref(false)
   const expandedRecipes = ref({})
   const expandedCategories = ref({})
+  const commonMaterials = ref({})
 
   function cleanName(name) {
     return String(name || '')
@@ -518,6 +520,10 @@ BUFF藥水跟藥丸
     return Number(v) || 0
   }
 
+  function isCommonMaterial(name) {
+    return !!commonMaterials.value[cleanName(name)]
+  }
+
   function recipeCost(recipe, stack = new Set()) {
     if (!recipe || stack.has(keyOf(recipe.name))) return 0
     stack.add(keyOf(recipe.name))
@@ -556,8 +562,13 @@ BUFF藥水跟藥丸
         price: unitPrice(row.name),
         subtotal: row.qty * unitPrice(row.name),
         isOil: /精油$/.test(row.name),
+        isCommon: isCommonMaterial(row.name),
       }))
-      .sort((a, b) => b.subtotal - a.subtotal || a.name.localeCompare(b.name, 'zh-Hant'))
+      .sort((a, b) =>
+        Number(b.isCommon) - Number(a.isCommon) ||
+        b.subtotal - a.subtotal ||
+        a.name.localeCompare(b.name, 'zh-Hant')
+      )
   }
 
   function collectBaseMaterialNames(recipe, target = new Map(), stack = new Set()) {
@@ -594,10 +605,13 @@ BUFF藥水跟藥丸
       .map(row => ({
         ...row,
         price: unitPrice(row.name),
+        isCommon: isCommonMaterial(row.name),
         categories: Array.from(row.categories).sort((a, b) => a.localeCompare(b, 'zh-Hant')),
       }))
       .filter(row => !q || keyOf(`${row.name} ${row.categories.join(' ')}`).includes(q))
+      .filter(row => !showOnlyCommonMaterials.value || row.isCommon)
       .sort((a, b) => {
+        if (b.isCommon !== a.isCommon) return Number(b.isCommon) - Number(a.isCommon)
         if ((b.price > 0) !== (a.price > 0)) return (b.price > 0) - (a.price > 0)
         return a.name.localeCompare(b.name, 'zh-Hant')
       })
@@ -689,6 +703,15 @@ BUFF藥水跟藥丸
     pricePanelOpen.value = !pricePanelOpen.value
   }
 
+  function toggleCommonMaterial(name) {
+    const clean = cleanName(name)
+    commonMaterials.value = {
+      ...commonMaterials.value,
+      [clean]: !commonMaterials.value[clean],
+    }
+    if (!commonMaterials.value[clean]) delete commonMaterials.value[clean]
+  }
+
   function toggleRecipeDetails(name) {
     const key = keyOf(name)
     expandedRecipes.value = {
@@ -759,10 +782,12 @@ BUFF藥水跟藥丸
       selectedCategory: selectedCategory.value,
       searchText: searchText.value,
       materialSearchText: materialSearchText.value,
+      showOnlyCommonMaterials: showOnlyCommonMaterials.value,
       expandCraftables: expandCraftables.value,
       pricePanelOpen: pricePanelOpen.value,
       expandedRecipes: JSON.parse(JSON.stringify(expandedRecipes.value)),
       expandedCategories: JSON.parse(JSON.stringify(expandedCategories.value)),
+      commonMaterials: JSON.parse(JSON.stringify(commonMaterials.value)),
     }
   }
 
@@ -773,10 +798,12 @@ BUFF藥水跟藥丸
     selectedCategory.value = state.selectedCategory || ''
     searchText.value = state.searchText || ''
     materialSearchText.value = state.materialSearchText || ''
+    showOnlyCommonMaterials.value = !!state.showOnlyCommonMaterials
     expandCraftables.value = state.expandCraftables !== false
     pricePanelOpen.value = !!state.pricePanelOpen
     expandedRecipes.value = state.expandedRecipes || {}
     expandedCategories.value = state.expandedCategories || {}
+    commonMaterials.value = state.commonMaterials || {}
   }
 
   return {
@@ -786,12 +813,14 @@ BUFF藥水跟藥丸
     quantities,
     searchText,
     materialSearchText,
+    showOnlyCommonMaterials,
     selectedCategory,
     expandCraftables,
     importMessage,
     pricePanelOpen,
     expandedRecipes,
     expandedCategories,
+    commonMaterials,
     filteredRecipes,
     allMaterialRows,
     pricedMaterialCount,
@@ -804,6 +833,8 @@ BUFF藥水跟藥丸
     selectedRecipeCost,
     addRecipe,
     togglePricePanel,
+    toggleCommonMaterial,
+    isCommonMaterial,
     toggleRecipeDetails,
     isRecipeExpanded,
     toggleCategoryDetails,

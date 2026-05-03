@@ -1556,10 +1556,14 @@ body {
 
 .alchemy-price-toolbar {
   display: grid;
-  grid-template-columns: minmax(220px, 340px) 1fr;
+  grid-template-columns: minmax(220px, 340px) 110px 1fr;
   gap: 12px;
   align-items: end;
   margin-bottom: 10px;
+}
+
+.alchemy-common-only {
+  align-self: end;
 }
 
 .alchemy-price-note {
@@ -1587,7 +1591,7 @@ body {
 
 .alchemy-price-row {
   display: grid;
-  grid-template-columns: minmax(130px, 1fr) 90px minmax(95px, 0.85fr);
+  grid-template-columns: 64px minmax(130px, 1fr) 90px minmax(95px, 0.85fr);
   align-items: center;
   gap: 8px;
   padding: 7px 8px;
@@ -1595,11 +1599,37 @@ body {
   background: rgba(255,255,255,0.02);
 }
 
-.alchemy-price-row span:first-child {
+.alchemy-price-row span:nth-child(2) {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.alchemy-common-toggle {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 8px;
+}
+
+.alchemy-common-toggle.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #111;
+}
+
+.alchemy-common-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.alchemy-common-toggle.active:hover {
+  color: #111;
 }
 
 .alchemy-price-row small {
