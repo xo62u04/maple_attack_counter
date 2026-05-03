@@ -1140,8 +1140,14 @@
           <input type="checkbox" v-model="alchemy.expandCraftables" />
           展開可製作材料
         </label>
+        <button class="btn btn-export" @click="alchemy.exportState()">匯出設定</button>
+        <label class="btn btn-import-file" title="匯入鍊金價格與製作數">
+          匯入設定
+          <input type="file" accept=".json" style="display:none" @change="alchemy.importStateFile($event)" />
+        </label>
         <button class="btn btn-export" @click="alchemy.clearQuantities()">清空製作數</button>
         <button class="btn btn-delete" @click="alchemy.clearPrices()">清空價格</button>
+        <div v-if="alchemy.importMessage" class="alchemy-message">{{ alchemy.importMessage }}</div>
       </section>
 
       <div class="alchemy-grid">
@@ -1178,6 +1184,19 @@
             <strong>{{ alchemy.formatCost(alchemy.totalCost) }}</strong>
           </div>
 
+          <div v-if="alchemy.categoryMaterialGroups.length" class="alchemy-category-summary">
+            <button
+              v-for="group in alchemy.categoryMaterialGroups"
+              :key="group.category"
+              class="alchemy-category-card"
+              @click="alchemy.selectedCategory = group.category"
+            >
+              <span>{{ group.category }}</span>
+              <strong>{{ alchemy.formatCost(group.totalCost) }}</strong>
+              <small>{{ group.recipeCount }} 種配方 / 製作 {{ alchemy.formatQty(group.craftQty) }} 次 / {{ group.materials.length }} 種材料</small>
+            </button>
+          </div>
+
           <div v-if="alchemy.selectedRecipes.length" class="alchemy-selected-list">
             <div v-for="row in alchemy.selectedRecipes" :key="row.recipe.id" class="alchemy-selected-row">
               <span>{{ row.recipe.name }}</span>
@@ -1186,9 +1205,32 @@
             </div>
           </div>
 
+          <div v-if="alchemy.categoryMaterialGroups.length" class="alchemy-category-detail-list">
+            <div v-for="group in alchemy.categoryMaterialGroups" :key="group.category" class="alchemy-category-detail">
+              <div class="alchemy-category-detail-title">
+                <span>{{ group.category }}材料明細</span>
+                <strong>{{ alchemy.formatCost(group.totalCost) }}</strong>
+              </div>
+              <div class="alchemy-material-table compact">
+                <div class="alchemy-material-row alchemy-table-head">
+                  <span>材料</span><span>數量</span><span>單價</span><span>小計</span>
+                </div>
+                <div v-for="row in group.materials" :key="`${group.category}-${row.name}`" class="alchemy-material-row">
+                  <span>
+                    {{ row.name }}
+                    <em v-if="row.isOil">精油</em>
+                  </span>
+                  <span>{{ alchemy.formatQty(row.qty) }}</span>
+                  <input type="number" min="0" v-model.number="alchemy.prices[row.name]" />
+                  <span class="alchemy-cost">{{ alchemy.formatCost(row.subtotal) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div v-if="alchemy.materialRows.length" class="alchemy-material-table">
             <div class="alchemy-material-row alchemy-table-head">
-              <span>材料</span><span>數量</span><span>單價</span><span>小計</span>
+              <span>全部材料合計</span><span>數量</span><span>單價</span><span>小計</span>
             </div>
             <div v-for="row in alchemy.materialRows" :key="row.name" class="alchemy-material-row">
               <span>

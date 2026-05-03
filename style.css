@@ -1428,6 +1428,14 @@ body {
   font-size: 14px;
 }
 
+.alchemy-message {
+  color: var(--success);
+  font-size: 13px;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+}
+
 .alchemy-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(380px, 0.8fr);
@@ -1540,6 +1548,51 @@ body {
   font-size: 26px;
 }
 
+.alchemy-category-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.alchemy-category-card {
+  text-align: left;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 10px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.alchemy-category-card:hover {
+  border-color: var(--accent);
+}
+
+.alchemy-category-card span,
+.alchemy-category-card strong,
+.alchemy-category-card small {
+  display: block;
+}
+
+.alchemy-category-card span {
+  color: var(--text);
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.alchemy-category-card strong {
+  color: var(--accent);
+  font-size: 20px;
+  margin-bottom: 3px;
+}
+
+.alchemy-category-card small {
+  color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 .alchemy-selected-list {
   display: flex;
   flex-direction: column;
@@ -1563,6 +1616,40 @@ body {
 .alchemy-selected-row {
   grid-template-columns: minmax(0, 1fr) 56px 96px;
   color: var(--text-dim);
+}
+
+.alchemy-category-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.alchemy-category-detail {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  background: rgba(255,255,255,0.02);
+}
+
+.alchemy-category-detail-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text);
+  font-weight: 800;
+  margin-bottom: 7px;
+}
+
+.alchemy-category-detail-title strong {
+  color: var(--accent);
+}
+
+.alchemy-material-table.compact {
+  max-height: 230px;
 }
 
 .alchemy-selected-row span:first-child,

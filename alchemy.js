@@ -423,6 +423,7 @@ BUFF藥水跟藥丸
   const searchText = ref('')
   const selectedCategory = ref('')
   const expandCraftables = ref(true)
+  const importMessage = ref('')
 
   function cleanName(name) {
     return String(name || '')
@@ -538,6 +539,17 @@ BUFF藥水跟藥丸
     map.get(displayName).qty += qty
   }
 
+  function materialRowsFromMap(map) {
+    return Array.from(map.values())
+      .map(row => ({
+        ...row,
+        price: unitPrice(row.name),
+        subtotal: row.qty * unitPrice(row.name),
+        isOil: /精油$/.test(row.name),
+      }))
+      .sort((a, b) => b.subtotal - a.subtotal || a.name.localeCompare(b.name, 'zh-Hant'))
+  }
+
   function addRecipeMaterials(map, recipe, times, stack = new Set()) {
     if (!recipe || stack.has(keyOf(recipe.name))) return
     stack.add(keyOf(recipe.name))
@@ -558,14 +570,38 @@ BUFF藥水跟藥丸
   const materialRows = computed(() => {
     const map = new Map()
     for (const row of selectedRecipes.value) addRecipeMaterials(map, row.recipe, row.qty)
-    return Array.from(map.values())
-      .map(row => ({
-        ...row,
-        price: unitPrice(row.name),
-        subtotal: row.qty * unitPrice(row.name),
-        isOil: /精油$/.test(row.name),
-      }))
-      .sort((a, b) => b.subtotal - a.subtotal || a.name.localeCompare(b.name, 'zh-Hant'))
+    return materialRowsFromMap(map)
+  })
+
+  const categoryMaterialGroups = computed(() => {
+    const groups = new Map()
+    for (const row of selectedRecipes.value) {
+      const category = row.recipe.category || '未分類'
+      if (!groups.has(category)) {
+        groups.set(category, {
+          category,
+          recipeCount: 0,
+          craftQty: 0,
+          map: new Map(),
+        })
+      }
+      const group = groups.get(category)
+      group.recipeCount += 1
+      group.craftQty += row.qty
+      addRecipeMaterials(group.map, row.recipe, row.qty)
+    }
+    return Array.from(groups.values())
+      .map(group => {
+        const materials = materialRowsFromMap(group.map)
+        return {
+          category: group.category,
+          recipeCount: group.recipeCount,
+          craftQty: group.craftQty,
+          materials,
+          totalCost: materials.reduce((sum, row) => sum + row.subtotal, 0),
+        }
+      })
+      .sort((a, b) => b.totalCost - a.totalCost || a.category.localeCompare(b.category, 'zh-Hant'))
   })
 
   const totalCost = computed(() => materialRows.value.reduce((sum, row) => sum + row.subtotal, 0))
@@ -590,6 +626,45 @@ BUFF藥水跟藥丸
 
   function clearPrices() {
     prices.value = {}
+  }
+
+  function exportState() {
+    const payload = {
+      type: 'maple_alchemy_cost_settings',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      state: getState(),
+    }
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `maple_alchemy_${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    importMessage.value = '已匯出鍊金價格與製作數'
+    setTimeout(() => { importMessage.value = '' }, 2500)
+  }
+
+  function importStateFile(event) {
+    const file = event.target.files && event.target.files[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result)
+        const state = data.state || data
+        setState(state)
+        importMessage.value = '已匯入鍊金價格與製作數'
+      } catch {
+        importMessage.value = '匯入失敗：JSON 格式不正確'
+      }
+      setTimeout(() => { importMessage.value = '' }, 3000)
+    }
+    reader.readAsText(file, 'utf-8')
+    event.target.value = ''
   }
 
   function getState() {
@@ -619,9 +694,11 @@ BUFF藥水跟藥丸
     searchText,
     selectedCategory,
     expandCraftables,
+    importMessage,
     filteredRecipes,
     selectedRecipes,
     materialRows,
+    categoryMaterialGroups,
     totalCost,
     recipeCost,
     selectedRecipeCost,
@@ -630,6 +707,8 @@ BUFF藥水跟藥丸
     formatCost,
     clearQuantities,
     clearPrices,
+    exportState,
+    importStateFile,
     getState,
     setState,
   }
