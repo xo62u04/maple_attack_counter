@@ -83,6 +83,34 @@ body {
 .btn-sync-clear { background: #3a2a2a; color: #e38a8a; border: 1px solid #6a3a3a; }
 .btn-sync-clear:hover { background: #4a3a3a; }
 .sync-status-text { font-size: 12px; color: #7ec8e3; min-width: 80px; }
+.conflict-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.conflict-modal {
+  background: var(--bg-panel);
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  padding: 28px 32px;
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.conflict-title { font-size: 16px; font-weight: bold; color: #f8c96b; }
+.conflict-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.conflict-label { color: #7ec8e3; font-weight: 600; white-space: nowrap; }
+.conflict-time { color: #c8d8f0; font-size: 13px; }
+.conflict-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 4px; }
+.btn-conflict-local { background: #2a3a2a; color: #7ec87e; border: 1px solid #3a6a3a; }
+.btn-conflict-local:hover { background: #3a4a3a; }
+.btn-conflict-cloud { background: var(--accent); color: #000; }
+.btn-conflict-cloud:hover { opacity: 0.85; }
 
 /* ── Layout ── */
 .calculator {
