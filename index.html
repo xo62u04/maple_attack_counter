@@ -1391,6 +1391,25 @@
       </div>
     </main>
 
+    <!-- ── 衝突解決對話框 ── -->
+    <div v-if="conflictDialog.show" class="conflict-overlay">
+      <div class="conflict-modal">
+        <div class="conflict-title">⚠️ 偵測到資料不同步</div>
+        <div class="conflict-row">
+          <span class="conflict-label">本地資料</span>
+          <span class="conflict-time">最後儲存：{{ formatSyncTime(conflictDialog.localTime) }}</span>
+        </div>
+        <div class="conflict-row">
+          <span class="conflict-label">雲端資料</span>
+          <span class="conflict-time">最後儲存：{{ formatSyncTime(conflictDialog.cloudTime) }}</span>
+        </div>
+        <div class="conflict-actions">
+          <button class="btn btn-conflict-local" @click="resolveConflict('local')">用本地資料</button>
+          <button class="btn btn-conflict-cloud" @click="resolveConflict('cloud')">用雲端資料</button>
+        </div>
+      </div>
+    </div>
+
   </div><!-- end #app -->
 
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
