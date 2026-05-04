@@ -5,6 +5,9 @@ createApp({
     // ── Tab 切換 ──
     const activeTab = ref('calc')
 
+    // ── 雲端同步 ──
+    const sync = useSync()
+
     // ── 裝備模擬器字體縮放 ──
     const equipZoom = ref(1)
     function changeEquipZoom(delta, reset = false) {
@@ -40,6 +43,7 @@ createApp({
       equip.initPartyBuffs()
       loadLootSettings()
       loadAlchemySettings()
+      if (sync.syncCode.value) pullAll()
     })
 
     // ── 選擇狀態 ──
@@ -428,6 +432,7 @@ createApp({
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(savedCharacters.value))
       } catch { saveMessage.value = '⚠️ 儲存失敗（瀏覽器儲存空間不足）' }
+      pushAll()
     }
 
     function saveCharacter() {
@@ -617,6 +622,7 @@ createApp({
       try {
         localStorage.setItem(LOOT_SETTINGS_KEY, JSON.stringify(loot.getState()))
       } catch {}
+      pushAll()
     }
 
     function loadLootSettings() {
@@ -638,6 +644,7 @@ createApp({
       try {
         localStorage.setItem(ALCHEMY_SETTINGS_KEY, JSON.stringify(alchemy.getState()))
       } catch {}
+      pushAll()
     }
 
     function loadAlchemySettings() {
@@ -645,6 +652,39 @@ createApp({
         const raw = localStorage.getItem(ALCHEMY_SETTINGS_KEY)
         if (raw) alchemy.setState(JSON.parse(raw))
       } catch {}
+    }
+
+    async function pullAll() {
+      const data = await sync.pull(sync.syncCode.value)
+      if (!data) return
+      if (data.characters) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data.characters))
+        loadSavedCharacters()
+      }
+      if (data.loot) {
+        localStorage.setItem(LOOT_SETTINGS_KEY, JSON.stringify(data.loot))
+        loadLootSettings()
+      }
+      if (data.alchemy) {
+        localStorage.setItem(ALCHEMY_SETTINGS_KEY, JSON.stringify(data.alchemy))
+        loadAlchemySettings()
+      }
+    }
+
+    function pushAll() {
+      if (!sync.syncCode.value) return
+      sync.push(sync.syncCode.value, {
+        characters: savedCharacters.value,
+        loot: loot.getState(),
+        alchemy: alchemy.getState()
+      })
+    }
+
+    async function onSetSyncCode() {
+      const code = sync.syncCodeDraft.value.trim()
+      if (!code) return
+      sync.applySyncCode(code)
+      await pullAll()
     }
 
     Vue.watch(() => JSON.stringify(alchemy.getState()), saveAlchemySettings)
@@ -676,6 +716,7 @@ createApp({
       removeSkill,
       loot, saveLootSettings,
       alchemy, saveAlchemySettings,
+      sync, onSetSyncCode,
     }
   }
 }).mount('#app')
