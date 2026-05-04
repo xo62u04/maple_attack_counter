@@ -66,6 +66,22 @@ body {
   display: inline-flex; align-items: center;
 }
 .btn-import-file:hover { background: #3a5a3a; }
+.sync-bar { display: flex; align-items: center; gap: 6px; }
+.sync-input {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid #3a5a8a;
+  background: #1a2a4a;
+  color: #c8d8f0;
+  font-size: 13px;
+  width: 120px;
+}
+.sync-input::placeholder { color: #6a8aaa; }
+.btn-sync { background: #2a4a6a; color: #7ec8e3; border: 1px solid #3a5a8a; }
+.btn-sync:hover:not(:disabled) { background: #3a5a7a; }
+.btn-sync-clear { background: #3a2a2a; color: #e38a8a; border: 1px solid #6a3a3a; }
+.btn-sync-clear:hover { background: #4a3a3a; }
+.sync-status-text { font-size: 12px; color: #7ec8e3; min-width: 80px; }
 
 /* ── Layout ── */
 .calculator {
