@@ -29,6 +29,17 @@
         </button>
       </div>
       <div class="header-actions">
+        <div class="sync-bar">
+          <input
+            v-model="sync.syncCodeDraft.value"
+            class="sync-input"
+            placeholder="同步碼"
+            @keyup.enter="onSetSyncCode"
+          />
+          <button class="btn btn-sync" @click="onSetSyncCode" :disabled="!sync.syncCodeDraft.value.trim()">確認</button>
+          <button class="btn btn-sync-clear" v-if="sync.syncCode.value" @click="sync.clearSyncCode()">清除</button>
+          <span class="sync-status-text">{{ sync.statusText.value }}</span>
+        </div>
         <button v-if="activeTab === 'calc'" @click="saveCharacter" class="btn btn-save" :disabled="!saveName.trim()">💾 存檔</button>
         <button v-if="activeTab === 'calc'" @click="shareUrl" class="btn btn-share">🔗 分享</button>
         <button @click="exportSaves" class="btn btn-export">📤 匯出</button>
@@ -1383,9 +1394,12 @@
   </div><!-- end #app -->
 
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="equip.js"></script>
   <script src="loot.js"></script>
   <script src="alchemy.js?v=20260503-7"></script>
+  <script src="sync.js"></script>
   <script src="app.js?v=20260503-7"></script>
 </body>
 </html>
