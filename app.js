@@ -656,6 +656,18 @@ createApp({
       } catch {}
     }
 
+    const conflictDialog = ref({ show: false, cloudData: null, cloudTime: null, localTime: null })
+
+    function formatSyncTime(date) {
+      if (!date) return '不明'
+      const d = date instanceof Date ? date : new Date(date)
+      return d.toLocaleString('zh-TW', {
+        timeZone: 'Asia/Taipei',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+      })
+    }
+
     function applyCloudData(data) {
       if (data.characters) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data.characters))
@@ -672,17 +684,16 @@ createApp({
       if (data.equip) equip.setState(data.equip)
     }
 
+    async function _applyWithGuard(data) {
+      _pulling = true
+      try { applyCloudData(data) } finally { await Vue.nextTick(); _pulling = false }
+    }
+
     async function pullAll() {
       if (!sync.syncCode.value) return
-      _pulling = true
-      try {
-        const data = await sync.pull(sync.syncCode.value)
-        if (!data) return
-        applyCloudData(data)
-      } finally {
-        await Vue.nextTick()
-        _pulling = false
-      }
+      const data = await sync.pull(sync.syncCode.value)
+      if (!data) return
+      await _applyWithGuard(data)
     }
 
     async function pushAll() {
@@ -708,7 +719,45 @@ createApp({
         return
       }
       sync.applySyncCode(code)
-      await pullAll()
+
+      const cloudData = await sync.pull(code)
+
+      if (!cloudData) {
+        await pushAll()
+        return
+      }
+
+      const localSyncedAt = localStorage.getItem(SYNC_LAST_PUSH_KEY)
+      if (!localSyncedAt) {
+        await _applyWithGuard(cloudData)
+        return
+      }
+
+      const cloudTime = cloudData.updatedAt?.toDate?.()
+      if (!cloudTime) {
+        await _applyWithGuard(cloudData)
+        return
+      }
+
+      const localTime = new Date(localSyncedAt)
+      const diffMs = Math.abs(cloudTime.getTime() - localTime.getTime())
+
+      if (diffMs < 1000) {
+        await _applyWithGuard(cloudData)
+        return
+      }
+
+      conflictDialog.value = { show: true, cloudData, cloudTime, localTime }
+    }
+
+    async function resolveConflict(choice) {
+      const { cloudData } = conflictDialog.value
+      conflictDialog.value = { show: false, cloudData: null, cloudTime: null, localTime: null }
+      if (choice === 'cloud') {
+        await _applyWithGuard(cloudData)
+      } else {
+        await pushAll()
+      }
     }
 
     Vue.watch(() => JSON.stringify(alchemy.getState()), saveAlchemySettings)
@@ -741,6 +790,7 @@ createApp({
       loot, saveLootSettings,
       alchemy, saveAlchemySettings,
       sync, onSetSyncCode,
+      conflictDialog, resolveConflict, formatSyncTime,
     }
   }
 }).mount('#app')
