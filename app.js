@@ -7,6 +7,7 @@ createApp({
 
     // ── 雲端同步 ──
     const sync = useSync()
+    let _pulling = false
 
     // ── 裝備模擬器字體縮放 ──
     const equipZoom = ref(1)
@@ -655,24 +656,31 @@ createApp({
     }
 
     async function pullAll() {
-      const data = await sync.pull(sync.syncCode.value)
-      if (!data) return
-      if (data.characters) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data.characters))
-        loadSavedCharacters()
-      }
-      if (data.loot) {
-        localStorage.setItem(LOOT_SETTINGS_KEY, JSON.stringify(data.loot))
-        loadLootSettings()
-      }
-      if (data.alchemy) {
-        localStorage.setItem(ALCHEMY_SETTINGS_KEY, JSON.stringify(data.alchemy))
-        loadAlchemySettings()
+      if (!sync.syncCode.value) return
+      _pulling = true
+      try {
+        const data = await sync.pull(sync.syncCode.value)
+        if (!data) return
+        if (data.characters) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data.characters))
+          loadSavedCharacters()
+        }
+        if (data.loot) {
+          localStorage.setItem(LOOT_SETTINGS_KEY, JSON.stringify(data.loot))
+          loadLootSettings()
+        }
+        if (data.alchemy) {
+          localStorage.setItem(ALCHEMY_SETTINGS_KEY, JSON.stringify(data.alchemy))
+          loadAlchemySettings()
+        }
+      } finally {
+        _pulling = false
       }
     }
 
     function pushAll() {
       if (!sync.syncCode.value) return
+      if (_pulling) return
       sync.push(sync.syncCode.value, {
         characters: savedCharacters.value,
         loot: loot.getState(),
