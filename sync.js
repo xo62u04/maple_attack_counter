@@ -27,22 +27,24 @@ function useSync() {
   }
 
   async function pull(code) {
-    _initFirebase()
     syncStatus.value = 'syncing'
+    _initFirebase()
     try {
       const snap = await db.collection('syncs').doc(code).get()
       syncStatus.value = 'ok'
       setTimeout(() => { if (syncStatus.value === 'ok') syncStatus.value = 'idle' }, 3000)
       return snap.exists ? snap.data() : null
     } catch (e) {
+      console.error('[sync] pull failed:', e)
       syncStatus.value = 'error'
+      setTimeout(() => { if (syncStatus.value === 'error') syncStatus.value = 'idle' }, 5000)
       return null
     }
   }
 
   async function push(code, data) {
-    _initFirebase()
     syncStatus.value = 'syncing'
+    _initFirebase()
     try {
       await db.collection('syncs').doc(code).set({
         ...data,
@@ -51,7 +53,9 @@ function useSync() {
       syncStatus.value = 'ok'
       setTimeout(() => { if (syncStatus.value === 'ok') syncStatus.value = 'idle' }, 3000)
     } catch (e) {
+      console.error('[sync] push failed:', e)
       syncStatus.value = 'error'
+      setTimeout(() => { if (syncStatus.value === 'error') syncStatus.value = 'idle' }, 5000)
     }
   }
 
