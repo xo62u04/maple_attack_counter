@@ -691,8 +691,9 @@ createApp({
 
     async function pullAll() {
       if (!sync.syncCode.value) return
+      _pulling = true
       const data = await sync.pull(sync.syncCode.value)
-      if (!data) return
+      if (!data) { _pulling = false; return }
       await _applyWithGuard(data)
     }
 
@@ -740,6 +741,10 @@ createApp({
       }
 
       const localTime = new Date(localSyncedAt)
+      if (isNaN(localTime.getTime())) {
+        await _applyWithGuard(cloudData)
+        return
+      }
       const diffMs = Math.abs(cloudTime.getTime() - localTime.getTime())
 
       if (diffMs < 1000) {
@@ -751,6 +756,7 @@ createApp({
     }
 
     async function resolveConflict(choice) {
+      if (!conflictDialog.value.show) return
       const { cloudData } = conflictDialog.value
       conflictDialog.value = { show: false, cloudData: null, cloudTime: null, localTime: null }
       if (choice === 'cloud') {
