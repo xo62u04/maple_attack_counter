@@ -22,7 +22,7 @@ function useSync() {
       messagingSenderId: "385192643267",
       appId:             "1:385192643267:web:be4a1655ed13ecffcb7076"
     }
-    const app = firebase.initializeApp(firebaseConfig)
+    const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig)
     db = firebase.firestore(app)
   }
 

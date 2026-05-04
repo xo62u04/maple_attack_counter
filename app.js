@@ -674,6 +674,7 @@ createApp({
           loadAlchemySettings()
         }
       } finally {
+        await Vue.nextTick()
         _pulling = false
       }
     }
@@ -691,6 +692,11 @@ createApp({
     async function onSetSyncCode() {
       const code = sync.syncCodeDraft.value.trim()
       if (!code) return
+      if (code.includes('/') || code === '.' || code === '..') {
+        sync.syncStatus.value = 'error'
+        setTimeout(() => { if (sync.syncStatus.value === 'error') sync.syncStatus.value = 'idle' }, 3000)
+        return
+      }
       sync.applySyncCode(code)
       await pullAll()
     }
