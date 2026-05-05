@@ -47,6 +47,7 @@ function useLoot() {
     currentSessionId.value = sessions.value[sessions.value.length - 1].id
   }
   function switchSession(id) {
+    if (!sessions.value.find(s => s.id === id)) return
     currentSessionId.value = id
   }
 
@@ -60,13 +61,16 @@ function useLoot() {
 
   // ── 本次 session 隊員 ──
   function addSessionMemberFromPreset(preset) {
+    if (!currentSession.value) return
     if (currentSession.value.members.find(m => m.name === preset.name)) return
     currentSession.value.members.push({ name: preset.name, share: preset.defaultShare })
   }
   function addSessionMemberManual() {
+    if (!currentSession.value) return
     currentSession.value.members.push({ name: '臨時隊員', share: 1 })
   }
   function removeSessionMember(idx) {
+    if (!currentSession.value) return
     currentSession.value.members.splice(idx, 1)
   }
 
@@ -90,6 +94,7 @@ function useLoot() {
 
   // ── session 物品管理 ──
   function addDropToSession(itemName, needsScissors, scissorType) {
+    if (!currentSession.value) return
     currentSession.value.soldItems.push({
       id: nextId(),
       itemName,
@@ -102,6 +107,7 @@ function useLoot() {
     })
   }
   function removeSessionItem(id) {
+    if (!currentSession.value) return
     currentSession.value.soldItems = currentSession.value.soldItems.filter(i => i.id !== id)
   }
   function clearSession() {
