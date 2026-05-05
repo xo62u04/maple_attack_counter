@@ -994,10 +994,28 @@
       <section class="loot-section loot-session">
         <h2 class="loot-section-title">🎯 本次結算</h2>
 
-        <!-- 日期 -->
+        <!-- Session 選擇器 -->
+        <div class="session-selector">
+          <select class="session-select" @change="loot.switchSession(+$event.target.value)">
+            <option
+              v-for="s in loot.sessions"
+              :key="s.id"
+              :value="s.id"
+              :selected="s.id === loot.currentSessionId"
+            >{{ s.name }}{{ s.date ? ' (' + s.date + ')' : '' }}</option>
+          </select>
+          <button class="btn loot-session-add-btn" @click="loot.addSession()">＋ 新增</button>
+          <button class="btn btn-delete loot-btn-sm" @click="loot.deleteSession()" :disabled="loot.sessions.length <= 1">刪除</button>
+        </div>
+
+        <!-- Session 名稱 + 日期 -->
+        <div class="loot-date-row">
+          <label>名稱</label>
+          <input type="text" v-model="loot.currentSession.name" class="loot-input-session-name" placeholder="例：黑馬、卡麻" />
+        </div>
         <div class="loot-date-row">
           <label>打王日期</label>
-          <input type="date" v-model="loot.session.date" class="loot-input-date" />
+          <input type="date" v-model="loot.currentSession.date" class="loot-input-date" />
         </div>
 
         <!-- 隊員設定 -->
@@ -1008,19 +1026,19 @@
               v-for="preset in loot.memberPresets"
               :key="preset.id"
               class="btn loot-preset-btn"
-              :class="{ active: loot.session.members.some(m => m.name === preset.name) }"
+              :class="{ active: loot.currentSession.members.some(m => m.name === preset.name) }"
               @click="loot.addSessionMemberFromPreset(preset)"
             >{{ preset.name }}</button>
             <button class="btn loot-add-temp-btn" @click="loot.addSessionMemberManual()">＋ 臨時隊員</button>
           </div>
           <div class="loot-member-rows">
-            <div v-for="(m, idx) in loot.session.members" :key="idx" class="loot-member-row">
+            <div v-for="(m, idx) in loot.currentSession.members" :key="idx" class="loot-member-row">
               <input type="text" v-model="m.name" class="loot-input-name" placeholder="名稱" />
               <label>比例</label>
               <input type="number" v-model.number="m.share" min="0" class="loot-input-share" />
               <span class="loot-pct">
-                ({{ loot.session.members.reduce((s,x)=>s+(Number(x.share)||0),0) > 0
-                  ? (((Number(m.share)||0) / loot.session.members.reduce((s,x)=>s+(Number(x.share)||0),0)) * 100).toFixed(0)
+                ({{ loot.currentSession.members.reduce((s,x)=>s+(Number(x.share)||0),0) > 0
+                  ? (((Number(m.share)||0) / loot.currentSession.members.reduce((s,x)=>s+(Number(x.share)||0),0)) * 100).toFixed(0)
                   : 0 }}%)
               </span>
               <button class="btn btn-delete loot-btn-sm" @click="loot.removeSessionMember(idx)">✕</button>
@@ -1053,17 +1071,17 @@
         </div>
 
         <!-- 物品明細 -->
-        <div class="loot-subsection" v-if="loot.session.soldItems.length > 0">
+        <div class="loot-subsection" v-if="loot.currentSession.soldItems.length > 0">
           <h3>物品明細</h3>
           <div class="loot-item-table">
             <div class="loot-item-header">
               <span>物品</span><span>撿的人</span><span>狀態</span><span>數量</span><span>單價(萬)</span><span>費%</span><span>剪刀</span><span></span>
             </div>
-            <div v-for="item in loot.session.soldItems" :key="item.id" class="loot-item-row">
+            <div v-for="item in loot.currentSession.soldItems" :key="item.id" class="loot-item-row">
               <span class="loot-item-name">{{ item.itemName }}</span>
               <select v-model="item.pickedBy" class="loot-select-sm">
                 <option value="">-</option>
-                <option v-for="m in loot.session.members" :key="m.name" :value="m.name">{{ m.name }}</option>
+                <option v-for="m in loot.currentSession.members" :key="m.name" :value="m.name">{{ m.name }}</option>
               </select>
               <select v-model="item.status" class="loot-select-sm">
                 <option value="pending">未賣</option>
@@ -1102,7 +1120,7 @@
 
         <!-- 結算結果 -->
         <div class="loot-subsection" v-if="loot.settlementResult">
-          <h3>💰 結算結果 <span v-if="loot.session.date" class="loot-date-label">{{ loot.session.date }}</span></h3>
+          <h3>💰 結算結果 <span v-if="loot.currentSession.date" class="loot-date-label">{{ loot.currentSession.date }}</span></h3>
           <div class="loot-summary">
             <div class="loot-summary-row">
               <span>總收入</span><span>{{ (loot.settlementResult.totalRevenue ?? 0).toFixed(1) }} 萬</span>
@@ -1147,7 +1165,7 @@
             </div>
           </div>
         </div>
-        <div v-else-if="loot.session.members.length > 0" class="loot-empty-hint">
+        <div v-else-if="loot.currentSession.members.length > 0" class="loot-empty-hint">
           請設定物品狀態和成交價後即可結算
         </div>
 
