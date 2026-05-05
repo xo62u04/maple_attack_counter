@@ -21,11 +21,12 @@ function useLoot() {
   const bossDropTables = ref([])  // [{ id, bossName, drops: [{ id, itemName, needsScissors, scissorType }] }]
 
   // ── 當次 session ──
-  const session = ref({
-    date: '',
-    members: [],     // [{ name, share }]
-    soldItems: [],   // [{ id, itemName, qty, pickedBy, status, price, scissorType }]
-  })
+  const sessions = ref([])           // [{ id, name, date, members, soldItems }]
+  const currentSessionId = ref(null)
+
+  const currentSession = computed(() =>
+    sessions.value.find(s => s.id === currentSessionId.value) ?? sessions.value[0] ?? null
+  )
 
   // ── 設定區折疊狀態 ──
   const settingsOpen = ref(false)
@@ -33,6 +34,21 @@ function useLoot() {
   // ── ID 產生器 ──
   let _nextId = 1
   function nextId() { return _nextId++ }
+
+  // ── Session 管理 ──
+  function addSession() {
+    const s = { id: nextId(), name: '新分錢', date: '', members: [], soldItems: [] }
+    sessions.value.push(s)
+    currentSessionId.value = s.id
+  }
+  function deleteSession() {
+    if (sessions.value.length <= 1) return
+    sessions.value = sessions.value.filter(s => s.id !== currentSessionId.value)
+    currentSessionId.value = sessions.value[sessions.value.length - 1].id
+  }
+  function switchSession(id) {
+    currentSessionId.value = id
+  }
 
   // ── 常用隊員管理 ──
   function addMemberPreset() {
@@ -44,14 +60,14 @@ function useLoot() {
 
   // ── 本次 session 隊員 ──
   function addSessionMemberFromPreset(preset) {
-    if (session.value.members.find(m => m.name === preset.name)) return
-    session.value.members.push({ name: preset.name, share: preset.defaultShare })
+    if (currentSession.value.members.find(m => m.name === preset.name)) return
+    currentSession.value.members.push({ name: preset.name, share: preset.defaultShare })
   }
   function addSessionMemberManual() {
-    session.value.members.push({ name: '臨時隊員', share: 1 })
+    currentSession.value.members.push({ name: '臨時隊員', share: 1 })
   }
   function removeSessionMember(idx) {
-    session.value.members.splice(idx, 1)
+    currentSession.value.members.splice(idx, 1)
   }
 
   // ── 王掉落表管理 ──
@@ -74,7 +90,7 @@ function useLoot() {
 
   // ── session 物品管理 ──
   function addDropToSession(itemName, needsScissors, scissorType) {
-    session.value.soldItems.push({
+    currentSession.value.soldItems.push({
       id: nextId(),
       itemName,
       qty: 1,
@@ -86,13 +102,17 @@ function useLoot() {
     })
   }
   function removeSessionItem(id) {
-    session.value.soldItems = session.value.soldItems.filter(i => i.id !== id)
+    currentSession.value.soldItems = currentSession.value.soldItems.filter(i => i.id !== id)
   }
   function clearSession() {
-    session.value = { date: '', members: [], soldItems: [] }
+    const cs = currentSession.value
+    if (!cs) return
+    cs.date = ''
+    cs.members = []
+    cs.soldItems = []
   }
   function dropCount(itemName) {
-    return session.value.soldItems.filter(i => i.itemName === itemName).length
+    return currentSession.value?.soldItems.filter(i => i.itemName === itemName).length ?? 0
   }
 
   // ── 最小轉帳算法 ──
@@ -130,10 +150,10 @@ function useLoot() {
 
   // ── 結算計算 ──
   const settlementResult = computed(() => {
-    const members = session.value.members
+    const members = currentSession.value?.members ?? []
     if (members.length === 0) return null
 
-    const validItems = session.value.soldItems.filter(
+    const validItems = (currentSession.value?.soldItems ?? []).filter(
       i => i.status === 'sold' || i.status === 'selfuse'
     )
 
@@ -206,18 +226,31 @@ function useLoot() {
       auctionFee:  auctionFee.value,
       memberPresets:  JSON.parse(JSON.stringify(memberPresets.value)),
       bossDropTables: JSON.parse(JSON.stringify(bossDropTables.value)),
-      session:        JSON.parse(JSON.stringify(session.value)),
+      sessions:        JSON.parse(JSON.stringify(sessions.value)),
+      currentSessionId: currentSessionId.value,
     }
   }
 
   function setState(s) {
     if (!s) return
-    if (s.mileageRate != null)  mileageRate.value  = s.mileageRate
-    if (s.cubePrice   != null)  cubePrice.value    = s.cubePrice
-    if (s.auctionFee  != null)  auctionFee.value   = s.auctionFee
-    if (s.memberPresets)        memberPresets.value  = s.memberPresets
-    if (s.bossDropTables)       bossDropTables.value = s.bossDropTables
-    if (s.session)              session.value        = s.session
+    if (s.mileageRate != null) mileageRate.value = s.mileageRate
+    if (s.cubePrice   != null) cubePrice.value   = s.cubePrice
+    if (s.auctionFee  != null) auctionFee.value  = s.auctionFee
+    if (s.memberPresets)  memberPresets.value  = s.memberPresets
+    if (s.bossDropTables) bossDropTables.value = s.bossDropTables
+
+    // 舊格式相容：有 session 無 sessions
+    if (s.session && !s.sessions) {
+      sessions.value = [{ id: 1, name: '舊紀錄', ...s.session }]
+      currentSessionId.value = 1
+    } else if (s.sessions && s.sessions.length > 0) {
+      sessions.value = s.sessions
+      currentSessionId.value = s.currentSessionId ?? s.sessions[0].id
+    }
+
+    // 全新安裝：sessions 仍為空則建立預設
+    if (sessions.value.length === 0) addSession()
+
     // 重建 _nextId（避免 id 衝突）
     let maxId = 0
     for (const m of memberPresets.value) if (m.id > maxId) maxId = m.id
@@ -225,7 +258,8 @@ function useLoot() {
       if (b.id > maxId) maxId = b.id
       for (const d of b.drops) if (d.id > maxId) maxId = d.id
     }
-    for (const i of session.value.soldItems) if (i.id > maxId) maxId = i.id
+    for (const sess of sessions.value)
+      for (const i of sess.soldItems) if (i.id > maxId) maxId = i.id
     _nextId = maxId + 1
   }
 
@@ -233,12 +267,14 @@ function useLoot() {
     mileageRate, cubePrice, auctionFee,
     scissorCost3900, scissorCost7100,
     memberPresets, bossDropTables,
-    session, settingsOpen,
+    sessions, currentSessionId, currentSession,
+    settingsOpen,
     nextId,
     addMemberPreset, removeMemberPreset,
     addSessionMemberFromPreset, addSessionMemberManual, removeSessionMember,
     addBoss, removeBoss, addDrop, removeDrop,
     addDropToSession, removeSessionItem, clearSession, dropCount,
+    addSession, deleteSession, switchSession,
     settlementResult,
     getState, setState,
   }
