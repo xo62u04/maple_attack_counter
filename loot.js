@@ -258,8 +258,10 @@ function useLoot() {
       if (b.id > maxId) maxId = b.id
       for (const d of b.drops) if (d.id > maxId) maxId = d.id
     }
-    for (const sess of sessions.value)
+    for (const sess of sessions.value) {
+      if (sess.id > maxId) maxId = sess.id
       for (const i of sess.soldItems) if (i.id > maxId) maxId = i.id
+    }
     _nextId = maxId + 1
   }
 
