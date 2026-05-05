@@ -43,8 +43,9 @@ function useLoot() {
   }
   function deleteSession() {
     if (sessions.value.length <= 1) return
+    const idx = sessions.value.findIndex(s => s.id === currentSessionId.value)
     sessions.value = sessions.value.filter(s => s.id !== currentSessionId.value)
-    currentSessionId.value = sessions.value[sessions.value.length - 1].id
+    currentSessionId.value = sessions.value[Math.min(idx, sessions.value.length - 1)].id
   }
   function switchSession(id) {
     if (!sessions.value.find(s => s.id === id)) return
