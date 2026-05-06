@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>楓星攻擊力計算機</title>
-  <link rel="stylesheet" href="style.css?v=20260506k" />
+  <link rel="stylesheet" href="style.css?v=20260506l" />
 </head>
 <body>
   <div id="app">
@@ -1533,19 +1533,28 @@
       <section class="heart-section">
         <h2 class="heart-section-title">③ 各心臟市場最低價（查市場後填入）</h2>
         <div class="heart-note" style="margin-bottom:10px">所有可能的出心組合，填越多越準確，讓⑤最佳策略排行正確計算</div>
-        <!-- 依攻擊力分群橫排 -->
+        <!-- 依攻擊力分群橫排，可打勾折疊 -->
         <div class="heart-price-atk-groups">
           <template v-for="atk in [...new Set(heartFactory.allOutcomes.map(o => o.atk))].sort((a,b)=>a-b)" :key="atk">
-            <div class="heart-price-atk-group">
-              <div class="heart-price-atk-title">{{ atk }} 攻</div>
-              <div class="heart-price-row-head">
-                <span>副屬</span><span>無潛（萬）</span><span>有潛（萬）</span>
+            <div class="heart-price-atk-group" :class="{ 'heart-atk-group-collapsed': heartFactory.marketPriceFilter[atk] === false }">
+              <div class="heart-price-atk-title">
+                <label class="heart-check-row">
+                  <input type="checkbox"
+                         :checked="heartFactory.marketPriceFilter[atk] !== false"
+                         @change="e => heartFactory.marketPriceFilter[atk] = e.target.checked" />
+                  {{ atk }} 攻
+                </label>
               </div>
-              <div v-for="o in heartFactory.allOutcomes.filter(o => o.atk === atk)" :key="o.keyNo" class="heart-price-row">
-                <span class="heart-atk-label">{{ o.label || '無副屬' }}</span>
-                <input type="number" v-model.number="heartFactory.marketPrices[o.keyNo]"  min="0" />
-                <input type="number" v-model.number="heartFactory.marketPrices[o.keyYes]" min="0" />
-              </div>
+              <template v-if="heartFactory.marketPriceFilter[atk] !== false">
+                <div class="heart-price-row-head">
+                  <span>副屬</span><span>無潛（萬）</span><span>有潛（萬）</span>
+                </div>
+                <div v-for="o in heartFactory.allOutcomes.filter(o => o.atk === atk)" :key="o.keyNo" class="heart-price-row">
+                  <span class="heart-atk-label">{{ o.label || '無副屬' }}</span>
+                  <input type="number" v-model.number="heartFactory.marketPrices[o.keyNo]"  min="0" />
+                  <input type="number" v-model.number="heartFactory.marketPrices[o.keyYes]" min="0" />
+                </div>
+              </template>
             </div>
           </template>
         </div>

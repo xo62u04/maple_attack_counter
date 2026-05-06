@@ -56,6 +56,9 @@ function useHeartFactory() {
   // 市價：key = `${atk}_${subsKey}_no/yes`（舊格式 `${atk}_no` 不相容，需重填）
   const marketPrices = ref({})
 
+  // 市價卡片展開/折疊：key = atk數值，false = 折疊，undefined/true = 展開
+  const marketPriceFilter = ref({})
+
   const batch = ref({
     slots:  ['p10_str', 'p10_str', 'p10_str'],
     hammer: 'none',
@@ -84,8 +87,9 @@ function useHeartFactory() {
       pot70Price:   pot70Price.value,
       pot90Price:   pot90Price.value,
       auctionFee:   auctionFee.value,
-      marketPrices: { ...marketPrices.value },
-      batch:        JSON.parse(JSON.stringify(batch.value)),
+      marketPrices:       { ...marketPrices.value },
+      marketPriceFilter:  { ...marketPriceFilter.value },
+      batch:              JSON.parse(JSON.stringify(batch.value)),
       optimizer:    { ...optimizer.value },
       condStrategy: { ...condStrategy.value },
     }
@@ -101,8 +105,9 @@ function useHeartFactory() {
     pot70Price.value   = s.pot70Price   ?? 0
     pot90Price.value   = s.pot90Price   ?? 0
     auctionFee.value   = s.auctionFee   ?? 3
-    if (s.marketPrices)  Object.assign(marketPrices.value,  s.marketPrices)
-    if (s.batch)         Object.assign(batch.value,         s.batch)
+    if (s.marketPrices)       Object.assign(marketPrices.value,       s.marketPrices)
+    if (s.marketPriceFilter)  Object.assign(marketPriceFilter.value,  s.marketPriceFilter)
+    if (s.batch)              Object.assign(batch.value,              s.batch)
     if (s.optimizer)     Object.assign(optimizer.value,     s.optimizer)
     if (s.condStrategy)  Object.assign(condStrategy.value,  s.condStrategy)
   }
@@ -424,7 +429,7 @@ function useHeartFactory() {
     scrollCosts, hammer50, hammer100,
     pot70Price, pot90Price,
     auctionFee,
-    marketPrices,
+    marketPrices, marketPriceFilter,
     batch, optimizer,
     materialCost,
     condStrategy, condStrategyAnalysis,
