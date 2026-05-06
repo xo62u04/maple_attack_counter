@@ -2491,6 +2491,33 @@ body {
   line-height: 1.3;
 }
 
+/* 最佳策略出心明細 */
+.heart-best-head,
+.heart-best-row {
+  display: grid;
+  grid-template-columns: 1.4fr 70px 160px 70px 70px;
+  gap: 4px;
+  font-size: 15px;
+  padding: 5px 3px;
+  border-bottom: 1px solid #1a2030;
+  align-items: center;
+}
+
+.heart-best-head {
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.heart-best-scrap {
+  color: var(--text-dim);
+  opacity: 0.65;
+}
+
+.heart-best-unknown {
+  color: #a07820;
+}
+
 /* ── 條件點法 ⑥ ───────────────────────────── */
 .heart-cond-config {
   display: flex;

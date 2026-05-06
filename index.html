@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>楓星攻擊力計算機</title>
-  <link rel="stylesheet" href="style.css?v=20260506l" />
+  <link rel="stylesheet" href="style.css?v=20260506m" />
 </head>
 <body>
   <div id="app">
@@ -1711,6 +1711,42 @@
               <strong>{{ r.totalProfit >= 0 ? '+' : '' }}{{ r.totalProfit.toFixed(0) }}萬</strong>
             </span>
           </div>
+
+          <!-- 最佳策略出心機率明細 -->
+          <template v-if="heartFactory.strategyRanking.length > 0">
+            <div class="heart-divider" style="margin-top:14px"></div>
+            <div class="heart-cond-subtitle" style="margin-top:10px">
+              🏆 {{ heartFactory.strategyRanking[0].label }} — 出心機率明細
+            </div>
+            <div class="heart-note" style="margin-bottom:8px">
+              含回收後，從 {{ heartFactory.optimizer.qty }} 顆出發共衝 {{ heartFactory.strategyRanking[0].totalScrolled.toFixed(1) }} 顆
+              （合成 {{ heartFactory.strategyRanking[0].totalSynthesized.toFixed(1) }} 次）
+            </div>
+            <div class="heart-best-head">
+              <span>結果</span><span>單心機率</span><span>期望出幾顆</span><span>市值</span><span>說明</span>
+            </div>
+            <div v-for="o in heartFactory.strategyRanking[0].outcomes" :key="o.atk+'_'+o.label"
+                 class="heart-best-row"
+                 :class="o.isScrap ? 'heart-best-scrap' : o.isUnknown ? 'heart-best-unknown' : ''">
+              <span><strong>{{ o.atk }}攻</strong> <span class="heart-dim">{{ o.label }}</span></span>
+              <span>{{ (o.prob * 100).toFixed(2) }}%</span>
+              <span>
+                {{ (o.prob * heartFactory.strategyRanking[0].totalScrolled).toFixed(2) }} 顆
+                <span class="heart-dim">（每 {{ o.prob > 0 ? (1/o.prob).toFixed(1) : '∞' }} 出 1）</span>
+              </span>
+              <span>
+                <template v-if="o.isUnknown">未填</template>
+                <template v-else-if="o.ev === 0">0 萬</template>
+                <template v-else>{{ o.ev !== null ? o.ev.toFixed(0) : '—' }} 萬</template>
+              </span>
+              <span class="heart-dim">
+                <template v-if="!o.isScrap && !o.isUnknown">✅ 可賣</template>
+                <template v-else-if="o.isUnknown">❓ 未知</template>
+                <template v-else-if="!VALID_ATK || o.ev === 0">♻️ 回收</template>
+                <template v-else>♻️ 回收</template>
+              </span>
+            </div>
+          </template>
         </section>
 
       </div><!-- end heart-bottom-grid -->
@@ -1880,7 +1916,7 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="heart.js?v=20260506j"></script>
+  <script src="heart.js?v=20260506k"></script>
   <script src="equip.js"></script>
   <script src="loot.js"></script>
   <script src="alchemy.js?v=20260504-2"></script>

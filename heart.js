@@ -133,6 +133,22 @@ function useHeartFactory() {
     return getMarketPrice(atk, subs, hasPotential) * (1 - (auctionFee.value || 0) / 100)
   }
 
+  // 空白（未填）→ null；填了（包含0）→ 數字
+  function getNetPriceNullable(atk, subs, hasPotential) {
+    if (!VALID_ATK.has(atk)) return null
+    const raw = marketPrices.value[`${atk}_${subsKey(subs)}_${hasPotential ? 'yes' : 'no'}`]
+    if (raw === undefined || raw === null || raw === '' || (typeof raw === 'number' && isNaN(raw))) return null
+    return Number(raw) * (1 - (auctionFee.value || 0) / 100)
+  }
+
+  // 兩格都空白 → null（不知道市價）；否則空白那格當 0 計算
+  function expectedMarketValueNullable(atk, subs) {
+    const netNo  = getNetPriceNullable(atk, subs, false)
+    const netYes = getNetPriceNullable(atk, subs, true)
+    if (netNo === null && netYes === null) return null
+    return 0.9 * (netNo ?? 0) + 0.1 * (netYes ?? 0)
+  }
+
   function expectedMarketValue(atk, subs) {
     return 0.9 * getNetPrice(atk, subs, false) + 0.1 * getNetPrice(atk, subs, true)
   }
@@ -375,13 +391,15 @@ function useHeartFactory() {
     }
   })
 
-  // ── 最佳策略排行 ───────────────────────────────────────────
+  // ── 最佳策略排行（含回收）──────────────────────────────────────
   const strategyRanking = computed(() => {
     const hammerType    = optimizer.value.hammerType
     const qty           = optimizer.value.qty || 1
     const hammerExpCost =
       hammerType === '50'  ? 2 * (hammer50.value  || 0) :
       hammerType === '100' ? (hammer100.value || 0) : 0
+    const synthCost  = condStrategy.value.synthCost ?? 0
+    const frameRate  = (condStrategy.value.synthFrameRate ?? 0) / 100
 
     const results = []
 
@@ -394,11 +412,13 @@ function useHeartFactory() {
 
           for (const s4 of s4List) {
             if (s4 && isMixedMagic([...slots3, s4])) continue
+
             const scrollCostTotal =
               slots3.reduce((s, sc) => s + (scrollCosts.value[sc.id] || 0), 0) +
               (s4 ? (scrollCosts.value[s4.id] || 0) : 0)
             const costPerHeart = materialCost.value + scrollCostTotal + hammerExpCost
 
+            // enumerate & aggregate
             const raw3 = []
             for (let mask = 0; mask < 8; mask++) {
               let prob = 1, atk = 0
@@ -419,17 +439,62 @@ function useHeartFactory() {
               { prob: o.prob * (1 - s4.rate), atk: o.atk,          subs: { ...o.subs } },
             ]) : raw3
 
-            const totalExpRevenue = raw.reduce((sum, o) => sum + o.prob * expectedMarketValue(o.atk, o.subs), 0)
-            const expProfit = totalExpRevenue - costPerHeart
+            // 聚合
+            const grouped = new Map()
+            for (const { prob, atk, subs } of raw) {
+              const k = `${atk}_${subsKey(subs)}`
+              if (!grouped.has(k)) grouped.set(k, { atk, subs, prob: 0 })
+              grouped.get(k).prob += prob
+            }
+
+            // 分類：廢品（回收）/ 空白（不知道）/ 可賣
+            let pScrap = 0, expRevPerHeart = 0
+            const outcomes = []
+            for (const { atk, subs, prob } of grouped.values()) {
+              const valid = VALID_ATK.has(atk)
+              const ev    = valid ? expectedMarketValueNullable(atk, subs) : null
+              // 0元 也算廢品（回收）; null = 不知道; >0 = 可賣
+              const isScrap   = !valid || ev === 0
+              const isUnknown = valid && ev === null
+              if (isScrap)        pScrap         += prob
+              else if (!isUnknown) expRevPerHeart += prob * ev
+              outcomes.push({ atk, subs, label: subsLabel(subs), prob, ev, isScrap, isUnknown })
+            }
+            outcomes.sort((a, b) => b.atk - a.atk || a.label.localeCompare(b.label))
+
+            // 回收計算（連續近似）
+            const s = pScrap
+            const totalScrolled    = qty * 2 / (2 - s)
+            const totalSynthesized = totalScrolled - qty
+            const synthHeartCost   = synthCost + scrollCostTotal + hammerExpCost
+            const totalCost        = qty * costPerHeart + totalSynthesized * synthHeartCost
+
+            // 合成出框加成
+            const pSell = outcomes.filter(o => !o.isScrap && !o.isUnknown).reduce((a, o) => a + o.prob, 0)
+            const avgNetDiff = pSell > 0
+              ? outcomes.filter(o => !o.isScrap && !o.isUnknown)
+                  .reduce((a, o) => a + (o.prob / pSell) * ((getNetPriceNullable(o.atk, o.subs, true) ?? 0) - (getNetPriceNullable(o.atk, o.subs, false) ?? 0)), 0)
+              : 0
+            const totalFrameBonus  = totalSynthesized * pSell * frameRate * avgNetDiff
+            const totalRevenue     = totalScrolled * expRevPerHeart + totalFrameBonus
+            const totalProfit      = totalRevenue - totalCost
+            const expProfitPerHeart = totalProfit / qty
 
             const label = slots3.map(s => s.name).join(' / ') + (s4 ? ` + 🔨${s4.name}` : '')
-            results.push({ label, costPerHeart, scrollCostTotal, totalExpRevenue, expProfit, totalProfit: expProfit * qty })
+            results.push({
+              label, costPerHeart, scrollCostTotal,
+              pScrap, expRevPerHeart,
+              totalScrolled, totalSynthesized,
+              totalCost, totalRevenue, totalProfit,
+              expProfit: expProfitPerHeart,
+              outcomes,
+            })
           }
         }
       }
     }
 
-    results.sort((a, b) => b.expProfit - a.expProfit)
+    results.sort((a, b) => b.totalProfit - a.totalProfit)
     return results.slice(0, 15)
   })
 
