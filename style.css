@@ -2140,39 +2140,58 @@ body {
   font-style: italic;
 }
 
-.heart-price-block {
+/* ③ 市價輸入 — 依攻擊力分群橫排 */
+.heart-price-atk-groups {
   display: flex;
-  gap: 20px;
   flex-wrap: wrap;
+  gap: 16px;
   align-items: flex-start;
 }
 
-.heart-price-table-head {
-  display: grid;
-  grid-template-columns: 130px 90px 90px;
-  gap: 4px;
+.heart-price-atk-group {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  min-width: 240px;
+}
+
+.heart-price-atk-title {
   font-size: 17px;
+  font-weight: bold;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.heart-price-row-head {
+  display: grid;
+  grid-template-columns: 90px 80px 80px;
+  gap: 4px;
+  font-size: 13px;
   color: var(--text-dim);
   margin-bottom: 4px;
-  padding: 0 4px;
+  padding: 0 2px;
 }
 
 .heart-price-row {
   display: grid;
-  grid-template-columns: 130px 90px 90px;
+  grid-template-columns: 90px 80px 80px;
   gap: 4px;
   align-items: center;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
 }
 
 .heart-atk-label {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 16px;
+  padding: 3px 7px;
+  font-size: 15px;
   font-weight: bold;
   text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .heart-atk-hammer {
@@ -2186,7 +2205,7 @@ body {
   color: var(--text);
   padding: 3px 6px;
   border-radius: 4px;
-  font-size: 16px;
+  font-size: 15px;
   width: 100%;
   box-sizing: border-box;
 }
