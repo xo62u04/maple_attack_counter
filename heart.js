@@ -181,7 +181,9 @@ function useHeartFactory() {
           netNo,
           netYes,
           expVal,
-          profit: expVal - costPerHeart,
+          profit:          expVal - costPerHeart,
+          expectedInBatch: prob * (batch.value.qty || 1),
+          heartsPerOne:    prob > 0 ? 1 / prob : Infinity,
           valid:  VALID_ATK.has(a),
         }
       })

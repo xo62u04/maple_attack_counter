@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>楓星攻擊力計算機</title>
-  <link rel="stylesheet" href="style.css?v=20260506d" />
+  <link rel="stylesheet" href="style.css?v=20260506e" />
 </head>
 <body>
   <div id="app">
@@ -1631,6 +1631,18 @@
                  :class="heartFactory.batchAnalysis.expProfit >= 0 ? 'heart-profit' : 'heart-loss'">
               <span>每顆期望利潤</span>
               <span>{{ heartFactory.batchAnalysis.expProfit >= 0 ? '+' : '' }}{{ heartFactory.batchAnalysis.expProfit.toFixed(0) }} 萬</span>
+            </div>
+
+            <div class="heart-divider"></div>
+
+            <!-- 期望出幾顆 -->
+            <div class="heart-expect-title">製作 {{ heartFactory.batch.qty }} 顆，期望出現：</div>
+            <div v-for="r in heartFactory.batchAnalysis.table" :key="'e'+r.atk" class="heart-expect-row">
+              <span class="heart-expect-atk">{{ r.atk }}攻</span>
+              <span class="heart-expect-count">
+                <strong>{{ r.expectedInBatch.toFixed(2) }} 顆</strong>
+              </span>
+              <span class="heart-dim">（平均每 {{ r.heartsPerOne.toFixed(1) }} 顆出1顆）</span>
             </div>
           </template>
         </section>

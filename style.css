@@ -2259,14 +2259,14 @@ body {
   display: grid;
   grid-template-columns: 48px 52px 72px 72px 80px 80px;
   gap: 4px;
-  font-size: 14px;
+  font-size: 16px;
   padding: 3px 0;
   border-bottom: 1px solid #1a2030;
 }
 
 .heart-outcome-head {
   color: var(--text-dim);
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .heart-dim { color: var(--text-dim); }
@@ -2400,4 +2400,30 @@ body {
   border-radius: 3px;
   font-size: 17px;
   font-weight: bold;
+}
+
+.heart-expect-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.heart-expect-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 16px;
+  padding: 3px 0;
+  border-bottom: 1px solid #1a2030;
+}
+
+.heart-expect-atk {
+  min-width: 44px;
+  font-weight: bold;
+  color: var(--accent);
+}
+
+.heart-expect-count {
+  min-width: 80px;
 }
