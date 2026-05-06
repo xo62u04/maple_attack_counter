@@ -3,15 +3,21 @@ function useHeartFactory() {
 
   // ── 常數 ──────────────────────────────────────────────────
   const SCROLLS = [
-    { id: 'p10_str', name: '5攻3力',   rate: 0.10, atk: 5, subs: { str: 3 } },
-    { id: 'p10_dex', name: '5攻1敏',   rate: 0.10, atk: 5, subs: { dex: 1 } },
-    { id: 'p10_luk', name: '5攻3幸',   rate: 0.10, atk: 5, subs: { luk: 3 } },
-    { id: 'p10_int', name: '5魔攻3智', rate: 0.10, atk: 5, subs: { int: 3 } },
-    { id: 'p60_str', name: '2攻1力',   rate: 0.60, atk: 2, subs: { str: 1 } },
-    { id: 'p60_atk', name: '2攻',      rate: 0.60, atk: 2, subs: {} },
-    { id: 'p60_luk', name: '2攻1幸',   rate: 0.60, atk: 2, subs: { luk: 1 } },
-    { id: 'p60_int', name: '2魔攻1智', rate: 0.60, atk: 2, subs: { int: 1 } },
+    { id: 'p10_str', name: '5攻3力',   rate: 0.10, atk: 5, subs: { str: 3 }, magic: false },
+    { id: 'p10_dex', name: '5攻1敏',   rate: 0.10, atk: 5, subs: { dex: 1 }, magic: false },
+    { id: 'p10_luk', name: '5攻3幸',   rate: 0.10, atk: 5, subs: { luk: 3 }, magic: false },
+    { id: 'p10_int', name: '5魔攻3智', rate: 0.10, atk: 5, subs: { int: 3 }, magic: true  },
+    { id: 'p60_str', name: '2攻1力',   rate: 0.60, atk: 2, subs: { str: 1 }, magic: false },
+    { id: 'p60_atk', name: '2攻',      rate: 0.60, atk: 2, subs: {},         magic: false },
+    { id: 'p60_luk', name: '2攻1幸',   rate: 0.60, atk: 2, subs: { luk: 1 }, magic: false },
+    { id: 'p60_int', name: '2魔攻1智', rate: 0.60, atk: 2, subs: { int: 1 }, magic: true  },
   ]
+
+  function isMixedMagic(scrollList) {
+    const hasMagic    = scrollList.some(s => s && s.magic)
+    const hasPhysical = scrollList.some(s => s && !s.magic)
+    return hasMagic && hasPhysical
+  }
 
   const VALID_ATK = new Set([5, 7, 9, 10, 11, 12, 14, 15, 17, 20])
 
@@ -226,6 +232,7 @@ function useHeartFactory() {
     // 3-slot combos (all unordered with repetition)
     for (let i = 0; i < 8; i++) for (let j = i; j < 8; j++) for (let k = j; k < 8; k++) {
       const slots3 = [SCROLLS[i], SCROLLS[j], SCROLLS[k]]
+      if (isMixedMagic(slots3)) continue
       for (let mask = 1; mask < 8; mask++) {
         let atk = 0; const subs = {}
         for (let b = 0; b < 3; b++) {
@@ -235,6 +242,7 @@ function useHeartFactory() {
       }
       // 4-slot combos (with hammer slot = any scroll)
       for (const s4 of SCROLLS) {
+        if (isMixedMagic([...slots3, s4])) continue
         const slots4 = [...slots3, s4]
         for (let mask = 1; mask < 16; mask++) {
           let atk = 0; const subs = {}
@@ -381,9 +389,11 @@ function useHeartFactory() {
       for (let j = i; j < 8; j++) {
         for (let k = j; k < 8; k++) {
           const slots3 = [SCROLLS[i], SCROLLS[j], SCROLLS[k]]
+          if (isMixedMagic(slots3)) continue
           const s4List = hammerType === 'none' ? [null] : SCROLLS
 
           for (const s4 of s4List) {
+            if (s4 && isMixedMagic([...slots3, s4])) continue
             const scrollCostTotal =
               slots3.reduce((s, sc) => s + (scrollCosts.value[sc.id] || 0), 0) +
               (s4 ? (scrollCosts.value[s4.id] || 0) : 0)
