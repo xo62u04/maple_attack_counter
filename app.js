@@ -45,6 +45,7 @@ createApp({
       equip.initPartyBuffs()
       loadLootSettings()
       loadAlchemySettings()
+      loadHeartSettings()
       if (sync.syncCode.value) pullAll()
     })
 
@@ -198,7 +199,7 @@ createApp({
       const buffAtkPct = tab1BuffTotals.value.atkPct
       const totalAtk   = (Number(stats.value.atk) || 0) + buffAtk
       const totalAtkPct = (Number(stats.value.atkPct) || 0) + buffAtkPct
-      return totalAtk * (1 + totalAtkPct / 100)
+      return Math.floor(totalAtk * (1 + totalAtkPct / 100))
     })
     const step4 = computed(() => step2.value * step3.value * 0.01 * (Number(stats.value.skillPct) || 0) / 100)
 
@@ -326,6 +327,7 @@ createApp({
     // ── 分錢系統 ──
     const loot = Vue.reactive(useLoot())
     const alchemy = Vue.reactive(useAlchemy())
+    const heartFactory = Vue.reactive(useHeartFactory())
 
     // 職業變更時：更新武器係數；只在 Tab2 技能清單為空時才自動載入（避免覆蓋已設定的技能）
     watch(selectedJobId, (id) => {
@@ -682,6 +684,10 @@ createApp({
         loadAlchemySettings()
       }
       if (data.equip) equip.setState(data.equip)
+      if (data.heart) {
+        localStorage.setItem(HEART_SETTINGS_KEY, JSON.stringify(data.heart))
+        loadHeartSettings()
+      }
     }
 
     async function _applyWithGuard(data) {
@@ -704,7 +710,8 @@ createApp({
         characters: savedCharacters.value,
         loot: loot.getState(),
         alchemy: alchemy.getState(),
-        equip: equip.getState()
+        equip: equip.getState(),
+        heart: heartFactory.getState()
       })
       if (sync.syncStatus.value !== 'error') {
         localStorage.setItem(SYNC_LAST_PUSH_KEY, new Date().toISOString())
@@ -768,6 +775,24 @@ createApp({
 
     Vue.watch(() => JSON.stringify(alchemy.getState()), saveAlchemySettings)
 
+    const HEART_SETTINGS_KEY = 'maple_heart_factory_settings'
+
+    function saveHeartSettings() {
+      try {
+        localStorage.setItem(HEART_SETTINGS_KEY, JSON.stringify(heartFactory.getState()))
+      } catch {}
+      pushAll()
+    }
+
+    function loadHeartSettings() {
+      try {
+        const raw = localStorage.getItem(HEART_SETTINGS_KEY)
+        if (raw) heartFactory.setState(JSON.parse(raw))
+      } catch {}
+    }
+
+    Vue.watch(() => JSON.stringify(heartFactory.getState()), saveHeartSettings)
+
     return {
       activeTab, equipZoom, changeEquipZoom, saveName, selectedSaveKey, saveMessage, savedCharacters,
       saveCharacter, loadCharacter, deleteCharacter, exportSaves, importSaves,
@@ -795,6 +820,7 @@ createApp({
       removeSkill,
       loot, saveLootSettings,
       alchemy, saveAlchemySettings,
+      heartFactory,
       sync, onSetSyncCode,
       conflictDialog, resolveConflict, formatSyncTime,
     }
