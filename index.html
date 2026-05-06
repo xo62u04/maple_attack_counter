@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>楓星攻擊力計算機</title>
-  <link rel="stylesheet" href="style.css?v=20260506i" />
+  <link rel="stylesheet" href="style.css?v=20260506j" />
 </head>
 <body>
   <div id="app">
@@ -1564,11 +1564,15 @@
             </select>
           </div>
           <div class="heart-slot-row">
-            <span class="heart-slot-label">槌子</span>
-            <select v-model="heartFactory.batch.hammer" class="heart-sel">
-              <option value="none">不加槌</option>
-              <option value="50">50%鐵鎚（期望 {{ 2*(heartFactory.hammer50||0) }}萬）</option>
-              <option value="100">100%鐵鎚（{{ heartFactory.hammer100||0 }}萬）</option>
+            <label class="heart-check-row">
+              <input type="checkbox"
+                     :checked="heartFactory.batch.hammer !== 'none'"
+                     @change="e => heartFactory.batch.hammer = e.target.checked ? '50' : 'none'" />
+              使用鐵鎚
+            </label>
+            <select v-if="heartFactory.batch.hammer !== 'none'" v-model="heartFactory.batch.hammer" class="heart-sel" style="width:auto">
+              <option value="50">50%（期望 {{ 2*(heartFactory.hammer50||0) }}萬）</option>
+              <option value="100">100%（{{ heartFactory.hammer100||0 }}萬）</option>
             </select>
           </div>
           <div class="heart-slot-row" v-if="heartFactory.batch.hammer !== 'none'">
@@ -1659,11 +1663,15 @@
             <input type="number" v-model.number="heartFactory.optimizer.qty" min="1" class="heart-qty-input" />
           </div>
           <div class="heart-slot-row">
-            <span class="heart-slot-label">加槌</span>
-            <select v-model="heartFactory.optimizer.hammerType" class="heart-sel">
-              <option value="none">不加槌</option>
-              <option value="50">50% 鐵鎚（期望 {{ 2*(heartFactory.hammer50||0) }}萬）</option>
-              <option value="100">100% 鐵鎚（{{ heartFactory.hammer100||0 }}萬）</option>
+            <label class="heart-check-row">
+              <input type="checkbox"
+                     :checked="heartFactory.optimizer.hammerType !== 'none'"
+                     @change="e => heartFactory.optimizer.hammerType = e.target.checked ? '50' : 'none'" />
+              使用鐵鎚
+            </label>
+            <select v-if="heartFactory.optimizer.hammerType !== 'none'" v-model="heartFactory.optimizer.hammerType" class="heart-sel" style="width:auto">
+              <option value="50">50%（期望 {{ 2*(heartFactory.hammer50||0) }}萬）</option>
+              <option value="100">100%（{{ heartFactory.hammer100||0 }}萬）</option>
             </select>
           </div>
 
@@ -1702,26 +1710,26 @@
           廢心每兩顆合成一顆新心繼續點，直到剩一顆為止。
         </div>
 
-        <!-- 策略設定 -->
+        <!-- 策略設定 橫排 -->
         <div class="heart-cond-config">
-          <div class="heart-slot-row">
-            <span class="heart-slot-label">10% 卷軸</span>
+          <div class="heart-cond-field">
+            <div class="heart-cond-label">10% 卷軸</div>
             <select v-model="heartFactory.condStrategy.scroll10" class="heart-sel">
               <option v-for="sc in heartFactory.SCROLLS.filter(s => s.rate < 0.5)" :key="sc.id" :value="sc.id">
                 {{ sc.name }}（{{ heartFactory.scrollCosts[sc.id]||0 }}萬）
               </option>
             </select>
           </div>
-          <div class="heart-slot-row">
-            <span class="heart-slot-label">60% 卷軸</span>
+          <div class="heart-cond-field">
+            <div class="heart-cond-label">60% 卷軸</div>
             <select v-model="heartFactory.condStrategy.scroll60" class="heart-sel">
               <option v-for="sc in heartFactory.SCROLLS.filter(s => s.rate >= 0.5)" :key="sc.id" :value="sc.id">
                 {{ sc.name }}（{{ heartFactory.scrollCosts[sc.id]||0 }}萬）
               </option>
             </select>
           </div>
-          <div class="heart-slot-row">
-            <span class="heart-slot-label">起始顆數</span>
+          <div class="heart-cond-field">
+            <div class="heart-cond-label">起始顆數</div>
             <input type="number" v-model.number="heartFactory.condStrategy.qty" min="1" class="heart-qty-input" />
           </div>
         </div>

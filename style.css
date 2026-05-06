@@ -2469,15 +2469,28 @@ body {
 /* ── 條件點法 ⑥ ───────────────────────────── */
 .heart-cond-config {
   display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+
+.heart-cond-field {
+  display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 4px;
+  gap: 5px;
+}
+
+.heart-cond-label {
+  font-size: 13px;
+  color: var(--text-dim);
 }
 
 .heart-cond-body {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 28px;
 }
 
 @media (max-width: 800px) {
@@ -2517,4 +2530,21 @@ body {
 .heart-waste {
   color: var(--text-dim);
   font-style: italic;
+}
+
+/* ── 打勾選槌子 ──────────────────────────── */
+.heart-check-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  font-size: 16px;
+  user-select: none;
+}
+
+.heart-check-row input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+  accent-color: var(--accent);
 }
