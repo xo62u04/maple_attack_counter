@@ -2149,7 +2149,7 @@ body {
 
 .heart-price-table-head {
   display: grid;
-  grid-template-columns: 55px 90px 90px;
+  grid-template-columns: 130px 90px 90px;
   gap: 4px;
   font-size: 17px;
   color: var(--text-dim);
@@ -2159,7 +2159,7 @@ body {
 
 .heart-price-row {
   display: grid;
-  grid-template-columns: 55px 90px 90px;
+  grid-template-columns: 130px 90px 90px;
   gap: 4px;
   align-items: center;
   margin-bottom: 3px;
@@ -2172,7 +2172,7 @@ body {
   padding: 4px 8px;
   font-size: 16px;
   font-weight: bold;
-  text-align: center;
+  text-align: left;
 }
 
 .heart-atk-hammer {
