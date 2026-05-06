@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>楓星攻擊力計算機</title>
-  <link rel="stylesheet" href="style.css?v=20260506" />
+  <link rel="stylesheet" href="style.css?v=20260506b" />
 </head>
 <body>
   <div id="app">
@@ -1487,6 +1487,22 @@
             </div>
             <div class="heart-note">50%鎚期望成本 = 2 × 單價</div>
           </div>
+          <!-- 潛能卷 -->
+          <div class="heart-scroll-group">
+            <div class="heart-scroll-group-title heart-purple">── 上潛能卷（失敗裝備消失）</div>
+            <div class="heart-scroll-grid" style="grid-template-columns:1fr">
+              <div class="heart-scroll-item">
+                <span>70% 潛能卷</span>
+                <input type="number" v-model.number="heartFactory.pot70Price" min="0" />
+                <span>萬</span>
+              </div>
+              <div class="heart-scroll-item">
+                <span>90% 潛能卷</span>
+                <input type="number" v-model.number="heartFactory.pot90Price" min="0" />
+                <span>萬</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1716,6 +1732,62 @@
                     &nbsp;
                     <span :class="heartFactory.scrollEVResult.ok ? 'heart-tag-go' : 'heart-tag-stop'">
                       {{ heartFactory.scrollEVResult.ok ? '建議點！' : '不建議' }}
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </template>
+          </template>
+
+          <!-- 上潛能卷 EV（僅在無潛能時顯示）-->
+          <template v-if="!heartFactory.heart.hasPotential">
+            <div class="heart-divider"></div>
+            <div class="heart-note" style="margin-bottom:6px">上潛能卷？（失敗裝備消失）</div>
+
+            <template v-if="heartFactory.pot70EVResult">
+              <div class="heart-ev-box" style="margin-bottom:6px">
+                <div class="heart-ev-box-title heart-purple">🎲 70% 潛能卷（{{ heartFactory.pot70Price||0 }}萬）</div>
+                <div class="heart-ev-row">
+                  <span>成功(70%) → 有潛能</span>
+                  <span class="heart-profit">{{ heartFactory.pot70EVResult.p_yes }} 萬</span>
+                </div>
+                <div class="heart-ev-row">
+                  <span>失敗(30%) → 裝備消失</span>
+                  <span class="heart-loss">0 萬</span>
+                </div>
+                <div class="heart-ev-row heart-ev-total"
+                     :class="heartFactory.pot70EVResult.ok ? 'heart-profit' : 'heart-loss'">
+                  <span>EV（vs 現在賣 {{ heartFactory.pot70EVResult.p_no }} 萬）</span>
+                  <span>
+                    {{ heartFactory.pot70EVResult.ev >= 0 ? '+' : '' }}{{ heartFactory.pot70EVResult.ev.toFixed(0) }} 萬
+                    &nbsp;
+                    <span :class="heartFactory.pot70EVResult.ok ? 'heart-tag-go' : 'heart-tag-stop'">
+                      {{ heartFactory.pot70EVResult.ok ? '建議！' : '不建議' }}
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </template>
+
+            <template v-if="heartFactory.pot90EVResult">
+              <div class="heart-ev-box">
+                <div class="heart-ev-box-title heart-blue">🎲 90% 潛能卷（{{ heartFactory.pot90Price||0 }}萬）</div>
+                <div class="heart-ev-row">
+                  <span>成功(90%) → 有潛能</span>
+                  <span class="heart-profit">{{ heartFactory.pot90EVResult.p_yes }} 萬</span>
+                </div>
+                <div class="heart-ev-row">
+                  <span>失敗(10%) → 裝備消失</span>
+                  <span class="heart-loss">0 萬</span>
+                </div>
+                <div class="heart-ev-row heart-ev-total"
+                     :class="heartFactory.pot90EVResult.ok ? 'heart-profit' : 'heart-loss'">
+                  <span>EV（vs 現在賣 {{ heartFactory.pot90EVResult.p_no }} 萬）</span>
+                  <span>
+                    {{ heartFactory.pot90EVResult.ev >= 0 ? '+' : '' }}{{ heartFactory.pot90EVResult.ev.toFixed(0) }} 萬
+                    &nbsp;
+                    <span :class="heartFactory.pot90EVResult.ok ? 'heart-tag-go' : 'heart-tag-stop'">
+                      {{ heartFactory.pot90EVResult.ok ? '建議！' : '不建議' }}
                     </span>
                   </span>
                 </div>

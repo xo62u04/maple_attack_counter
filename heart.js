@@ -26,6 +26,10 @@ function useHeartFactory() {
   const hammer50  = ref(0)
   const hammer100 = ref(0)
 
+  // 潛能卷成本（萬）
+  const pot70Price = ref(0)
+  const pot90Price = ref(0)
+
   const marketPrices = ref(
     Object.fromEntries(
       [...VALID_ATK].flatMap(atk => [
@@ -65,6 +69,8 @@ function useHeartFactory() {
       scrollCosts:  { ...scrollCosts.value },
       hammer50:     hammer50.value,
       hammer100:    hammer100.value,
+      pot70Price:   pot70Price.value,
+      pot90Price:   pot90Price.value,
       marketPrices: { ...marketPrices.value },
       batch:        JSON.parse(JSON.stringify(batch.value)),
     }
@@ -77,6 +83,8 @@ function useHeartFactory() {
     if (s.scrollCosts)  Object.assign(scrollCosts.value,  s.scrollCosts)
     hammer50.value     = s.hammer50     ?? 0
     hammer100.value    = s.hammer100    ?? 0
+    pot70Price.value   = s.pot70Price   ?? 0
+    pot90Price.value   = s.pot90Price   ?? 0
     if (s.marketPrices) Object.assign(marketPrices.value, s.marketPrices)
     if (s.batch)        Object.assign(batch.value,        s.batch)
   }
@@ -253,6 +261,19 @@ function useHeartFactory() {
   const hammer50EVResult  = computed(() => calcHammerEV('50',  nextHammerScrollId.value))
   const hammer100EVResult = computed(() => calcHammerEV('100', nextHammerScrollId.value))
 
+  // 潛能卷 EV（成功→有潛能市價，失敗→裝備消失=0）
+  // EV vs 現在賣 = rate × P_yes - scrollCost - P_no
+  function calcPotEV(rate, scrollCost) {
+    const atk    = heartCurrentAtk.value
+    const p_no   = getMarketPrice(atk, false)
+    const p_yes  = getMarketPrice(atk, true)
+    const ev     = rate * p_yes - scrollCost - p_no
+    return { rate, scrollCost, p_no, p_yes, ev, ok: ev > 0 }
+  }
+
+  const pot70EVResult = computed(() => calcPotEV(0.70, pot70Price.value || 0))
+  const pot90EVResult = computed(() => calcPotEV(0.90, pot90Price.value || 0))
+
   return {
     SCROLLS, VALID_ATK, ATK_3SLOT, ATK_4SLOT,
     goldPrice, crystalPrice,
@@ -267,6 +288,7 @@ function useHeartFactory() {
     heartCostSoFar, heartCurrentProfit,
     heartHasOpenSlot, heartCanHammer,
     scrollEVResult, hammer50EVResult, hammer100EVResult,
+    pot70Price, pot90Price, pot70EVResult, pot90EVResult,
     getState, setState, resetHeart,
   }
 }
