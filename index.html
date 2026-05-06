@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>楓星攻擊力計算機</title>
-  <link rel="stylesheet" href="style.css?v=20260506g" />
+  <link rel="stylesheet" href="style.css?v=20260506h" />
 </head>
 <body>
   <div id="app">
@@ -1516,16 +1516,13 @@
       <!-- ③ 市場最低價 -->
       <section class="heart-section">
         <h2 class="heart-section-title">③ 各心臟市場最低價（查市場後填入）</h2>
-        <div class="heart-note" style="margin-bottom:8px">依目前④批量策略的卷軸組合自動生成可能結果，切換策略後欄位同步更新</div>
+        <div class="heart-note" style="margin-bottom:8px">所有可能的出心組合，填越多越準確，讓⑤最佳策略排行正確計算</div>
         <div class="heart-price-block">
           <div class="heart-price-group" style="flex:1">
             <div class="heart-price-table-head">
               <span>心臟（攻擊＋副屬）</span><span>無潛能（萬）</span><span>有潛能（萬）</span>
             </div>
-            <div v-if="heartFactory.batchOutcomes.length === 0" class="heart-note" style="padding:12px 0">
-              請先在④設定卷軸組合
-            </div>
-            <div v-for="o in heartFactory.batchOutcomes" :key="o.keyNo" class="heart-price-row">
+            <div v-for="o in heartFactory.allOutcomes" :key="o.keyNo" class="heart-price-row">
               <span class="heart-atk-label">{{ o.atk }}攻 <span class="heart-dim">{{ o.label }}</span></span>
               <input type="number" v-model.number="heartFactory.marketPrices[o.keyNo]"  min="0" />
               <input type="number" v-model.number="heartFactory.marketPrices[o.keyYes]" min="0" />

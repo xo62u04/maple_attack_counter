@@ -116,7 +116,43 @@ function useHeartFactory() {
     return 0.9 * getNetPrice(atk, subs, false) + 0.1 * getNetPrice(atk, subs, true)
   }
 
-  // ── 枚舉目前批量策略的非廢品結果（供市價表格使用）────────────
+  // ── 枚舉所有策略可能出現的非廢品結果（供市價表格使用）─────────
+  const allOutcomes = computed(() => {
+    const seen = new Set()
+    const list = []
+    const add = (atk, subs) => {
+      if (!VALID_ATK.has(atk)) return
+      const kb = `${atk}_${subsKey(subs)}`
+      if (seen.has(kb)) return
+      seen.add(kb)
+      list.push({ atk, subs, label: subsLabel(subs), keyNo: `${kb}_no`, keyYes: `${kb}_yes` })
+    }
+    // 3-slot combos (all unordered with repetition)
+    for (let i = 0; i < 8; i++) for (let j = i; j < 8; j++) for (let k = j; k < 8; k++) {
+      const slots3 = [SCROLLS[i], SCROLLS[j], SCROLLS[k]]
+      for (let mask = 1; mask < 8; mask++) {
+        let atk = 0; const subs = {}
+        for (let b = 0; b < 3; b++) {
+          if ((mask >> (2-b)) & 1) { atk += slots3[b].atk; for (const [sk, sv] of Object.entries(slots3[b].subs)) subs[sk] = (subs[sk]||0)+sv }
+        }
+        add(atk, subs)
+      }
+      // 4-slot combos (with hammer slot = any scroll)
+      for (const s4 of SCROLLS) {
+        const slots4 = [...slots3, s4]
+        for (let mask = 1; mask < 16; mask++) {
+          let atk = 0; const subs = {}
+          for (let b = 0; b < 4; b++) {
+            if ((mask >> (3-b)) & 1) { atk += slots4[b].atk; for (const [sk, sv] of Object.entries(slots4[b].subs)) subs[sk] = (subs[sk]||0)+sv }
+          }
+          add(atk, subs)
+        }
+      }
+    }
+    return list.sort((a, b) => a.atk - b.atk || a.label.localeCompare(b.label))
+  })
+
+  // ── 枚舉目前批量策略的非廢品結果（供批量分析使用）────────────
   const batchOutcomes = computed(() => {
     const slots  = batch.value.slots.map(id => SCROLLS.find(s => s.id === id))
     const hammer = batch.value.hammer
@@ -300,7 +336,7 @@ function useHeartFactory() {
     marketPrices,
     batch, optimizer,
     materialCost,
-    batchOutcomes, batchAnalysis, strategyRanking,
+    allOutcomes, batchOutcomes, batchAnalysis, strategyRanking,
     getState, setState,
   }
 }
