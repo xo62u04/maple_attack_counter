@@ -1,4 +1,4 @@
-/* ── CSS Variables ── */
+﻿/* ── CSS Variables ── */
 :root {
   --bg: #0f0f1a;
   --bg-panel: #1a1a2e;
@@ -2032,7 +2032,7 @@ body {
 }
 
 .heart-section-title {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: bold;
   color: var(--accent);
   margin-bottom: 12px;
@@ -2053,7 +2053,7 @@ body {
 }
 
 .heart-field label {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--text-dim);
 }
 
@@ -2070,7 +2070,7 @@ body {
   color: var(--text);
   padding: 4px 8px;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .heart-fixed {
@@ -2083,7 +2083,7 @@ body {
   border: 1px solid var(--success);
   border-radius: 6px;
   padding: 6px 12px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--success);
   display: flex;
   flex-direction: column;
@@ -2091,7 +2091,7 @@ body {
 }
 
 .heart-total-chip small {
-  font-size: 10px;
+  font-size: 15px;
   color: var(--text-dim);
 }
 
@@ -2102,7 +2102,7 @@ body {
 }
 
 .heart-scroll-group-title {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: bold;
   margin-bottom: 6px;
 }
@@ -2121,7 +2121,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 4px 8px;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .heart-scroll-item input {
@@ -2131,11 +2131,11 @@ body {
   color: var(--text);
   padding: 2px 6px;
   border-radius: 3px;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .heart-note {
-  font-size: 10px;
+  font-size: 15px;
   color: var(--text-dim);
   font-style: italic;
 }
@@ -2151,7 +2151,7 @@ body {
   display: grid;
   grid-template-columns: 55px 90px 90px;
   gap: 4px;
-  font-size: 10px;
+  font-size: 15px;
   color: var(--text-dim);
   margin-bottom: 4px;
   padding: 0 4px;
@@ -2170,7 +2170,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 4px 8px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: bold;
   text-align: center;
 }
@@ -2186,13 +2186,13 @@ body {
   color: var(--text);
   padding: 3px 6px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 14px;
   width: 100%;
   box-sizing: border-box;
 }
 
 .heart-price-group-title {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: bold;
   margin-bottom: 6px;
 }
@@ -2215,7 +2215,7 @@ body {
 }
 
 .heart-panel-title {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: bold;
   margin-bottom: 8px;
 }
@@ -2225,12 +2225,12 @@ body {
   align-items: center;
   gap: 8px;
   margin-bottom: 5px;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .heart-slot-label {
   color: var(--text-dim);
-  font-size: 11px;
+  font-size: 14px;
   min-width: 36px;
 }
 
@@ -2240,7 +2240,7 @@ body {
   color: var(--text);
   padding: 3px 6px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 14px;
   flex: 1;
 }
 
@@ -2251,7 +2251,7 @@ body {
   color: var(--text);
   padding: 3px 8px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .heart-outcome-head,
@@ -2259,14 +2259,14 @@ body {
   display: grid;
   grid-template-columns: 60px 65px 85px 85px;
   gap: 4px;
-  font-size: 11px;
+  font-size: 14px;
   padding: 3px 0;
   border-bottom: 1px solid #1a2030;
 }
 
 .heart-outcome-head {
   color: var(--text-dim);
-  font-size: 10px;
+  font-size: 15px;
 }
 
 .heart-waste { opacity: 0.6; }
@@ -2274,7 +2274,7 @@ body {
 .heart-ev-row {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 14px;
   margin-bottom: 3px;
 }
 
@@ -2293,7 +2293,7 @@ body {
 }
 
 .heart-ev-box-title {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: bold;
   margin-bottom: 5px;
 }
@@ -2315,7 +2315,7 @@ body {
   color: var(--text-dim);
   padding: 2px 7px;
   border-radius: 4px;
-  font-size: 10px;
+  font-size: 15px;
   cursor: pointer;
 }
 
@@ -2343,7 +2343,7 @@ body {
   color: var(--text-dim);
   padding: 4px 12px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 14px;
   cursor: pointer;
 }
 
@@ -2352,7 +2352,7 @@ body {
   border: 1px solid var(--accent);
   border-radius: 5px;
   padding: 5px 10px;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: bold;
   color: var(--accent);
   display: inline-flex;
@@ -2362,7 +2362,7 @@ body {
 }
 
 .heart-pot-badge {
-  font-size: 11px;
+  font-size: 14px;
   color: #c894e8;
 }
 
@@ -2386,7 +2386,7 @@ body {
   color: var(--success);
   padding: 1px 6px;
   border-radius: 3px;
-  font-size: 10px;
+  font-size: 15px;
   font-weight: bold;
 }
 
@@ -2396,6 +2396,6 @@ body {
   color: var(--danger);
   padding: 1px 6px;
   border-radius: 3px;
-  font-size: 10px;
+  font-size: 15px;
   font-weight: bold;
 }
