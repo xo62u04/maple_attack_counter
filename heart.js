@@ -61,6 +61,9 @@ function useHeartFactory() {
   const nextHammerType     = ref('50')
   const nextHammerScrollId = ref('p10_str')
 
+  // 交易所手續費 %
+  const auctionFee = ref(3)
+
   // ── getState / setState ────────────────────────────────────
   function getState() {
     return {
@@ -71,6 +74,7 @@ function useHeartFactory() {
       hammer100:    hammer100.value,
       pot70Price:   pot70Price.value,
       pot90Price:   pot90Price.value,
+      auctionFee:   auctionFee.value,
       marketPrices: { ...marketPrices.value },
       batch:        JSON.parse(JSON.stringify(batch.value)),
     }
@@ -85,6 +89,7 @@ function useHeartFactory() {
     hammer100.value    = s.hammer100    ?? 0
     pot70Price.value   = s.pot70Price   ?? 0
     pot90Price.value   = s.pot90Price   ?? 0
+    auctionFee.value   = s.auctionFee   ?? 3
     if (s.marketPrices) Object.assign(marketPrices.value, s.marketPrices)
     if (s.batch)        Object.assign(batch.value,        s.batch)
   }
@@ -108,13 +113,20 @@ function useHeartFactory() {
   )
 
   // ── 計算：市價查詢 ────────────────────────────────────────
+  // 原始市價（使用者填入）
   function getMarketPrice(atk, hasPotential) {
     if (!VALID_ATK.has(atk)) return 0
     return marketPrices.value[`${atk}_${hasPotential ? 'yes' : 'no'}`] || 0
   }
 
+  // 扣除手續費後實拿
+  function getNetPrice(atk, hasPotential) {
+    return getMarketPrice(atk, hasPotential) * (1 - (auctionFee.value || 0) / 100)
+  }
+
+  // 含10%潛能機率 × 扣費後 期望市值
   function expectedMarketValue(atk) {
-    return 0.9 * getMarketPrice(atk, false) + 0.1 * getMarketPrice(atk, true)
+    return 0.9 * getNetPrice(atk, false) + 0.1 * getNetPrice(atk, true)
   }
 
   // ── 計算：批量分析 ────────────────────────────────────────
@@ -159,11 +171,15 @@ function useHeartFactory() {
 
     const table = Object.entries(grouped)
       .map(([atk, prob]) => {
-        const a      = +atk
-        const expVal = expectedMarketValue(a)
+        const a        = +atk
+        const netNo    = getNetPrice(a, false)
+        const netYes   = getNetPrice(a, true)
+        const expVal   = VALID_ATK.has(a) ? (0.9 * netNo + 0.1 * netYes) : 0
         return {
           atk:    a,
           prob,
+          netNo,
+          netYes,
           expVal,
           profit: expVal - costPerHeart,
           valid:  VALID_ATK.has(a),
@@ -202,7 +218,7 @@ function useHeartFactory() {
   })
 
   const heartCurrentMarketValue = computed(() =>
-    getMarketPrice(heartCurrentAtk.value, heart.value.hasPotential)
+    getNetPrice(heartCurrentAtk.value, heart.value.hasPotential)
   )
 
   const heartCostSoFar = computed(() => {
@@ -236,7 +252,7 @@ function useHeartFactory() {
     if (!scroll) return null
     const curVal     = heartCurrentMarketValue.value
     const successAtk = heartCurrentAtk.value + scroll.atk
-    const successVal = getMarketPrice(successAtk, heart.value.hasPotential)
+    const successVal = getNetPrice(successAtk, heart.value.hasPotential)
     const cost       = scrollCosts.value[scrollId] || 0
     const ev         = scroll.rate * (successVal - curVal) - cost
     return { scroll, cost, successAtk, successVal, failVal: curVal, ev, ok: ev > 0 }
@@ -250,7 +266,7 @@ function useHeartFactory() {
     if (!scroll) return null
     const curVal     = heartCurrentMarketValue.value
     const successAtk = heartCurrentAtk.value + scroll.atk
-    const successVal = getMarketPrice(successAtk, heart.value.hasPotential)
+    const successVal = getNetPrice(successAtk, heart.value.hasPotential)
     const scrollCost = scrollCosts.value[scrollId] || 0
     const slot4EV    = scroll.rate * (successVal - curVal) - scrollCost
     const totalEV    = slot4EV - hammerCost
@@ -265,8 +281,8 @@ function useHeartFactory() {
   // EV vs 現在賣 = rate × P_yes - scrollCost - P_no
   function calcPotEV(rate, scrollCost) {
     const atk    = heartCurrentAtk.value
-    const p_no   = getMarketPrice(atk, false)
-    const p_yes  = getMarketPrice(atk, true)
+    const p_no   = getNetPrice(atk, false)
+    const p_yes  = getNetPrice(atk, true)
     const ev     = rate * p_yes - scrollCost - p_no
     return { rate, scrollCost, p_no, p_yes, ev, ok: ev > 0 }
   }
@@ -289,6 +305,7 @@ function useHeartFactory() {
     heartHasOpenSlot, heartCanHammer,
     scrollEVResult, hammer50EVResult, hammer100EVResult,
     pot70Price, pot90Price, pot70EVResult, pot90EVResult,
+    auctionFee,
     getState, setState, resetHeart,
   }
 }

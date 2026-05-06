@@ -2257,17 +2257,19 @@ body {
 .heart-outcome-head,
 .heart-outcome-row {
   display: grid;
-  grid-template-columns: 60px 65px 85px 85px;
+  grid-template-columns: 48px 52px 72px 72px 80px 80px;
   gap: 4px;
-  font-size: 16px;
+  font-size: 14px;
   padding: 3px 0;
   border-bottom: 1px solid #1a2030;
 }
 
 .heart-outcome-head {
   color: var(--text-dim);
-  font-size: 17px;
+  font-size: 13px;
 }
+
+.heart-dim { color: var(--text-dim); }
 
 .heart-waste { opacity: 0.6; }
 

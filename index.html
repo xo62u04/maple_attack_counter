@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>楓星攻擊力計算機</title>
-  <link rel="stylesheet" href="style.css?v=20260506c" />
+  <link rel="stylesheet" href="style.css?v=20260506d" />
 </head>
 <body>
   <div id="app">
@@ -1440,6 +1440,13 @@
               <span>萬/顆</span>
             </div>
           </div>
+          <div class="heart-field">
+            <label>交易所手續費</label>
+            <div class="heart-input-wrap">
+              <input type="number" v-model.number="heartFactory.auctionFee" min="0" max="100" style="width:60px" />
+              <span>%</span>
+            </div>
+          </div>
           <div class="heart-total-chip">
             每顆材料成本：<strong>{{ heartFactory.materialCost }} 萬</strong>
             <small>= 3×{{ heartFactory.goldPrice||0 }} + 10 + 4×{{ heartFactory.crystalPrice||0 }}</small>
@@ -1594,19 +1601,22 @@
             <div class="heart-divider"></div>
 
             <div class="heart-outcome-head">
-              <span>結果</span><span>機率</span><span>期望市值</span><span>利潤/顆</span>
+              <span>結果</span><span>機率</span><span>無潛售價</span><span>有潛售價</span><span>期望市值</span><span>利潤/顆</span>
             </div>
             <div v-for="r in heartFactory.batchAnalysis.table" :key="r.atk" class="heart-outcome-row">
               <span>{{ r.atk }}攻</span>
               <span>{{ (r.prob*100).toFixed(2) }}%</span>
+              <span class="heart-dim">{{ r.netNo > 0 ? r.netNo.toFixed(0) : '—' }}</span>
+              <span class="heart-dim">{{ r.netYes > 0 ? r.netYes.toFixed(0) : '—' }}</span>
               <span>{{ r.expVal.toFixed(0) }} 萬</span>
               <span :class="r.profit >= 0 ? 'heart-profit' : 'heart-loss'">
                 {{ r.profit >= 0 ? '+' : '' }}{{ r.profit.toFixed(0) }} 萬
               </span>
             </div>
             <div class="heart-outcome-row heart-waste" v-if="heartFactory.batchAnalysis.wasteProb > 0.0001">
-              <span>廢品（其他）</span>
+              <span>廢品</span>
               <span>{{ (heartFactory.batchAnalysis.wasteProb*100).toFixed(2) }}%</span>
+              <span>—</span><span>—</span>
               <span>0 萬</span>
               <span class="heart-loss">{{ (-heartFactory.batchAnalysis.costPerHeart).toFixed(0) }} 萬</span>
             </div>
