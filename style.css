@@ -2465,3 +2465,56 @@ body {
   font-size: 14px;
   line-height: 1.3;
 }
+
+/* ── 條件點法 ⑥ ───────────────────────────── */
+.heart-cond-config {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.heart-cond-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 800px) {
+  .heart-cond-body { grid-template-columns: 1fr; }
+}
+
+.heart-cond-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.heart-cond-subtitle {
+  font-size: 16px;
+  font-weight: bold;
+  color: #f0c040;
+  margin-bottom: 8px;
+}
+
+.heart-cond-outcome-head,
+.heart-cond-outcome-row {
+  display: grid;
+  grid-template-columns: 1fr 60px 60px 60px 80px;
+  gap: 4px;
+  font-size: 16px;
+  padding: 4px 2px;
+  border-bottom: 1px solid #1a2030;
+  align-items: center;
+}
+
+.heart-cond-outcome-head {
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.heart-waste {
+  color: var(--text-dim);
+  font-style: italic;
+}

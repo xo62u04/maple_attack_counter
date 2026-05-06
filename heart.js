@@ -65,6 +65,14 @@ function useHeartFactory() {
 
   const optimizer = ref({ hammerType: 'none', qty: 40 })
 
+  const condStrategy = ref({
+    scroll10:       'p10_str',
+    scroll60:       'p60_atk',
+    synthCost:      3,
+    synthFrameRate: 1,
+    qty:            40,
+  })
+
   // ── getState / setState ────────────────────────────────────
   function getState() {
     return {
@@ -79,6 +87,7 @@ function useHeartFactory() {
       marketPrices: { ...marketPrices.value },
       batch:        JSON.parse(JSON.stringify(batch.value)),
       optimizer:    { ...optimizer.value },
+      condStrategy: { ...condStrategy.value },
     }
   }
 
@@ -86,15 +95,16 @@ function useHeartFactory() {
     if (!s) return
     goldPrice.value    = s.goldPrice    ?? 0
     crystalPrice.value = s.crystalPrice ?? 0
-    if (s.scrollCosts)  Object.assign(scrollCosts.value,  s.scrollCosts)
+    if (s.scrollCosts)   Object.assign(scrollCosts.value,   s.scrollCosts)
     hammer50.value     = s.hammer50     ?? 0
     hammer100.value    = s.hammer100    ?? 0
     pot70Price.value   = s.pot70Price   ?? 0
     pot90Price.value   = s.pot90Price   ?? 0
     auctionFee.value   = s.auctionFee   ?? 3
-    if (s.marketPrices) Object.assign(marketPrices.value, s.marketPrices)
-    if (s.batch)        Object.assign(batch.value,        s.batch)
-    if (s.optimizer)    Object.assign(optimizer.value,    s.optimizer)
+    if (s.marketPrices)  Object.assign(marketPrices.value,  s.marketPrices)
+    if (s.batch)         Object.assign(batch.value,         s.batch)
+    if (s.optimizer)     Object.assign(optimizer.value,     s.optimizer)
+    if (s.condStrategy)  Object.assign(condStrategy.value,  s.condStrategy)
   }
 
   // ── 材料成本 ───────────────────────────────────────────────
@@ -115,6 +125,87 @@ function useHeartFactory() {
   function expectedMarketValue(atk, subs) {
     return 0.9 * getNetPrice(atk, subs, false) + 0.1 * getNetPrice(atk, subs, true)
   }
+
+  // ── 條件點法＋合成回收分析 ─────────────────────────────────────
+  const condStrategyAnalysis = computed(() => {
+    const sc10 = SCROLLS.find(s => s.id === condStrategy.value.scroll10)
+    const sc60 = SCROLLS.find(s => s.id === condStrategy.value.scroll60)
+    if (!sc10 || !sc60) return null
+
+    const p  = sc10.rate
+    const q  = sc60.rate
+    const qty = condStrategy.value.qty || 1
+    const synthCost  = condStrategy.value.synthCost  ?? 0
+    const frameRate  = (condStrategy.value.synthFrameRate ?? 0) / 100
+
+    // 廢品 = 兩張10%都沒過
+    const pScrap   = (1 - p) * (1 - p)
+    const pSuccess = 1 - pScrap
+
+    // 期望卷軸成本：
+    //  槽1 (10%): 固定 c10
+    //  槽2: 若槽1過 → c60；若槽1沒過 → c10
+    //  槽3: 若槽1過 → c60；若槽1沒過且槽2過 → c60；兩者都沒過 → 不用
+    const c10 = scrollCosts.value[sc10.id] || 0
+    const c60 = scrollCosts.value[sc60.id] || 0
+    const scrollCostPerHeart =
+      c10 +
+      p * c60 + (1 - p) * c10 +
+      p * c60 + (1 - p) * p * c60
+
+    const baseCostPerHeart = materialCost.value + scrollCostPerHeart
+
+    // 枚舉出心結果
+    const rawOutcomes = []
+    const tryAdd = (atk, subs, prob) => {
+      if (VALID_ATK.has(atk) && prob > 0) rawOutcomes.push({ atk, subs, prob })
+    }
+    // 9攻: 槽1過 + 兩槽60%都過
+    tryAdd(sc10.atk + 2 * sc60.atk, addSubs(sc10.subs, addSubs(sc60.subs, sc60.subs)), p * q * q)
+    // 7攻: (槽1過 + 只有一槽60%過) OR (槽1沒過 + 槽2過 + 槽3過)
+    tryAdd(sc10.atk + sc60.atk, addSubs(sc10.subs, sc60.subs), p * 2 * q * (1 - q) + (1 - p) * p * q)
+    // 5攻: (槽1過 + 兩槽60%都沒過) OR (槽1沒過 + 槽2過 + 槽3沒過)
+    tryAdd(sc10.atk, { ...sc10.subs }, p * (1 - q) * (1 - q) + (1 - p) * p * (1 - q))
+
+    const outcomes = rawOutcomes
+      .sort((a, b) => b.atk - a.atk)
+      .map(o => ({
+        ...o,
+        label:  subsLabel(o.subs),
+        netNo:  getNetPrice(o.atk, o.subs, false),
+        netYes: getNetPrice(o.atk, o.subs, true),
+        expVal: expectedMarketValue(o.atk, o.subs),
+      }))
+
+    const expRevPerHeart = outcomes.reduce((s, o) => s + o.prob * o.expVal, 0)
+
+    // 合成回收：連續近似  s = pScrap
+    //  從 qty 顆出發，總衝卷數 = 2*qty/(2-s)，合成數 = qty*s/(2-s)
+    const s = pScrap
+    const totalScrolled    = 2 * qty / (2 - s)
+    const totalSynthesized = totalScrolled - qty
+    const totalUsable      = totalScrolled * pSuccess
+
+    // 合成出框加成：合成出的可賣心有 frameRate 機率多有潛能
+    const avgNetDiff = pSuccess > 0
+      ? outcomes.reduce((sum, o) => sum + (o.prob / pSuccess) * (o.netYes - o.netNo), 0)
+      : 0
+    const totalFrameBonus = totalSynthesized * pSuccess * frameRate * avgNetDiff
+
+    // 總成本 = 初始材料 + 全部卷軸費 + 合成費
+    const totalCost    = qty * materialCost.value + totalScrolled * scrollCostPerHeart + totalSynthesized * synthCost
+    const totalRevenue = totalScrolled * expRevPerHeart + totalFrameBonus
+    const totalProfit  = totalRevenue - totalCost
+    const effCostPerUsable = totalUsable > 0 ? totalCost / totalUsable : Infinity
+
+    return {
+      sc10, sc60, pScrap, pSuccess,
+      scrollCostPerHeart, baseCostPerHeart,
+      outcomes, expRevPerHeart,
+      qty, totalScrolled, totalSynthesized, totalUsable,
+      totalCost, totalRevenue, totalFrameBonus, totalProfit, effCostPerUsable,
+    }
+  })
 
   // ── 枚舉所有策略可能出現的非廢品結果（供市價表格使用）─────────
   const allOutcomes = computed(() => {
@@ -336,6 +427,7 @@ function useHeartFactory() {
     marketPrices,
     batch, optimizer,
     materialCost,
+    condStrategy, condStrategyAnalysis,
     allOutcomes, batchOutcomes, batchAnalysis, strategyRanking,
     getState, setState,
   }

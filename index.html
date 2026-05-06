@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>楓星攻擊力計算機</title>
-  <link rel="stylesheet" href="style.css?v=20260506h" />
+  <link rel="stylesheet" href="style.css?v=20260506i" />
 </head>
 <body>
   <div id="app">
@@ -1510,6 +1510,22 @@
               </div>
             </div>
           </div>
+          <!-- 合成回收 -->
+          <div class="heart-scroll-group">
+            <div class="heart-scroll-group-title heart-gold">── 合成回收（兩廢心→一新心）</div>
+            <div class="heart-scroll-grid" style="grid-template-columns:1fr">
+              <div class="heart-scroll-item">
+                <span>合成費用</span>
+                <input type="number" v-model.number="heartFactory.condStrategy.synthCost" min="0" />
+                <span>萬</span>
+              </div>
+              <div class="heart-scroll-item">
+                <span>合成出框機率</span>
+                <input type="number" v-model.number="heartFactory.condStrategy.synthFrameRate" min="0" max="100" step="0.1" style="width:70px" />
+                <span>%</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1677,6 +1693,146 @@
         </section>
 
       </div><!-- end heart-bottom-grid -->
+
+      <!-- ⑥ 條件點法 + 合成回收 -->
+      <section class="heart-section">
+        <h2 class="heart-section-title">⑥ 條件點法＋合成回收分析</h2>
+        <div class="heart-note" style="margin-bottom:10px">
+          點法：先點10%，中了填60%×2；沒中再點一張10%，中了填60%，兩張都沒中報廢。
+          廢心每兩顆合成一顆新心繼續點，直到剩一顆為止。
+        </div>
+
+        <!-- 策略設定 -->
+        <div class="heart-cond-config">
+          <div class="heart-slot-row">
+            <span class="heart-slot-label">10% 卷軸</span>
+            <select v-model="heartFactory.condStrategy.scroll10" class="heart-sel">
+              <option v-for="sc in heartFactory.SCROLLS.filter(s => s.rate < 0.5)" :key="sc.id" :value="sc.id">
+                {{ sc.name }}（{{ heartFactory.scrollCosts[sc.id]||0 }}萬）
+              </option>
+            </select>
+          </div>
+          <div class="heart-slot-row">
+            <span class="heart-slot-label">60% 卷軸</span>
+            <select v-model="heartFactory.condStrategy.scroll60" class="heart-sel">
+              <option v-for="sc in heartFactory.SCROLLS.filter(s => s.rate >= 0.5)" :key="sc.id" :value="sc.id">
+                {{ sc.name }}（{{ heartFactory.scrollCosts[sc.id]||0 }}萬）
+              </option>
+            </select>
+          </div>
+          <div class="heart-slot-row">
+            <span class="heart-slot-label">起始顆數</span>
+            <input type="number" v-model.number="heartFactory.condStrategy.qty" min="1" class="heart-qty-input" />
+          </div>
+        </div>
+
+        <div class="heart-divider"></div>
+
+        <template v-if="heartFactory.condStrategyAnalysis">
+          <div class="heart-cond-body">
+
+            <!-- 左：出心明細 -->
+            <div class="heart-cond-col">
+              <div class="heart-cond-subtitle">出心機率</div>
+              <div class="heart-cond-outcome-head">
+                <span>結果</span><span>機率</span><span>無潛售</span><span>有潛售</span><span>期望市值</span>
+              </div>
+              <div v-for="o in heartFactory.condStrategyAnalysis.outcomes" :key="o.atk" class="heart-cond-outcome-row">
+                <span>{{ o.atk }}攻 <span class="heart-dim">{{ o.label }}</span></span>
+                <span>{{ (o.prob*100).toFixed(2) }}%</span>
+                <span class="heart-dim">{{ o.netNo > 0 ? o.netNo.toFixed(0) : '—' }}</span>
+                <span class="heart-dim">{{ o.netYes > 0 ? o.netYes.toFixed(0) : '—' }}</span>
+                <span>{{ o.expVal > 0 ? o.expVal.toFixed(0) : '—' }} 萬</span>
+              </div>
+              <div class="heart-cond-outcome-row heart-waste">
+                <span>廢品（合成）</span>
+                <span>{{ (heartFactory.condStrategyAnalysis.pScrap*100).toFixed(1) }}%</span>
+                <span>—</span><span>—</span><span>0 萬</span>
+              </div>
+
+              <div class="heart-divider" style="margin:10px 0"></div>
+
+              <div class="heart-ev-row">
+                <span>每顆期望卷軸成本</span>
+                <span>{{ heartFactory.condStrategyAnalysis.scrollCostPerHeart.toFixed(1) }} 萬</span>
+              </div>
+              <div class="heart-ev-row heart-ev-total">
+                <span>每顆基礎成本（含材料）</span>
+                <span>{{ heartFactory.condStrategyAnalysis.baseCostPerHeart.toFixed(1) }} 萬</span>
+              </div>
+              <div class="heart-ev-row">
+                <span>每顆期望收益</span>
+                <span>{{ heartFactory.condStrategyAnalysis.expRevPerHeart.toFixed(1) }} 萬</span>
+              </div>
+            </div>
+
+            <!-- 右：合成回收總覽 -->
+            <div class="heart-cond-col">
+              <div class="heart-cond-subtitle">合成回收（從 {{ heartFactory.condStrategyAnalysis.qty }} 顆出發）</div>
+
+              <div class="heart-ev-row">
+                <span>廢品率</span>
+                <span>{{ (heartFactory.condStrategyAnalysis.pScrap*100).toFixed(1) }}%</span>
+              </div>
+              <div class="heart-ev-row">
+                <span>合計衝卷顆數（含合成）</span>
+                <span>{{ heartFactory.condStrategyAnalysis.totalScrolled.toFixed(1) }} 顆</span>
+              </div>
+              <div class="heart-ev-row">
+                <span>合成次數</span>
+                <span>{{ heartFactory.condStrategyAnalysis.totalSynthesized.toFixed(1) }} 次</span>
+              </div>
+              <div class="heart-ev-row">
+                <span>實際出心顆數</span>
+                <span>{{ heartFactory.condStrategyAnalysis.totalUsable.toFixed(1) }} 顆</span>
+              </div>
+
+              <div class="heart-divider" style="margin:10px 0"></div>
+
+              <div class="heart-ev-row">
+                <span>材料成本（初始 {{ heartFactory.condStrategyAnalysis.qty }} 顆）</span>
+                <span>{{ (heartFactory.condStrategyAnalysis.qty * heartFactory.materialCost).toFixed(0) }} 萬</span>
+              </div>
+              <div class="heart-ev-row">
+                <span>卷軸費（全部心）</span>
+                <span>{{ (heartFactory.condStrategyAnalysis.totalScrolled * heartFactory.condStrategyAnalysis.scrollCostPerHeart).toFixed(0) }} 萬</span>
+              </div>
+              <div class="heart-ev-row">
+                <span>合成費合計</span>
+                <span>{{ (heartFactory.condStrategyAnalysis.totalSynthesized * heartFactory.condStrategy.synthCost).toFixed(0) }} 萬</span>
+              </div>
+              <div class="heart-ev-row heart-ev-total">
+                <span>總花費</span>
+                <span>{{ heartFactory.condStrategyAnalysis.totalCost.toFixed(0) }} 萬</span>
+              </div>
+              <div class="heart-ev-row heart-ev-total">
+                <span>有效成本 / 出心顆</span>
+                <span>{{ heartFactory.condStrategyAnalysis.effCostPerUsable.toFixed(1) }} 萬</span>
+              </div>
+
+              <div class="heart-divider" style="margin:10px 0"></div>
+
+              <div class="heart-ev-row">
+                <span>期望總收益</span>
+                <span>{{ heartFactory.condStrategyAnalysis.totalRevenue.toFixed(0) }} 萬</span>
+              </div>
+              <div v-if="heartFactory.condStrategyAnalysis.totalFrameBonus > 0" class="heart-ev-row heart-dim">
+                <span>　　其中合成出框加成</span>
+                <span>+{{ heartFactory.condStrategyAnalysis.totalFrameBonus.toFixed(0) }} 萬</span>
+              </div>
+              <div class="heart-ev-row heart-ev-total"
+                   :class="heartFactory.condStrategyAnalysis.totalProfit >= 0 ? 'heart-profit' : 'heart-loss'">
+                <span>期望總利潤</span>
+                <span>
+                  {{ heartFactory.condStrategyAnalysis.totalProfit >= 0 ? '+' : '' }}{{ heartFactory.condStrategyAnalysis.totalProfit.toFixed(0) }} 萬
+                </span>
+              </div>
+            </div>
+
+          </div>
+        </template>
+      </section>
+
     </main><!-- end heart tab -->
 
     <!-- ── 衝突解決對話框 ── -->
