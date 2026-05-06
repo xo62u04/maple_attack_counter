@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>楓星攻擊力計算機</title>
-  <link rel="stylesheet" href="style.css?v=20260506e" />
+  <link rel="stylesheet" href="style.css?v=20260506f" />
 </head>
 <body>
   <div id="app">
@@ -1647,230 +1647,47 @@
           </template>
         </section>
 
-        <!-- ⑤ 單顆決策助手 -->
+        <!-- ⑤ 最佳策略排行 -->
         <section class="heart-panel">
-          <h2 class="heart-panel-title heart-orange">⑤ 單顆決策助手</h2>
-          <div class="heart-note" style="margin-bottom:8px">輸入目前這顆心臟的狀態，即時計算下一步 EV</div>
-
-          <div v-for="(slot, i) in heartFactory.heart.slots" :key="i" class="heart-slot-row">
-            <span class="heart-slot-label">槽{{ i+1 }}</span>
-            <select v-model="slot.scrollId" class="heart-sel" style="flex:1">
-              <option v-for="sc in heartFactory.SCROLLS" :key="sc.id" :value="sc.id">{{ sc.name }}</option>
-            </select>
-            <div class="heart-result-btns">
-              <button :class="['heart-btn-result', slot.result==='pass'?'active-pass':'']"
-                      @click="slot.result='pass'">✅ 過</button>
-              <button :class="['heart-btn-result', slot.result==='fail'?'active-fail':'']"
-                      @click="slot.result='fail'">❌ 失敗</button>
-              <button :class="['heart-btn-result', slot.result==='unused'?'active-none':'']"
-                      @click="slot.result='unused'">－ 未用</button>
-            </div>
-          </div>
+          <h2 class="heart-panel-title heart-orange">⑤ 最佳策略排行</h2>
+          <div class="heart-note" style="margin-bottom:10px">根據你填入的成本與售價，枚舉所有卷軸組合，依期望利潤由高到低排名</div>
 
           <div class="heart-slot-row">
-            <span class="heart-slot-label">潛能</span>
-            <select v-model="heartFactory.heart.hasPotential" class="heart-sel">
-              <option :value="false">❌ 無潛能</option>
-              <option :value="true">✅ 有潛能</option>
-            </select>
+            <span class="heart-slot-label">製作顆數</span>
+            <input type="number" v-model.number="heartFactory.optimizer.qty" min="1" class="heart-qty-input" />
           </div>
           <div class="heart-slot-row">
-            <span class="heart-slot-label">槌子</span>
-            <select v-model="heartFactory.heart.hammerUsed" class="heart-sel">
-              <option :value="false">尚未加槌（3槽）</option>
-              <option :value="true">已加槌（4槽）</option>
+            <span class="heart-slot-label">加槌</span>
+            <select v-model="heartFactory.optimizer.hammerType" class="heart-sel">
+              <option value="none">不加槌</option>
+              <option value="50">50% 鐵鎚（期望 {{ 2*(heartFactory.hammer50||0) }}萬）</option>
+              <option value="100">100% 鐵鎚（{{ heartFactory.hammer100||0 }}萬）</option>
             </select>
-          </div>
-          <div v-if="heartFactory.heart.hammerUsed" class="heart-slot-row">
-            <span class="heart-slot-label">槽4</span>
-            <select v-model="heartFactory.heart.slot4.scrollId" class="heart-sel" style="flex:1">
-              <option v-for="sc in heartFactory.SCROLLS" :key="sc.id" :value="sc.id">{{ sc.name }}</option>
-            </select>
-            <div class="heart-result-btns">
-              <button :class="['heart-btn-result', heartFactory.heart.slot4.result==='pass'?'active-pass':'']"
-                      @click="heartFactory.heart.slot4.result='pass'">✅ 過</button>
-              <button :class="['heart-btn-result', heartFactory.heart.slot4.result==='fail'?'active-fail':'']"
-                      @click="heartFactory.heart.slot4.result='fail'">❌ 失敗</button>
-              <button :class="['heart-btn-result', heartFactory.heart.slot4.result==='unused'?'active-none':'']"
-                      @click="heartFactory.heart.slot4.result='unused'">－ 未用</button>
-            </div>
-          </div>
-
-          <button class="heart-reset-btn" @click="heartFactory.resetHeart()">🔄 重設心臟</button>
-
-          <div class="heart-divider"></div>
-
-          <div class="heart-state-chip">
-            目前：<strong>{{ heartFactory.heartCurrentAtk }}攻</strong>
-            <span v-if="heartFactory.heart.hasPotential" class="heart-pot-badge">✨ 有潛能</span>
-          </div>
-          <div class="heart-ev-row">
-            <span>現在賣</span>
-            <span class="heart-market-val">{{ heartFactory.heartCurrentMarketValue }} 萬</span>
-          </div>
-          <div class="heart-ev-row">
-            <span>已花費成本</span><span>{{ heartFactory.heartCostSoFar }} 萬</span>
-          </div>
-          <div class="heart-ev-row heart-ev-total"
-               :class="heartFactory.heartCurrentProfit >= 0 ? 'heart-profit' : 'heart-loss'">
-            <span>目前損益</span>
-            <span>{{ heartFactory.heartCurrentProfit >= 0 ? '+' : '' }}{{ heartFactory.heartCurrentProfit }} 萬</span>
           </div>
 
           <div class="heart-divider"></div>
 
-          <template v-if="heartFactory.heartHasOpenSlot">
-            <div class="heart-note" style="margin-bottom:6px">下一格，要點哪種卷軸？</div>
-            <select v-model="heartFactory.nextScrollId" class="heart-sel" style="width:100%;margin-bottom:8px">
-              <option v-for="sc in heartFactory.SCROLLS" :key="sc.id" :value="sc.id">
-                {{ sc.name }}（{{ (sc.rate*100).toFixed(0) }}%，{{ heartFactory.scrollCosts[sc.id]||0 }}萬）
-              </option>
-            </select>
-
-            <template v-if="heartFactory.scrollEVResult">
-              <div class="heart-ev-box">
-                <div class="heart-ev-row">
-                  <span>成功({{ (heartFactory.scrollEVResult.scroll.rate*100).toFixed(0) }}%)
-                    → {{ heartFactory.scrollEVResult.successAtk }}攻
-                    {{ heartFactory.heart.hasPotential ? '有潛' : '無潛' }}
-                  </span>
-                  <span class="heart-profit">市價 {{ heartFactory.scrollEVResult.successVal }} 萬</span>
-                </div>
-                <div class="heart-ev-row">
-                  <span>失敗({{ (100 - heartFactory.scrollEVResult.scroll.rate*100).toFixed(0) }}%)
-                    → 維持 {{ heartFactory.heartCurrentAtk }}攻
-                  </span>
-                  <span>市價 {{ heartFactory.scrollEVResult.failVal }} 萬</span>
-                </div>
-                <div class="heart-ev-row">
-                  <span>卷軸成本</span>
-                  <span class="heart-loss">−{{ heartFactory.scrollEVResult.cost }} 萬</span>
-                </div>
-                <div class="heart-ev-row heart-ev-total"
-                     :class="heartFactory.scrollEVResult.ok ? 'heart-profit' : 'heart-loss'">
-                  <span>EV（vs 現在賣 {{ heartFactory.heartCurrentMarketValue }} 萬）</span>
-                  <span>
-                    {{ heartFactory.scrollEVResult.ev >= 0 ? '+' : '' }}{{ heartFactory.scrollEVResult.ev.toFixed(0) }} 萬
-                    &nbsp;
-                    <span :class="heartFactory.scrollEVResult.ok ? 'heart-tag-go' : 'heart-tag-stop'">
-                      {{ heartFactory.scrollEVResult.ok ? '建議點！' : '不建議' }}
-                    </span>
-                  </span>
-                </div>
-              </div>
-            </template>
-          </template>
-
-          <!-- 上潛能卷 EV（僅在無潛能時顯示）-->
-          <template v-if="!heartFactory.heart.hasPotential">
-            <div class="heart-divider"></div>
-            <div class="heart-note" style="margin-bottom:6px">上潛能卷？（失敗裝備消失）</div>
-
-            <template v-if="heartFactory.pot70EVResult">
-              <div class="heart-ev-box" style="margin-bottom:6px">
-                <div class="heart-ev-box-title heart-purple">🎲 70% 潛能卷（{{ heartFactory.pot70Price||0 }}萬）</div>
-                <div class="heart-ev-row">
-                  <span>成功(70%) → 有潛能</span>
-                  <span class="heart-profit">{{ heartFactory.pot70EVResult.p_yes }} 萬</span>
-                </div>
-                <div class="heart-ev-row">
-                  <span>失敗(30%) → 裝備消失</span>
-                  <span class="heart-loss">0 萬</span>
-                </div>
-                <div class="heart-ev-row heart-ev-total"
-                     :class="heartFactory.pot70EVResult.ok ? 'heart-profit' : 'heart-loss'">
-                  <span>EV（vs 現在賣 {{ heartFactory.pot70EVResult.p_no }} 萬）</span>
-                  <span>
-                    {{ heartFactory.pot70EVResult.ev >= 0 ? '+' : '' }}{{ heartFactory.pot70EVResult.ev.toFixed(0) }} 萬
-                    &nbsp;
-                    <span :class="heartFactory.pot70EVResult.ok ? 'heart-tag-go' : 'heart-tag-stop'">
-                      {{ heartFactory.pot70EVResult.ok ? '建議！' : '不建議' }}
-                    </span>
-                  </span>
-                </div>
-              </div>
-            </template>
-
-            <template v-if="heartFactory.pot90EVResult">
-              <div class="heart-ev-box">
-                <div class="heart-ev-box-title heart-blue">🎲 90% 潛能卷（{{ heartFactory.pot90Price||0 }}萬）</div>
-                <div class="heart-ev-row">
-                  <span>成功(90%) → 有潛能</span>
-                  <span class="heart-profit">{{ heartFactory.pot90EVResult.p_yes }} 萬</span>
-                </div>
-                <div class="heart-ev-row">
-                  <span>失敗(10%) → 裝備消失</span>
-                  <span class="heart-loss">0 萬</span>
-                </div>
-                <div class="heart-ev-row heart-ev-total"
-                     :class="heartFactory.pot90EVResult.ok ? 'heart-profit' : 'heart-loss'">
-                  <span>EV（vs 現在賣 {{ heartFactory.pot90EVResult.p_no }} 萬）</span>
-                  <span>
-                    {{ heartFactory.pot90EVResult.ev >= 0 ? '+' : '' }}{{ heartFactory.pot90EVResult.ev.toFixed(0) }} 萬
-                    &nbsp;
-                    <span :class="heartFactory.pot90EVResult.ok ? 'heart-tag-go' : 'heart-tag-stop'">
-                      {{ heartFactory.pot90EVResult.ok ? '建議！' : '不建議' }}
-                    </span>
-                  </span>
-                </div>
-              </div>
-            </template>
-          </template>
-
-          <template v-if="heartFactory.heartCanHammer">
-            <div class="heart-divider"></div>
-            <div class="heart-note" style="margin-bottom:6px">加槌子開第4槽？選槽4卷軸：</div>
-            <select v-model="heartFactory.nextHammerScrollId" class="heart-sel" style="width:100%;margin-bottom:8px">
-              <option v-for="sc in heartFactory.SCROLLS" :key="sc.id" :value="sc.id">{{ sc.name }}</option>
-            </select>
-
-            <template v-if="heartFactory.hammer50EVResult">
-              <div class="heart-ev-box" style="margin-bottom:6px">
-                <div class="heart-ev-box-title heart-gold">🔨 50%鐵鎚（期望成本 {{ heartFactory.hammer50EVResult.hammerCost }} 萬）</div>
-                <div class="heart-ev-row">
-                  <span>槽4成功 → {{ heartFactory.hammer50EVResult.successAtk }}攻</span>
-                  <span class="heart-profit">{{ heartFactory.hammer50EVResult.successVal }} 萬</span>
-                </div>
-                <div class="heart-ev-row">
-                  <span>槽4成功期望增益</span>
-                  <span>{{ heartFactory.hammer50EVResult.slot4EV.toFixed(0) }} 萬</span>
-                </div>
-                <div class="heart-ev-row heart-ev-total"
-                     :class="heartFactory.hammer50EVResult.ok ? 'heart-profit' : 'heart-loss'">
-                  <span>總 EV（含槌成本）</span>
-                  <span>
-                    {{ heartFactory.hammer50EVResult.totalEV >= 0 ? '+' : '' }}{{ heartFactory.hammer50EVResult.totalEV.toFixed(0) }} 萬
-                    &nbsp;
-                    <span :class="heartFactory.hammer50EVResult.ok ? 'heart-tag-go' : 'heart-tag-stop'">
-                      {{ heartFactory.hammer50EVResult.ok ? '建議！' : '不建議' }}
-                    </span>
-                  </span>
-                </div>
-              </div>
-            </template>
-
-            <template v-if="heartFactory.hammer100EVResult">
-              <div class="heart-ev-box">
-                <div class="heart-ev-box-title heart-red">🔨 100%鐵鎚（{{ heartFactory.hammer100EVResult.hammerCost }} 萬）</div>
-                <div class="heart-ev-row">
-                  <span>槽4成功 → {{ heartFactory.hammer100EVResult.successAtk }}攻</span>
-                  <span class="heart-profit">{{ heartFactory.hammer100EVResult.successVal }} 萬</span>
-                </div>
-                <div class="heart-ev-row heart-ev-total"
-                     :class="heartFactory.hammer100EVResult.ok ? 'heart-profit' : 'heart-loss'">
-                  <span>總 EV（含槌成本）</span>
-                  <span>
-                    {{ heartFactory.hammer100EVResult.totalEV >= 0 ? '+' : '' }}{{ heartFactory.hammer100EVResult.totalEV.toFixed(0) }} 萬
-                    &nbsp;
-                    <span :class="heartFactory.hammer100EVResult.ok ? 'heart-tag-go' : 'heart-tag-stop'">
-                      {{ heartFactory.hammer100EVResult.ok ? '建議！' : '不建議' }}
-                    </span>
-                  </span>
-                </div>
-              </div>
-            </template>
-          </template>
-
+          <!-- 排名表 -->
+          <div class="heart-rank-head">
+            <span>#</span>
+            <span>策略（槽1 / 槽2 / 槽3）</span>
+            <span>每顆成本</span>
+            <span>期望利潤/顆</span>
+            <span>{{ heartFactory.optimizer.qty }}顆總利潤</span>
+          </div>
+          <div v-for="(r, idx) in heartFactory.strategyRanking" :key="idx"
+               class="heart-rank-row"
+               :class="idx === 0 ? 'heart-rank-top' : ''">
+            <span class="heart-rank-num">{{ idx + 1 }}</span>
+            <span class="heart-rank-label">{{ r.label }}</span>
+            <span class="heart-dim">{{ r.costPerHeart.toFixed(1) }}萬</span>
+            <span :class="r.expProfit >= 0 ? 'heart-profit' : 'heart-loss'">
+              {{ r.expProfit >= 0 ? '+' : '' }}{{ r.expProfit.toFixed(0) }}萬
+            </span>
+            <span :class="r.totalProfit >= 0 ? 'heart-profit' : 'heart-loss'">
+              <strong>{{ r.totalProfit >= 0 ? '+' : '' }}{{ r.totalProfit.toFixed(0) }}萬</strong>
+            </span>
+          </div>
         </section>
 
       </div><!-- end heart-bottom-grid -->

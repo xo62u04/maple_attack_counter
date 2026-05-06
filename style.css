@@ -2427,3 +2427,41 @@ body {
 .heart-expect-count {
   min-width: 80px;
 }
+
+.heart-rank-head,
+.heart-rank-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 80px 90px 100px;
+  gap: 6px;
+  font-size: 15px;
+  padding: 5px 2px;
+  border-bottom: 1px solid #1a2030;
+  align-items: center;
+}
+
+.heart-rank-head {
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.heart-rank-top {
+  background: #1e2e1e;
+  border-radius: 4px;
+  padding: 6px 4px;
+}
+
+.heart-rank-num {
+  color: var(--text-dim);
+  font-weight: bold;
+  text-align: center;
+}
+
+.heart-rank-top .heart-rank-num {
+  color: var(--accent);
+}
+
+.heart-rank-label {
+  font-size: 14px;
+  line-height: 1.3;
+}

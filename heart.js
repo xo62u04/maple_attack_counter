@@ -57,12 +57,11 @@ function useHeartFactory() {
     slot4: { scrollId: 'p10_str', result: 'unused' },
   })
 
-  const nextScrollId       = ref('p10_str')
-  const nextHammerType     = ref('50')
-  const nextHammerScrollId = ref('p10_str')
-
   // 交易所手續費 %
   const auctionFee = ref(3)
+
+  // 最佳策略排行設定
+  const optimizer = ref({ hammerType: 'none', qty: 40 })
 
   // ── getState / setState ────────────────────────────────────
   function getState() {
@@ -205,6 +204,68 @@ function useHeartFactory() {
     }
   })
 
+  // ── 計算：最佳策略排行 ──────────────────────────────────────
+  const strategyRanking = computed(() => {
+    const hammerType    = optimizer.value.hammerType
+    const qty           = optimizer.value.qty || 1
+    const hammerExpCost =
+      hammerType === '50'  ? 2 * (hammer50.value  || 0) :
+      hammerType === '100' ? (hammer100.value || 0) : 0
+
+    const results = []
+
+    // 枚舉 3 槽不重複組合（unordered, with replacement）= C(8+2,3) = 120 種
+    for (let i = 0; i < 8; i++) {
+      for (let j = i; j < 8; j++) {
+        for (let k = j; k < 8; k++) {
+          const slots3 = [SCROLLS[i], SCROLLS[j], SCROLLS[k]]
+
+          // slot4 選項：不加槌只有 null，加槌則枚舉 8 種
+          const s4List = hammerType === 'none' ? [null] : SCROLLS
+
+          for (const s4 of s4List) {
+            const scrollCostTotal =
+              slots3.reduce((s, sc) => s + (scrollCosts.value[sc.id] || 0), 0) +
+              (s4 ? (scrollCosts.value[s4.id] || 0) : 0)
+            const costPerHeart = materialCost.value + scrollCostTotal + hammerExpCost
+
+            // 枚舉 3 槽 8 種組合
+            const raw3 = []
+            for (let mask = 0; mask < 8; mask++) {
+              let prob = 1, atk = 0
+              for (let b = 0; b < 3; b++) {
+                const bit = (mask >> (2 - b)) & 1
+                prob *= bit ? slots3[b].rate : (1 - slots3[b].rate)
+                atk  += bit * slots3[b].atk
+              }
+              raw3.push({ prob, atk })
+            }
+
+            const raw = s4 ? raw3.flatMap(o => [
+              { prob: o.prob * s4.rate,       atk: o.atk + s4.atk },
+              { prob: o.prob * (1 - s4.rate), atk: o.atk },
+            ]) : raw3
+
+            const grouped = {}
+            for (const { prob, atk } of raw) grouped[atk] = (grouped[atk] || 0) + prob
+
+            const totalExpRevenue = Object.entries(grouped)
+              .reduce((sum, [atk, prob]) => sum + prob * expectedMarketValue(+atk), 0)
+            const expProfit = totalExpRevenue - costPerHeart
+
+            const label = slots3.map(s => s.name).join(' / ') +
+              (s4 ? ` + 🔨${s4.name}` : '')
+
+            results.push({ label, costPerHeart, scrollCostTotal, totalExpRevenue, expProfit, totalProfit: expProfit * qty })
+          }
+        }
+      }
+    }
+
+    results.sort((a, b) => b.expProfit - a.expProfit)
+    return results.slice(0, 15)
+  })
+
   // ── 計算：單顆心臟狀態 ────────────────────────────────────
   const heartCurrentAtk = computed(() => {
     let atk = 0
@@ -307,7 +368,7 @@ function useHeartFactory() {
     heartHasOpenSlot, heartCanHammer,
     scrollEVResult, hammer50EVResult, hammer100EVResult,
     pot70Price, pot90Price, pot70EVResult, pot90EVResult,
-    auctionFee,
+    auctionFee, optimizer, strategyRanking,
     getState, setState, resetHeart,
   }
 }
