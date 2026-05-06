@@ -65,6 +65,21 @@ function useHeartFactory() {
   // 市價卡片展開/折疊：key = atk數值，false = 折疊，undefined/true = 展開
   const marketPriceFilter = ref({})
 
+  // 批量填入暫存：key = `${atk}_no` / `${atk}_yes`
+  const bulkPriceInputs = ref({})
+
+  function applyBulkPrice(atk) {
+    const no  = bulkPriceInputs.value[`${atk}_no`]
+    const yes = bulkPriceInputs.value[`${atk}_yes`]
+    for (const o of allOutcomes.value) {
+      if (o.atk !== atk) continue
+      if (no  !== undefined && no  !== null && no  !== '' && !isNaN(Number(no)))
+        marketPrices.value[o.keyNo]  = Number(no)
+      if (yes !== undefined && yes !== null && yes !== '' && !isNaN(Number(yes)))
+        marketPrices.value[o.keyYes] = Number(yes)
+    }
+  }
+
   const batch = ref({
     slots:  ['p10_str', 'p10_str', 'p10_str'],
     hammer: 'none',
@@ -504,7 +519,7 @@ function useHeartFactory() {
     scrollCosts, hammer50, hammer100,
     pot70Price, pot90Price,
     auctionFee,
-    marketPrices, marketPriceFilter,
+    marketPrices, marketPriceFilter, bulkPriceInputs, applyBulkPrice,
     batch, optimizer,
     materialCost,
     condStrategy, condStrategyAnalysis,

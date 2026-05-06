@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>楓星攻擊力計算機</title>
-  <link rel="stylesheet" href="style.css?v=20260506m" />
+  <link rel="stylesheet" href="style.css?v=20260506n" />
 </head>
 <body>
   <div id="app">
@@ -1546,6 +1546,17 @@
                 </label>
               </div>
               <template v-if="heartFactory.marketPriceFilter[atk] !== false">
+                <!-- 批量填入 -->
+                <div class="heart-price-bulk-row">
+                  <span class="heart-dim" style="font-size:13px">批量</span>
+                  <input type="number" placeholder="無潛" min="0"
+                         v-model.number="heartFactory.bulkPriceInputs[atk+'_no']"
+                         @keyup.enter="heartFactory.applyBulkPrice(atk)" />
+                  <input type="number" placeholder="有潛" min="0"
+                         v-model.number="heartFactory.bulkPriceInputs[atk+'_yes']"
+                         @keyup.enter="heartFactory.applyBulkPrice(atk)" />
+                  <button class="heart-bulk-btn" @click="heartFactory.applyBulkPrice(atk)">套用</button>
+                </div>
                 <div class="heart-price-row-head">
                   <span>副屬</span><span>無潛（萬）</span><span>有潛（萬）</span>
                 </div>
@@ -1916,7 +1927,7 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="heart.js?v=20260506k"></script>
+  <script src="heart.js?v=20260506l"></script>
   <script src="equip.js"></script>
   <script src="loot.js"></script>
   <script src="alchemy.js?v=20260504-2"></script>
