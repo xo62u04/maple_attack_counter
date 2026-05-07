@@ -428,35 +428,83 @@ function useHeartFactory() {
           for (const s4 of s4List) {
             if (s4 && isMixedMagic([...slots3, s4])) continue
 
-            const scrollCostTotal =
-              slots3.reduce((s, sc) => s + (scrollCosts.value[sc.id] || 0), 0) +
-              (s4 ? (scrollCosts.value[s4.id] || 0) : 0)
-            const costPerHeart = materialCost.value + scrollCostTotal + hammerExpCost
+            // 條件點法：10%卷（至多前2張）當關卡，全爆就停；60%卷及剩餘10%卷在關卡至少一張過後才點
+            const is10 = sc => sc.rate < 0.5
+            const sorted3   = [...slots3].sort((a, b) => Number(is10(b)) - Number(is10(a)))
+            const gate10s   = sorted3.filter(is10)
+            const rest60s   = sorted3.filter(sc => !is10(sc))
+            const gateSlots = gate10s.slice(0, 2)
+            const condSlots = [...gate10s.slice(2), ...rest60s, ...(s4 ? [s4] : [])]
 
-            // enumerate & aggregate
-            const raw3 = []
-            for (let mask = 0; mask < 8; mask++) {
-              let prob = 1, atk = 0
-              const subs = {}
-              for (let b = 0; b < 3; b++) {
-                const bit = (mask >> (2 - b)) & 1
-                prob *= bit ? slots3[b].rate : (1 - slots3[b].rate)
-                if (bit) {
-                  atk += slots3[b].atk
-                  for (const [kk, v] of Object.entries(slots3[b].subs)) subs[kk] = (subs[kk] || 0) + v
+            const hasGate   = gateSlots.length > 0
+            const pGateFail = hasGate ? gateSlots.reduce((p, sc) => p * (1 - sc.rate), 1) : 0
+            const pGatePass = 1 - pGateFail
+
+            const gateScrollCost = gateSlots.reduce((sum, sc) => sum + (scrollCosts.value[sc.id] || 0), 0)
+            const condScrollCost = condSlots.reduce((sum, sc) => sum + (scrollCosts.value[sc.id] || 0), 0)
+            const scrollCostTotal  = gateScrollCost + pGatePass * condScrollCost
+            const hammerCostCond   = pGatePass * hammerExpCost
+            const costPerHeart     = materialCost.value + scrollCostTotal + hammerCostCond
+
+            // 枚舉結果（條件式）
+            const rawOutcomes = []
+            if (!hasGate) {
+              // 純60%：全部無條件點
+              const allSlots = [...slots3, ...(s4 ? [s4] : [])]
+              const n = allSlots.length
+              for (let mask = 0; mask < (1 << n); mask++) {
+                let prob = 1, atk = 0
+                const subs = {}
+                for (let b = 0; b < n; b++) {
+                  const bit = (mask >> (n - 1 - b)) & 1
+                  prob *= bit ? allSlots[b].rate : (1 - allSlots[b].rate)
+                  if (bit) {
+                    atk += allSlots[b].atk
+                    for (const [kk, v] of Object.entries(allSlots[b].subs)) subs[kk] = (subs[kk] || 0) + v
+                  }
+                }
+                rawOutcomes.push({ prob, atk, subs })
+              }
+            } else {
+              // 有10%關卡：關卡全爆→廢品（停手），至少一張過→點其餘卷軸
+              const nGate = gateSlots.length
+              const nCond = condSlots.length
+              for (let gmask = 0; gmask < (1 << nGate); gmask++) {
+                let gProb = 1, gAtk = 0
+                const gSubs = {}
+                let anyGatePass = false
+                for (let b = 0; b < nGate; b++) {
+                  const bit = (gmask >> (nGate - 1 - b)) & 1
+                  gProb *= bit ? gateSlots[b].rate : (1 - gateSlots[b].rate)
+                  if (bit) {
+                    anyGatePass = true
+                    gAtk += gateSlots[b].atk
+                    for (const [kk, v] of Object.entries(gateSlots[b].subs)) gSubs[kk] = (gSubs[kk] || 0) + v
+                  }
+                }
+                if (!anyGatePass) {
+                  rawOutcomes.push({ prob: gProb, atk: 0, subs: {} })
+                } else {
+                  for (let cmask = 0; cmask < (1 << nCond); cmask++) {
+                    let cProb = 1, cAtk = gAtk
+                    const cSubs = { ...gSubs }
+                    for (let b = 0; b < nCond; b++) {
+                      const bit = (cmask >> (nCond - 1 - b)) & 1
+                      cProb *= bit ? condSlots[b].rate : (1 - condSlots[b].rate)
+                      if (bit) {
+                        cAtk += condSlots[b].atk
+                        for (const [kk, v] of Object.entries(condSlots[b].subs)) cSubs[kk] = (cSubs[kk] || 0) + v
+                      }
+                    }
+                    rawOutcomes.push({ prob: gProb * cProb, atk: cAtk, subs: cSubs })
+                  }
                 }
               }
-              raw3.push({ prob, atk, subs })
             }
-
-            const raw = s4 ? raw3.flatMap(o => [
-              { prob: o.prob * s4.rate,       atk: o.atk + s4.atk, subs: addSubs(o.subs, s4.subs) },
-              { prob: o.prob * (1 - s4.rate), atk: o.atk,          subs: { ...o.subs } },
-            ]) : raw3
 
             // 聚合
             const grouped = new Map()
-            for (const { prob, atk, subs } of raw) {
+            for (const { prob, atk, subs } of rawOutcomes) {
               const k = `${atk}_${subsKey(subs)}`
               if (!grouped.has(k)) grouped.set(k, { atk, subs, prob: 0 })
               grouped.get(k).prob += prob
@@ -481,7 +529,7 @@ function useHeartFactory() {
             const s = pScrap
             const totalScrolled    = qty * 2 / (2 - s)
             const totalSynthesized = totalScrolled - qty
-            const synthHeartCost   = synthCost + scrollCostTotal + hammerExpCost
+            const synthHeartCost   = synthCost + scrollCostTotal + hammerCostCond
             const totalCost        = qty * costPerHeart + totalSynthesized * synthHeartCost
 
             // 合成出框加成
