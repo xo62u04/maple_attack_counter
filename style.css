@@ -98,6 +98,7 @@ body {
   border-radius: 12px;
   padding: 28px 32px;
   min-width: 320px;
+  max-width: min(520px, calc(100vw - 32px));
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -106,7 +107,7 @@ body {
 .conflict-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 .conflict-label { color: #7ec8e3; font-weight: 600; white-space: nowrap; }
 .conflict-time { color: #c8d8f0; font-size: 13px; }
-.conflict-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 4px; }
+.conflict-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; margin-top: 4px; }
 .btn-conflict-local { background: #2a3a2a; color: #7ec87e; border: 1px solid #3a6a3a; }
 .btn-conflict-local:hover { background: #3a4a3a; }
 .btn-conflict-cloud { background: var(--accent); color: #000; }

@@ -8,6 +8,7 @@ createApp({
     // ── 雲端同步 ──
     const sync = useSync()
     let _pulling = false
+    let _bootstrapping = true
     const SYNC_LAST_PUSH_KEY = 'maple_sync_last_push'
 
     // ── 裝備模擬器字體縮放 ──
@@ -46,7 +47,8 @@ createApp({
       loadLootSettings()
       loadAlchemySettings()
       loadHeartSettings()
-      if (sync.syncCode.value) pullAll()
+      if (sync.syncCode.value) await pullAll()
+      _bootstrapping = false
     })
 
     // ── 選擇狀態 ──
@@ -658,7 +660,7 @@ createApp({
       } catch {}
     }
 
-    const conflictDialog = ref({ show: false, cloudData: null, cloudTime: null, localTime: null })
+    const conflictDialog = ref({ show: false, code: '', cloudData: null, cloudTime: null, localTime: null })
 
     function formatSyncTime(date) {
       if (!date) return '不明'
@@ -690,6 +692,48 @@ createApp({
       }
     }
 
+    function currentSyncData() {
+      return {
+        characters: savedCharacters.value,
+        loot: loot.getState(),
+        alchemy: alchemy.getState(),
+        equip: equip.getState(),
+        heart: heartFactory.getState()
+      }
+    }
+
+    function normalizeSyncData(data) {
+      return {
+        characters: data?.characters || [],
+        loot: data?.loot || loot.getState(),
+        alchemy: data?.alchemy || alchemy.getState(),
+        equip: data?.equip || equip.getState(),
+        heart: data?.heart || heartFactory.getState()
+      }
+    }
+
+    function stableStringify(value) {
+      if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`
+      if (value && typeof value === 'object') {
+        return `{${Object.keys(value).sort().map(k => `${JSON.stringify(k)}:${stableStringify(value[k])}`).join(',')}}`
+      }
+      return JSON.stringify(value)
+    }
+
+    function syncDataEquals(a, b) {
+      return stableStringify(normalizeSyncData(a)) === stableStringify(normalizeSyncData(b))
+    }
+
+    function showSyncConflict(code, cloudData) {
+      conflictDialog.value = {
+        show: true,
+        code,
+        cloudData,
+        cloudTime: cloudData?.updatedAt?.toDate?.() || null,
+        localTime: localStorage.getItem(SYNC_LAST_PUSH_KEY) || null
+      }
+    }
+
     async function _applyWithGuard(data) {
       _pulling = true
       try { applyCloudData(data) } finally { await Vue.nextTick(); _pulling = false }
@@ -697,22 +741,21 @@ createApp({
 
     async function pullAll() {
       if (!sync.syncCode.value) return
-      _pulling = true
       const data = await sync.pull(sync.syncCode.value)
-      if (!data) { _pulling = false; return }
+      if (!data) return
+      if (!syncDataEquals(currentSyncData(), data)) {
+        showSyncConflict(sync.syncCode.value, data)
+        return
+      }
       await _applyWithGuard(data)
     }
 
     async function pushAll() {
       if (!sync.syncCode.value) return
       if (_pulling) return
-      await sync.push(sync.syncCode.value, {
-        characters: savedCharacters.value,
-        loot: loot.getState(),
-        alchemy: alchemy.getState(),
-        equip: equip.getState(),
-        heart: heartFactory.getState()
-      })
+      if (_bootstrapping) return
+      if (conflictDialog.value.show) return
+      await sync.push(sync.syncCode.value, currentSyncData())
       if (sync.syncStatus.value !== 'error') {
         localStorage.setItem(SYNC_LAST_PUSH_KEY, new Date().toISOString())
       }
@@ -726,46 +769,28 @@ createApp({
         setTimeout(() => { if (sync.syncStatus.value === 'error') sync.syncStatus.value = 'idle' }, 3000)
         return
       }
-      sync.applySyncCode(code)
-
       const cloudData = await sync.pull(code)
 
       if (!cloudData) {
+        sync.applySyncCode(code)
         await pushAll()
         return
       }
 
-      const localSyncedAt = localStorage.getItem(SYNC_LAST_PUSH_KEY)
-      if (!localSyncedAt) {
+      if (syncDataEquals(currentSyncData(), cloudData)) {
+        sync.applySyncCode(code)
         await _applyWithGuard(cloudData)
         return
       }
 
-      const cloudTime = cloudData.updatedAt?.toDate?.()
-      if (!cloudTime) {
-        await _applyWithGuard(cloudData)
-        return
-      }
-
-      const localTime = new Date(localSyncedAt)
-      if (isNaN(localTime.getTime())) {
-        await _applyWithGuard(cloudData)
-        return
-      }
-      const diffMs = Math.abs(cloudTime.getTime() - localTime.getTime())
-
-      if (diffMs < 1000) {
-        await _applyWithGuard(cloudData)
-        return
-      }
-
-      conflictDialog.value = { show: true, cloudData, cloudTime, localTime }
+      showSyncConflict(code, cloudData)
     }
 
     async function resolveConflict(choice) {
       if (!conflictDialog.value.show) return
-      const { cloudData } = conflictDialog.value
-      conflictDialog.value = { show: false, cloudData: null, cloudTime: null, localTime: null }
+      const { code, cloudData } = conflictDialog.value
+      sync.applySyncCode(code || sync.syncCode.value)
+      conflictDialog.value = { show: false, code: '', cloudData: null, cloudTime: null, localTime: null }
       if (choice === 'cloud') {
         await _applyWithGuard(cloudData)
       } else {
