@@ -425,6 +425,7 @@ BUFF藥水跟藥丸
   const showOnlyCommonMaterials = ref(false)
   const selectedCategory = ref('')
   const expandCraftables = ref(true)
+  const oilPricingEnabled = ref(true)
   const importMessage = ref('')
   const pricePanelOpen = ref(false)
   const expandedRecipes = ref({})
@@ -442,6 +443,51 @@ BUFF藥水跟藥丸
   function keyOf(name) {
     return cleanName(name).replace(/\s+/g, '')
   }
+
+  const OIL_BOTTLES = {
+    basic: '初級藥草精油瓶',
+    intermediate: '中級藥草精油瓶',
+    advanced: '高級藥草精油瓶',
+    superior: '最高級藥草精油瓶',
+  }
+
+  function oilRule(oil, base, qty, bottle, success, powder = '') {
+    return { oil, base, qty, bottle: OIL_BOTTLES[bottle], success, powder }
+  }
+
+  const OIL_REFINING_RULES = [
+    oilRule('墨角蘭種子精油', '墨角蘭種子', 2, 'basic', 1),
+    oilRule('墨角蘭花精油', '墨角蘭花', 2, 'basic', 1),
+    oilRule('薰衣草種子精油', '薰衣草種子', 2, 'basic', 1),
+    oilRule('薰衣草花精油', '薰衣草花', 2, 'basic', 1),
+    oilRule('迷迭香種子精油', '迷迭香種子', 3, 'basic', 0.9, '藍色魔法粉'),
+    oilRule('迷迭香花精油', '迷迭香花', 3, 'basic', 0.9, '藍色魔法粉'),
+    oilRule('柑橘種子精油', '柑橘種子', 3, 'intermediate', 0.9, '褐色魔法粉'),
+    oilRule('柑橘花精油', '柑橘花', 3, 'intermediate', 0.9, '褐色魔法粉'),
+    oilRule('香蜂草種子精油', '香蜂草種子', 4, 'intermediate', 0.9, '綠色魔法粉'),
+    oilRule('香蜂草花精油', '香蜂草花', 4, 'intermediate', 0.9, '綠色魔法粉'),
+    oilRule('薄荷花精油', '薄荷花', 4, 'intermediate', 0.9, '綠色魔法粉'),
+    oilRule('茉莉花種子精油', '茉莉花種子', 4, 'intermediate', 0.9, '黃色魔法粉'),
+    oilRule('茉莉花精油', '茉莉花', 4, 'intermediate', 0.9, '黃色魔法粉'),
+    oilRule('茶樹種子精油', '茶樹種子', 5, 'advanced', 0.9, '白色魔法粉'),
+    oilRule('茶樹精油', '茶樹花', 5, 'advanced', 0.9, '白色魔法粉'),
+    oilRule('洋甘菊種子精油', '洋甘菊種子', 5, 'advanced', 0.9, '紅色魔法粉'),
+    oilRule('洋甘菊精油', '洋甘菊花', 5, 'advanced', 0.9, '紅色魔法粉'),
+    oilRule('廣藿香種子精油', '廣藿香種子', 6, 'advanced', 0.9, '黑色魔法粉'),
+    oilRule('廣藿香精油', '廣藿香花', 6, 'advanced', 0.9, '黑色魔法粉'),
+    oilRule('杜松的種子精油', '杜松種子', 6, 'superior', 0.9, '紫色魔法粉'),
+    oilRule('杜松花精油', '杜松花', 6, 'superior', 0.9, '紫色魔法粉'),
+    oilRule('牛膝草花精油', '牛膝草花', 6, 'superior', 0.9, '紫色魔法粉'),
+  ]
+  const oilRulesByKey = new Map(OIL_REFINING_RULES.map(rule => [keyOf(rule.oil), rule]))
+  const FIXED_OIL_BOTTLE_PRICES = {
+    [OIL_BOTTLES.basic]: 50,
+    [OIL_BOTTLES.intermediate]: 150,
+    [OIL_BOTTLES.advanced]: 250,
+    [OIL_BOTTLES.superior]: 500,
+  }
+  const OIL_FATIGUE = 1
+  const POTION_FATIGUE = 3
 
   function parseMaterial(part) {
     const m = String(part).trim().match(/^(.+?)\s*x\s*([0-9.]+)$/i)
@@ -515,9 +561,30 @@ BUFF藥水跟藥丸
     })
   })
 
-  function unitPrice(name) {
+  function rawUnitPrice(name) {
     const v = prices.value[cleanName(name)]
-    return Number(v) || 0
+    return Number(v) || FIXED_OIL_BOTTLE_PRICES[cleanName(name)] || 0
+  }
+
+  function oilRuleFor(name) {
+    return oilRulesByKey.get(keyOf(name))
+  }
+
+  function isAutoOil(name) {
+    return oilPricingEnabled.value && !!oilRuleFor(name)
+  }
+
+  function oilExpectedUnitCost(name) {
+    const rule = oilRuleFor(name)
+    if (!rule) return 0
+    const grossCost = rawUnitPrice(rule.base) * rule.qty + rawUnitPrice(rule.bottle)
+    const powderCredit = rule.powder ? rawUnitPrice(rule.powder) * (1 - rule.success) : 0
+    return Math.max(0, (grossCost - powderCredit) / rule.success)
+  }
+
+  function unitPrice(name) {
+    if (isAutoOil(name)) return oilExpectedUnitCost(name)
+    return rawUnitPrice(name)
   }
 
   function isCommonMaterial(name) {
@@ -562,6 +629,8 @@ BUFF藥水跟藥丸
         price: unitPrice(row.name),
         subtotal: row.qty * unitPrice(row.name),
         isOil: /精油$/.test(row.name),
+        isAutoOil: isAutoOil(row.name),
+        oilRule: oilRuleFor(row.name),
         isCommon: isCommonMaterial(row.name),
       }))
       .sort((a, b) =>
@@ -584,6 +653,7 @@ BUFF藥水跟藥丸
           target.set(name, {
             name,
             isOil: /精油$/.test(name),
+            isAutoOil: isAutoOil(name),
             recipeCount: 0,
             categories: new Set(),
           })
@@ -600,11 +670,30 @@ BUFF藥水跟藥丸
   const allMaterialRows = computed(() => {
     const map = new Map()
     for (const recipe of recipes) collectBaseMaterialNames(recipe, map)
+    for (const rule of OIL_REFINING_RULES) {
+      for (const name of [rule.base, rule.bottle, rule.powder].filter(Boolean)) {
+        if (!map.has(name)) {
+          map.set(name, {
+            name,
+            isOil: /精油$/.test(name),
+            isAutoOil: isAutoOil(name),
+            recipeCount: 0,
+            categories: new Set(['精油提煉']),
+          })
+        } else {
+          map.get(name).categories.add('精油提煉')
+        }
+      }
+    }
     const q = keyOf(materialSearchText.value)
     return Array.from(map.values())
       .map(row => ({
         ...row,
         price: unitPrice(row.name),
+        directPrice: rawUnitPrice(row.name),
+        isFixedPrice: !!FIXED_OIL_BOTTLE_PRICES[row.name],
+        isAutoOil: isAutoOil(row.name),
+        oilRule: oilRuleFor(row.name),
         isCommon: isCommonMaterial(row.name),
         categories: Array.from(row.categories).sort((a, b) => a.localeCompare(b, 'zh-Hant')),
       }))
@@ -619,6 +708,28 @@ BUFF藥水跟藥丸
 
   const pricedMaterialCount = computed(() =>
     allMaterialRows.value.filter(row => unitPrice(row.name) > 0).length
+  )
+
+  const oilCostRows = computed(() =>
+    OIL_REFINING_RULES
+      .map(rule => {
+        const baseCost = rawUnitPrice(rule.base) * rule.qty
+        const bottleCost = rawUnitPrice(rule.bottle)
+        const powderCredit = rule.powder ? rawUnitPrice(rule.powder) * (1 - rule.success) : 0
+        return {
+          ...rule,
+          inputCost: baseCost + bottleCost,
+          powderCredit,
+          unitCost: oilExpectedUnitCost(rule.oil),
+          marketPrice: rawUnitPrice(rule.oil),
+          profit: rawUnitPrice(rule.oil) - oilExpectedUnitCost(rule.oil),
+          profitPerFatigue: (rawUnitPrice(rule.oil) - oilExpectedUnitCost(rule.oil)) / OIL_FATIGUE,
+          basePrice: rawUnitPrice(rule.base),
+          bottlePrice: rawUnitPrice(rule.bottle),
+          powderPrice: rule.powder ? rawUnitPrice(rule.powder) : 0,
+        }
+      })
+      .sort((a, b) => a.oil.localeCompare(b.oil, 'zh-Hant'))
   )
 
   function addRecipeMaterials(map, recipe, times, stack = new Set()) {
@@ -680,6 +791,19 @@ BUFF藥水跟藥丸
   function selectedRecipeCost(recipeName) {
     const recipe = recipeByKey.get(keyOf(recipeName))
     return recipeCost(recipe)
+  }
+
+  function productPrice(name) {
+    return rawUnitPrice(name)
+  }
+
+  function recipeProfit(recipe) {
+    if (!recipe) return 0
+    return productPrice(recipe.name) - recipeCost(recipe)
+  }
+
+  function recipeProfitPerFatigue(recipe) {
+    return recipeProfit(recipe) / POTION_FATIGUE
   }
 
   function formatQty(n) {
@@ -784,6 +908,7 @@ BUFF藥水跟藥丸
       materialSearchText: materialSearchText.value,
       showOnlyCommonMaterials: showOnlyCommonMaterials.value,
       expandCraftables: expandCraftables.value,
+      oilPricingEnabled: oilPricingEnabled.value,
       pricePanelOpen: pricePanelOpen.value,
       expandedRecipes: JSON.parse(JSON.stringify(expandedRecipes.value)),
       expandedCategories: JSON.parse(JSON.stringify(expandedCategories.value)),
@@ -800,6 +925,7 @@ BUFF藥水跟藥丸
     materialSearchText.value = state.materialSearchText || ''
     showOnlyCommonMaterials.value = !!state.showOnlyCommonMaterials
     expandCraftables.value = state.expandCraftables !== false
+    oilPricingEnabled.value = state.oilPricingEnabled !== false
     pricePanelOpen.value = !!state.pricePanelOpen
     expandedRecipes.value = state.expandedRecipes || {}
     expandedCategories.value = state.expandedCategories || {}
@@ -816,6 +942,7 @@ BUFF藥水跟藥丸
     showOnlyCommonMaterials,
     selectedCategory,
     expandCraftables,
+    oilPricingEnabled,
     importMessage,
     pricePanelOpen,
     expandedRecipes,
@@ -823,6 +950,7 @@ BUFF藥水跟藥丸
     commonMaterials,
     filteredRecipes,
     allMaterialRows,
+    oilCostRows,
     pricedMaterialCount,
     selectedRecipes,
     materialRows,
@@ -831,6 +959,9 @@ BUFF藥水跟藥丸
     recipeCost,
     recipeMaterialRows,
     selectedRecipeCost,
+    productPrice,
+    recipeProfit,
+    recipeProfitPerFatigue,
     addRecipe,
     togglePricePanel,
     toggleCommonMaterial,

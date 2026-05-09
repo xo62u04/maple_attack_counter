@@ -1562,7 +1562,8 @@ body {
 .alchemy-field input,
 .alchemy-recipe-row input,
 .alchemy-material-row input,
-.alchemy-price-row input {
+.alchemy-price-row input,
+.alchemy-oil-row input {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -1626,7 +1627,7 @@ body {
 
 .alchemy-recipe-row {
   display: grid;
-  grid-template-columns: 86px 48px minmax(220px, 1fr) 90px 80px 48px 62px;
+  grid-template-columns: 78px 42px minmax(190px, 1fr) 88px 88px 78px 70px 44px 56px;
   gap: 8px;
   align-items: center;
   padding: 7px 8px;
@@ -1695,7 +1696,8 @@ body {
 
 .alchemy-recipe-row input,
 .alchemy-material-row input,
-.alchemy-price-row input {
+.alchemy-price-row input,
+.alchemy-oil-row input {
   width: 100%;
   text-align: right;
 }
@@ -1741,6 +1743,39 @@ body {
 
 .alchemy-price-panel .alchemy-price-table {
   max-height: 320px;
+}
+
+.alchemy-oil-panel {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.alchemy-oil-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.alchemy-oil-row {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.85fr) minmax(220px, 1.25fr) 70px minmax(90px, 0.65fr) 88px 88px 88px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 7px;
+  background: rgba(255,255,255,0.02);
+}
+
+.alchemy-oil-row span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .alchemy-price-row {
@@ -2006,12 +2041,21 @@ body {
 @media (max-width: 760px) {
   .alchemy-tab { padding: 14px; }
   .alchemy-recipe-row {
-    grid-template-columns: 58px 38px minmax(120px, 1fr) 70px 58px 40px 48px;
+    grid-template-columns: 52px 34px minmax(120px, 1fr) 68px 68px 62px 56px 38px 44px;
     font-size: 13px;
   }
   .alchemy-material-row {
     grid-template-columns: minmax(130px, 1fr) 58px 82px 76px;
     font-size: 13px;
+  }
+  .alchemy-oil-row {
+    grid-template-columns: minmax(130px, 1fr) 70px 76px 76px;
+    font-size: 13px;
+  }
+  .alchemy-oil-row span:nth-child(2),
+  .alchemy-oil-row span:nth-child(3),
+  .alchemy-oil-row span:nth-child(4) {
+    display: none;
   }
 }
 
