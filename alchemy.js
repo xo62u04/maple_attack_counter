@@ -635,7 +635,6 @@ BUFF藥水跟藥丸
       }))
       .sort((a, b) =>
         Number(b.isCommon) - Number(a.isCommon) ||
-        b.subtotal - a.subtotal ||
         a.name.localeCompare(b.name, 'zh-Hant')
       )
   }
@@ -701,7 +700,6 @@ BUFF藥水跟藥丸
       .filter(row => !showOnlyCommonMaterials.value || row.isCommon)
       .sort((a, b) => {
         if (b.isCommon !== a.isCommon) return Number(b.isCommon) - Number(a.isCommon)
-        if ((b.price > 0) !== (a.price > 0)) return (b.price > 0) - (a.price > 0)
         return a.name.localeCompare(b.name, 'zh-Hant')
       })
   })
