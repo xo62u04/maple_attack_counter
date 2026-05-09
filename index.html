@@ -1275,7 +1275,7 @@
             只看常用
           </label>
           <div class="alchemy-price-note">
-            同一個材料只需要在這裡輸入一次。精油預設用種子/花 + 藥草精油瓶計算；3 級以上以 90% 精油、10% 魔法粉期望值換算。精油本身的價格會當作售價，用來算每 1 疲勞利潤。
+            同一個材料只需要在這裡輸入一次。價格分成材料買價、精油賣價、成品賣價；精油拿去做藥水時用自製期望成本，拿去賣才用精油賣價。
           </div>
         </div>
         <div v-if="alchemy.oilPricingEnabled" class="alchemy-oil-panel">
@@ -1285,7 +1285,7 @@
           </div>
           <div class="alchemy-oil-table">
             <div class="alchemy-oil-row alchemy-table-head">
-              <span>精油</span><span>材料</span><span>成功率</span><span>粉末</span><span>成本</span><span>市價</span><span>/疲勞</span>
+              <span>精油</span><span>材料</span><span>成功率</span><span>粉末</span><span>成本</span><span>精油賣價</span><span>/疲勞</span>
             </div>
             <div v-for="row in alchemy.oilCostRows" :key="row.oil" class="alchemy-oil-row">
               <span>{{ row.oil }}</span>
@@ -1293,14 +1293,14 @@
               <span>{{ Math.round(row.success * 100) }}%</span>
               <span>{{ row.powder || '-' }}</span>
               <span class="alchemy-cost">{{ alchemy.formatCost(row.unitCost) }}</span>
-              <input type="number" min="0" v-model.number="alchemy.prices[row.oil]" />
+              <input type="number" min="0" v-model.number="alchemy.oilSellPrices[row.oil]" />
               <span class="alchemy-cost">{{ alchemy.formatCost(row.profitPerFatigue) }}</span>
             </div>
           </div>
         </div>
         <div class="alchemy-price-table">
           <div class="alchemy-price-row alchemy-table-head">
-            <span>常用</span><span>材料</span><span>單價</span><span>用途</span>
+            <span>常用</span><span>材料</span><span>買價</span><span>用途</span>
           </div>
           <div v-for="row in (alchemy.allMaterialRows || [])" :key="row.name" class="alchemy-price-row">
             <button
@@ -1329,7 +1329,7 @@
           </div>
           <div class="alchemy-recipe-table">
             <div class="alchemy-recipe-row alchemy-table-head">
-              <span>分類</span><span>等級</span><span>道具</span><span>每次成本</span><span>成品市價</span><span>/疲勞</span><span>製作數</span><span>加入</span><span>材料</span>
+              <span>分類</span><span>等級</span><span>道具</span><span>每次成本</span><span>成品賣價</span><span>/疲勞</span><span>製作數</span><span>加入</span><span>材料</span>
             </div>
             <template v-for="recipe in (alchemy.filteredRecipes || [])" :key="recipe.id">
               <div class="alchemy-recipe-row">
@@ -1337,7 +1337,7 @@
                 <span>{{ recipe.level || '-' }}</span>
                 <span class="alchemy-name">{{ recipe.name }}</span>
                 <span class="alchemy-cost">{{ alchemy.formatCost(alchemy.recipeCost(recipe)) }}</span>
-                <input type="number" min="0" v-model.number="alchemy.prices[recipe.name]" />
+                <input type="number" min="0" v-model.number="alchemy.productSellPrices[recipe.name]" />
                 <span class="alchemy-cost">{{ alchemy.formatCost(alchemy.recipeProfitPerFatigue(recipe)) }}</span>
                 <input type="number" min="0" v-model.number="alchemy.quantities[recipe.name]" />
                 <button class="alchemy-plus" @click="alchemy.addRecipe(recipe.name, 1)">+1</button>

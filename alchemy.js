@@ -419,6 +419,8 @@ BUFF藥水跟藥丸
   const categories = ['秘藥', '變身藥水', '恢復藥水跟藥丸', 'BUFF藥水跟藥丸', '分解機器', '背包']
   const categorySet = new Set(categories)
   const prices = ref({})
+  const oilSellPrices = ref({})
+  const productSellPrices = ref({})
   const quantities = ref({})
   const searchText = ref('')
   const materialSearchText = ref('')
@@ -564,6 +566,16 @@ BUFF藥水跟藥丸
   function rawUnitPrice(name) {
     const v = prices.value[cleanName(name)]
     return Number(v) || FIXED_OIL_BOTTLE_PRICES[cleanName(name)] || 0
+  }
+
+  function oilSellPrice(name) {
+    const v = oilSellPrices.value[cleanName(name)]
+    return Number(v) || 0
+  }
+
+  function productSellPrice(name) {
+    const v = productSellPrices.value[cleanName(name)]
+    return Number(v) || 0
   }
 
   function oilRuleFor(name) {
@@ -719,9 +731,9 @@ BUFF藥水跟藥丸
           inputCost: baseCost + bottleCost,
           powderCredit,
           unitCost: oilExpectedUnitCost(rule.oil),
-          marketPrice: rawUnitPrice(rule.oil),
-          profit: rawUnitPrice(rule.oil) - oilExpectedUnitCost(rule.oil),
-          profitPerFatigue: (rawUnitPrice(rule.oil) - oilExpectedUnitCost(rule.oil)) / OIL_FATIGUE,
+          marketPrice: oilSellPrice(rule.oil),
+          profit: oilSellPrice(rule.oil) - oilExpectedUnitCost(rule.oil),
+          profitPerFatigue: (oilSellPrice(rule.oil) - oilExpectedUnitCost(rule.oil)) / OIL_FATIGUE,
           basePrice: rawUnitPrice(rule.base),
           bottlePrice: rawUnitPrice(rule.bottle),
           powderPrice: rule.powder ? rawUnitPrice(rule.powder) : 0,
@@ -792,7 +804,7 @@ BUFF藥水跟藥丸
   }
 
   function productPrice(name) {
-    return rawUnitPrice(name)
+    return productSellPrice(name)
   }
 
   function recipeProfit(recipe) {
@@ -819,6 +831,8 @@ BUFF藥水跟藥丸
 
   function clearPrices() {
     prices.value = {}
+    oilSellPrices.value = {}
+    productSellPrices.value = {}
   }
 
   function togglePricePanel() {
@@ -900,6 +914,8 @@ BUFF藥水跟藥丸
   function getState() {
     return {
       prices: JSON.parse(JSON.stringify(prices.value)),
+      oilSellPrices: JSON.parse(JSON.stringify(oilSellPrices.value)),
+      productSellPrices: JSON.parse(JSON.stringify(productSellPrices.value)),
       quantities: JSON.parse(JSON.stringify(quantities.value)),
       selectedCategory: selectedCategory.value,
       searchText: searchText.value,
@@ -917,6 +933,20 @@ BUFF藥水跟藥丸
   function setState(state) {
     if (!state) return
     prices.value = state.prices || {}
+    oilSellPrices.value = state.oilSellPrices || {}
+    productSellPrices.value = state.productSellPrices || {}
+    if (!state.oilSellPrices) {
+      for (const rule of OIL_REFINING_RULES) {
+        const legacyPrice = Number(prices.value[cleanName(rule.oil)]) || 0
+        if (legacyPrice > 0) oilSellPrices.value[cleanName(rule.oil)] = legacyPrice
+      }
+    }
+    if (!state.productSellPrices) {
+      for (const recipe of recipes) {
+        const legacyPrice = Number(prices.value[cleanName(recipe.name)]) || 0
+        if (legacyPrice > 0) productSellPrices.value[cleanName(recipe.name)] = legacyPrice
+      }
+    }
     quantities.value = state.quantities || {}
     selectedCategory.value = state.selectedCategory || ''
     searchText.value = state.searchText || ''
@@ -934,6 +964,8 @@ BUFF藥水跟藥丸
     recipes,
     categories,
     prices,
+    oilSellPrices,
+    productSellPrices,
     quantities,
     searchText,
     materialSearchText,
