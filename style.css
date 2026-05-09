@@ -1627,7 +1627,7 @@ body {
 
 .alchemy-recipe-row {
   display: grid;
-  grid-template-columns: 78px 42px minmax(190px, 1fr) 88px 88px 78px 70px 44px 56px;
+  grid-template-columns: 72px 40px minmax(170px, 1fr) 84px 48px 84px 74px 66px 42px 54px;
   gap: 8px;
   align-items: center;
   padding: 7px 8px;
@@ -2041,7 +2041,7 @@ body {
 @media (max-width: 760px) {
   .alchemy-tab { padding: 14px; }
   .alchemy-recipe-row {
-    grid-template-columns: 52px 34px minmax(120px, 1fr) 68px 68px 62px 56px 38px 44px;
+    grid-template-columns: 50px 32px minmax(110px, 1fr) 64px 42px 66px 58px 52px 36px 42px;
     font-size: 13px;
   }
   .alchemy-material-row {

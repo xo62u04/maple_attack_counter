@@ -807,9 +807,16 @@ BUFF藥水跟藥丸
     return productSellPrice(name)
   }
 
+  function recipeOutputQty(recipe) {
+    const name = cleanName(recipe?.name)
+    if (/^(體力|魔力)恢復藥水/.test(name)) return 50
+    if (/^\d+階段.+的藥水$/.test(name)) return 5
+    return 3
+  }
+
   function recipeProfit(recipe) {
     if (!recipe) return 0
-    return productPrice(recipe.name) - recipeCost(recipe)
+    return productPrice(recipe.name) * recipeOutputQty(recipe) - recipeCost(recipe)
   }
 
   function recipeProfitPerFatigue(recipe) {
@@ -990,6 +997,7 @@ BUFF藥水跟藥丸
     recipeMaterialRows,
     selectedRecipeCost,
     productPrice,
+    recipeOutputQty,
     recipeProfit,
     recipeProfitPerFatigue,
     addRecipe,

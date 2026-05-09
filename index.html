@@ -1329,7 +1329,7 @@
           </div>
           <div class="alchemy-recipe-table">
             <div class="alchemy-recipe-row alchemy-table-head">
-              <span>分類</span><span>等級</span><span>道具</span><span>每次成本</span><span>成品賣價</span><span>/疲勞</span><span>製作數</span><span>加入</span><span>材料</span>
+              <span>分類</span><span>等級</span><span>道具</span><span>每次成本</span><span>產出</span><span>單瓶賣價</span><span>/疲勞</span><span>製作數</span><span>加入</span><span>材料</span>
             </div>
             <template v-for="recipe in (alchemy.filteredRecipes || [])" :key="recipe.id">
               <div class="alchemy-recipe-row">
@@ -1337,6 +1337,7 @@
                 <span>{{ recipe.level || '-' }}</span>
                 <span class="alchemy-name">{{ recipe.name }}</span>
                 <span class="alchemy-cost">{{ alchemy.formatCost(alchemy.recipeCost(recipe)) }}</span>
+                <span>x{{ alchemy.recipeOutputQty(recipe) }}</span>
                 <input type="number" min="0" v-model.number="alchemy.productSellPrices[recipe.name]" />
                 <span class="alchemy-cost">{{ alchemy.formatCost(alchemy.recipeProfitPerFatigue(recipe)) }}</span>
                 <input type="number" min="0" v-model.number="alchemy.quantities[recipe.name]" />
