@@ -977,6 +977,8 @@
           3900里程剪刀 ≈ <strong>{{ loot.scissorCost3900.toFixed(1) }} 萬</strong>
           &nbsp;&nbsp;
           7100里程剪刀 ≈ <strong>{{ loot.scissorCost7100.toFixed(1) }} 萬</strong>
+          &nbsp;&nbsp;
+          雪花(3500里程/11個) ≈ <strong>{{ loot.snowflakeCostPer.toFixed(1) }} 萬/個</strong>
         </div>
         <div class="loot-rate-row" style="margin-top:8px">
           <label>奇幻方塊單價</label>
@@ -1019,6 +1021,13 @@
         <div class="loot-date-row">
           <label>打王日期</label>
           <input type="date" v-model="loot.currentSession.date" class="loot-input-date" />
+        </div>
+        <div class="loot-date-row">
+          <label>本場雪花數</label>
+          <input type="number" v-model.number="loot.currentSession.snowflakesUsed" min="0" class="loot-input-qty" placeholder="0" />
+          <span class="loot-rate-info-inline" v-if="loot.currentSession.snowflakesUsed > 0">
+            ≈ {{ (loot.snowflakeCostPer * (loot.currentSession.snowflakesUsed || 0)).toFixed(1) }} 萬（均分）
+          </span>
         </div>
 
         <!-- 隊員設定 -->
@@ -1130,6 +1139,9 @@
             </div>
             <div class="loot-summary-row danger">
               <span>剪刀成本</span><span>-{{ (loot.settlementResult.totalScissorCost ?? 0).toFixed(1) }} 萬</span>
+            </div>
+            <div class="loot-summary-row danger" v-if="(loot.settlementResult.totalSnowflakeCost ?? 0) > 0.001">
+              <span>雪花成本（打王）</span><span>-{{ (loot.settlementResult.totalSnowflakeCost ?? 0).toFixed(1) }} 萬</span>
             </div>
             <div class="loot-summary-row accent">
               <span>淨收入</span><span>{{ (loot.settlementResult.netRevenue ?? 0).toFixed(1) }} 萬</span>

@@ -1170,6 +1170,11 @@ body {
 .loot-rate-info strong {
   color: var(--accent);
 }
+.loot-rate-info-inline {
+  font-size: 15px;
+  color: var(--text-dim);
+  margin-left: 6px;
+}
 
 /* 預設隊員按鈕 */
 .loot-preset-list {

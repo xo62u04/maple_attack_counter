@@ -13,6 +13,10 @@ function useLoot() {
   const scissorCost7100 = computed(() =>
     mileageRate.value > 0 ? (7100 / mileageRate.value * 1000) : 0
   )
+  // 雪花：3500里程 = 11個
+  const snowflakeCostPer = computed(() =>
+    mileageRate.value > 0 ? (3500 / 11 / mileageRate.value * 1000) : 0
+  )
 
   // ── 常用隊員預設 ──
   const memberPresets = ref([])   // [{ id, name, defaultShare }]
@@ -37,7 +41,7 @@ function useLoot() {
 
   // ── Session 管理 ──
   function addSession() {
-    const s = { id: nextId(), name: '新分錢', date: '', members: [], soldItems: [] }
+    const s = { id: nextId(), name: '新分錢', date: '', members: [], soldItems: [], snowflakesUsed: 0 }
     sessions.value.push(s)
     currentSessionId.value = s.id
   }
@@ -176,7 +180,10 @@ function useLoot() {
       return sum + (Number(i.qty) || 1) * (i.scissorType / mileageRate.value * 1000)
     }, 0)
 
-    const netRevenue = totalRevenue - totalScissorCost
+    const snowflakesUsed = Number(currentSession.value?.snowflakesUsed) || 0
+    const totalSnowflakeCost = snowflakesUsed * snowflakeCostPer.value
+
+    const netRevenue = totalRevenue - totalScissorCost - totalSnowflakeCost
 
     const totalShares = members.reduce((s, m) => s + (Number(m.share) || 0), 0)
     if (totalShares === 0) return null
@@ -219,6 +226,7 @@ function useLoot() {
     return {
       totalRevenue,
       totalScissorCost,
+      totalSnowflakeCost,
       netRevenue,
       members: Object.values(memberMap),
       transfers,
@@ -274,7 +282,7 @@ function useLoot() {
 
   return {
     mileageRate, cubePrice, auctionFee,
-    scissorCost3900, scissorCost7100,
+    scissorCost3900, scissorCost7100, snowflakeCostPer,
     memberPresets, bossDropTables,
     sessions, currentSessionId, currentSession,
     settingsOpen,
