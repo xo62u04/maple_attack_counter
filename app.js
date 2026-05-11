@@ -10,6 +10,8 @@ createApp({
     let _pulling = false
     let _bootstrapping = true
     const SYNC_LAST_PUSH_KEY = 'maple_sync_last_push'
+    const SYNC_BACKUP_KEY    = 'maple_sync_backup'
+    const syncBackup = ref(null)
 
     // ── 裝備模擬器字體縮放 ──
     const equipZoom = ref(1)
@@ -49,6 +51,10 @@ createApp({
       loadHeartSettings()
       if (sync.syncCode.value) await pullAll()
       _bootstrapping = false
+      try {
+        const raw = localStorage.getItem(SYNC_BACKUP_KEY)
+        if (raw) syncBackup.value = JSON.parse(raw)
+      } catch {}
     })
 
     // ── 選擇狀態 ──
@@ -786,14 +792,35 @@ createApp({
       showSyncConflict(code, cloudData)
     }
 
+    function saveBackup(data, origin) {
+      const b = { data: JSON.parse(JSON.stringify(data)), origin, savedAt: new Date().toISOString() }
+      syncBackup.value = b
+      try { localStorage.setItem(SYNC_BACKUP_KEY, JSON.stringify(b)) } catch {}
+    }
+
+    function clearBackup() {
+      syncBackup.value = null
+      localStorage.removeItem(SYNC_BACKUP_KEY)
+    }
+
+    async function restoreBackup() {
+      if (!syncBackup.value) return
+      const data = syncBackup.value.data
+      clearBackup()
+      await _applyWithGuard(data)
+      await pushAll()
+    }
+
     async function resolveConflict(choice) {
       if (!conflictDialog.value.show) return
       const { code, cloudData } = conflictDialog.value
       sync.applySyncCode(code || sync.syncCode.value)
       conflictDialog.value = { show: false, code: '', cloudData: null, cloudTime: null, localTime: null }
       if (choice === 'cloud') {
+        saveBackup(currentSyncData(), 'local')
         await _applyWithGuard(cloudData)
       } else {
+        saveBackup(cloudData, 'cloud')
         await pushAll()
       }
     }
@@ -848,6 +875,7 @@ createApp({
       heartFactory,
       sync, onSetSyncCode,
       conflictDialog, resolveConflict, formatSyncTime,
+      syncBackup, restoreBackup, clearBackup,
     }
   }
 }).mount('#app')

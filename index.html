@@ -57,6 +57,17 @@
       資料載入失敗，請重新整理頁面。
     </div>
 
+    <!-- 同步備份復原提示 -->
+    <div v-if="syncBackup" class="backup-banner">
+      <span>
+        ↩️ 已備份被覆蓋的{{ syncBackup.origin === 'local' ? '本地' : '雲端' }}資料（{{ formatSyncTime(syncBackup.savedAt) }}）
+      </span>
+      <div class="backup-actions">
+        <button class="btn btn-backup-restore" @click="restoreBackup()">復原</button>
+        <button class="btn btn-backup-dismiss" @click="clearBackup()">忽略</button>
+      </div>
+    </div>
+
     <div v-if="loading" class="loading">載入職業資料中...</div>
 
     <!-- ══════════════════════════════════════════ Tab 1：攻擊力計算機 ══ -->
