@@ -1397,19 +1397,60 @@ body {
 }
 .loot-member-summary-header {
   display: grid;
-  grid-template-columns: 1fr 80px 80px 80px 80px 80px;
-  font-size: 14px;
+  grid-template-columns: 1fr 72px 72px 72px 72px 72px 80px;
+  font-size: 13px;
   color: var(--text-dim);
   padding: 2px 0;
 }
 .loot-member-summary-row {
   display: grid;
-  grid-template-columns: 1fr 80px 80px 80px 80px 80px;
-  font-size: 20px;
+  grid-template-columns: 1fr 72px 72px 72px 72px 72px 80px;
+  font-size: 18px;
   padding: 4px 0;
 }
 .loot-member-summary-row.owes { background: rgba(248,113,113,0.05); }
 .loot-member-summary-row.owed { background: rgba(74,222,128,0.05); }
+.loot-receipt-header {
+  display: grid;
+  grid-template-columns: 1fr 110px 90px 36px;
+  font-size: 13px;
+  color: var(--text-dim);
+  padding: 2px 0;
+  gap: 6px;
+}
+.loot-receipt-row {
+  display: grid;
+  grid-template-columns: 1fr 110px 90px 36px;
+  gap: 6px;
+  align-items: center;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--border);
+}
+.loot-receipt-add-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.loot-receipt-detail-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+  padding: 2px 4px 4px 8px;
+  border-left: 2px solid #7a6a20;
+  margin-bottom: 2px;
+}
+.loot-receipt-detail-name { color: #f0d060; font-weight: 600; white-space: nowrap; }
+.loot-receipt-detail-item {
+  background: #2a2a1a;
+  border: 1px solid #5a5020;
+  border-radius: 4px;
+  padding: 1px 8px;
+  color: #f0d060;
+}
+.text-warning { color: #f0d060; }
 .loot-transfers { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
 .loot-transfer-row {
   font-size: 22px;

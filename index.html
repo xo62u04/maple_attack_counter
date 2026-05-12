@@ -1141,6 +1141,34 @@
           </div>
         </div>
 
+        <!-- 成員自取物品 -->
+        <div class="loot-subsection">
+          <h3>🎁 成員自取物品</h3>
+          <div class="loot-item-table" v-if="(loot.currentSession.memberItems || []).length > 0">
+            <div class="loot-receipt-header">
+              <span>物品名稱</span><span>歸屬成員</span><span>市價(萬)</span><span></span>
+            </div>
+            <div v-for="mi in loot.currentSession.memberItems" :key="mi.id" class="loot-receipt-row">
+              <input type="text" v-model="mi.itemName" class="loot-input-name" placeholder="物品名稱" />
+              <select v-model="mi.memberName" class="loot-select-sm">
+                <option value="">-</option>
+                <option v-for="m in loot.currentSession.members" :key="m.name" :value="m.name">{{ m.name }}</option>
+              </select>
+              <input type="number" v-model.number="mi.price" min="0" class="loot-input-price" placeholder="0" />
+              <button class="btn btn-delete loot-btn-sm" @click="loot.removeMemberItem(mi.id)">✕</button>
+            </div>
+          </div>
+          <div class="loot-receipt-add-row">
+            <button
+              v-for="m in loot.currentSession.members"
+              :key="m.name"
+              class="btn loot-preset-btn"
+              @click="loot.addMemberItem(m.name)"
+            >＋ {{ m.name }}</button>
+            <button v-if="loot.currentSession.members.length === 0" class="btn loot-add-btn" @click="loot.addMemberItem('')">＋ 新增物品</button>
+          </div>
+        </div>
+
         <!-- 結算結果 -->
         <div class="loot-subsection" v-if="loot.settlementResult">
           <h3>💰 結算結果 <span v-if="loot.currentSession.date" class="loot-date-label">{{ loot.currentSession.date }}</span></h3>
@@ -1159,7 +1187,7 @@
             </div>
             <div class="loot-divider"></div>
             <div class="loot-member-summary-header">
-              <span>隊員</span><span>應得</span><span>現金</span><span>自用↑</span><span>剪刀↓</span><span>差額</span>
+              <span>隊員</span><span>應得</span><span>現金</span><span>自用↑</span><span>已取↓</span><span>剪刀↓</span><span>差額</span>
             </div>
             <div
               v-for="m in loot.settlementResult.members"
@@ -1171,11 +1199,21 @@
               <span>{{ (m.due ?? 0).toFixed(1) }} 萬</span>
               <span>{{ (m.soldEarned ?? 0).toFixed(1) }} 萬</span>
               <span class="text-accent">{{ (m.selfuseCost ?? 0) > 0.01 ? (m.selfuseCost).toFixed(1) : '-' }}</span>
+              <span class="text-warning">{{ (m.receiptTotal ?? 0) > 0.01 ? (m.receiptTotal).toFixed(1) : '-' }}</span>
               <span class="text-danger">{{ (m.scissorPaid ?? 0) > 0.01 ? '-' + (m.scissorPaid).toFixed(1) : '-' }}</span>
               <span :class="(m.diff ?? 0) > 0.01 ? 'text-danger' : (m.diff ?? 0) < -0.01 ? 'text-success' : ''">
                 {{ (m.diff ?? 0) > 0.01 ? '+' : '' }}{{ (m.diff ?? 0).toFixed(1) }} 萬
               </span>
             </div>
+            <!-- 已取物品明細（有自取物品才展開） -->
+            <template v-for="m in loot.settlementResult.members" :key="'ri-' + m.name">
+              <div v-if="m.receivedItems && m.receivedItems.length > 0" class="loot-receipt-detail-row">
+                <span class="loot-receipt-detail-name">{{ m.name }} 已取：</span>
+                <span v-for="(ri, i) in m.receivedItems" :key="i" class="loot-receipt-detail-item">
+                  {{ ri.itemName }} {{ ri.price.toFixed(1) }}萬
+                </span>
+              </div>
+            </template>
             <div class="loot-divider" v-if="loot.settlementResult.transfers.length > 0"></div>
             <div class="loot-transfers">
               <div

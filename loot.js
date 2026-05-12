@@ -41,7 +41,7 @@ function useLoot() {
 
   // ── Session 管理 ──
   function addSession() {
-    const s = { id: nextId(), name: '新分錢', date: '', members: [], soldItems: [], snowflakesUsed: 0 }
+    const s = { id: nextId(), name: '新分錢', date: '', members: [], soldItems: [], memberItems: [], snowflakesUsed: 0 }
     sessions.value.push(s)
     currentSessionId.value = s.id
   }
@@ -115,12 +115,26 @@ function useLoot() {
     if (!currentSession.value) return
     currentSession.value.soldItems = currentSession.value.soldItems.filter(i => i.id !== id)
   }
+
+  // ── 成員自取物品 ──
+  function addMemberItem(memberName) {
+    if (!currentSession.value) return
+    if (!currentSession.value.memberItems) currentSession.value.memberItems = []
+    currentSession.value.memberItems.push({ id: nextId(), memberName: memberName || '', itemName: '', price: 0 })
+  }
+  function removeMemberItem(id) {
+    if (!currentSession.value) return
+    currentSession.value.memberItems = (currentSession.value.memberItems || []).filter(i => i.id !== id)
+  }
+
   function clearSession() {
     const cs = currentSession.value
     if (!cs) return
     cs.date = ''
     cs.members = []
     cs.soldItems = []
+    cs.memberItems = []
+    cs.snowflakesUsed = 0
   }
   function dropCount(itemName) {
     return currentSession.value?.soldItems.filter(i => i.itemName === itemName).length ?? 0
@@ -173,7 +187,9 @@ function useLoot() {
       const feeRate = i.status === 'sold' ? (Number(i.fee) || 0) : 0
       return gross * (1 - feeRate / 100)
     }
-    const totalRevenue = validItems.reduce((sum, i) => sum + itemNet(i), 0)
+    const memberItems = (currentSession.value?.memberItems ?? []).filter(i => i.memberName && (Number(i.price) || 0) > 0)
+    const totalMemberItemValue = memberItems.reduce((sum, i) => sum + (Number(i.price) || 0), 0)
+    const totalRevenue = validItems.reduce((sum, i) => sum + itemNet(i), 0) + totalMemberItemValue
 
     const totalScissorCost = validItems.reduce((sum, i) => {
       if (!i.scissorType) return sum
@@ -194,13 +210,15 @@ function useLoot() {
         name: m.name,
         share: Number(m.share) || 0,
         pct: (Number(m.share) || 0) / totalShares,
-        soldEarned:  0,   // 已賣物品現金（扣AH費）
-        selfuseCost: 0,   // 自用物品市場價值（算作個人收到的報酬）
-        scissorPaid: 0,   // 自付剪刀成本
-        grossEarned: 0,   // soldEarned + selfuseCost
-        earned: 0,        // grossEarned - scissorPaid
+        soldEarned:   0,   // 已賣物品現金（扣AH費）
+        selfuseCost:  0,   // 自用物品市場價值（算作個人收到的報酬）
+        receiptTotal: 0,   // 成員自取物品市值合計
+        scissorPaid:  0,   // 自付剪刀成本
+        grossEarned:  0,   // soldEarned + selfuseCost + receiptTotal
+        earned: 0,         // grossEarned - scissorPaid
         due: 0,
         diff: 0,
+        receivedItems: [], // [{ itemName, price }]
       }
     }
 
@@ -214,8 +232,16 @@ function useLoot() {
       }
     }
 
+    for (const mi of memberItems) {
+      const mm = memberMap[mi.memberName]
+      if (!mm) continue
+      const price = Number(mi.price) || 0
+      mm.receiptTotal += price
+      mm.receivedItems.push({ itemName: mi.itemName || '（未命名）', price })
+    }
+
     for (const m of Object.values(memberMap)) {
-      m.grossEarned = Number(m.soldEarned)  + Number(m.selfuseCost)
+      m.grossEarned = Number(m.soldEarned) + Number(m.selfuseCost) + Number(m.receiptTotal)
       m.earned      = Number(m.grossEarned) - Number(m.scissorPaid)
       m.due         = Number(netRevenue)    * Number(m.pct)
       m.diff        = Number(m.earned)      - Number(m.due)
@@ -291,6 +317,7 @@ function useLoot() {
     addSessionMemberFromPreset, addSessionMemberManual, removeSessionMember,
     addBoss, removeBoss, addDrop, removeDrop,
     addDropToSession, removeSessionItem, clearSession, dropCount,
+    addMemberItem, removeMemberItem,
     addSession, deleteSession, switchSession,
     settlementResult,
     getState, setState,
