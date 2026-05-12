@@ -1146,9 +1146,13 @@
           <h3>🎁 成員自取物品</h3>
           <div class="loot-item-table" v-if="(loot.currentSession.memberItems || []).length > 0">
             <div class="loot-receipt-header">
-              <span>物品名稱</span><span>歸屬成員</span><span>市價(萬)</span><span></span>
+              <span>給予方</span><span>物品名稱</span><span>歸屬成員</span><span>市價(萬)</span><span></span>
             </div>
             <div v-for="mi in loot.currentSession.memberItems" :key="mi.id" class="loot-receipt-row">
+              <select v-model="mi.fromMember" class="loot-select-sm">
+                <option value="">-</option>
+                <option v-for="m in loot.currentSession.members" :key="m.name" :value="m.name">{{ m.name }}</option>
+              </select>
               <input type="text" v-model="mi.itemName" class="loot-input-name" placeholder="物品名稱" />
               <select v-model="mi.memberName" class="loot-select-sm">
                 <option value="">-</option>
@@ -1224,9 +1228,8 @@
             <!-- 已取物品明細 -->
             <template v-for="m in loot.settlementResult.members" :key="'ri-' + m.name">
               <div v-if="m.receivedItems && m.receivedItems.length > 0" class="loot-receipt-detail-row">
-                <span class="loot-receipt-detail-name">{{ m.name }} 已取：</span>
                 <span v-for="(ri, i) in m.receivedItems" :key="i" class="loot-receipt-detail-item">
-                  {{ ri.itemName }} {{ ri.price.toFixed(1) }}萬
+                  <span class="loot-receipt-detail-name">{{ ri.fromMember ? ri.fromMember + ' 給 ' + m.name : m.name + ' 已取' }}：</span>{{ ri.itemName }} {{ ri.price.toFixed(1) }}萬
                 </span>
               </div>
             </template>

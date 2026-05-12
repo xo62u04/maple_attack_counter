@@ -120,7 +120,7 @@ function useLoot() {
   function addMemberItem(memberName) {
     if (!currentSession.value) return
     if (!currentSession.value.memberItems) currentSession.value.memberItems = []
-    currentSession.value.memberItems.push({ id: nextId(), memberName: memberName || '', itemName: '', price: 0 })
+    currentSession.value.memberItems.push({ id: nextId(), fromMember: '', memberName: memberName || '', itemName: '', price: 0 })
   }
   function removeMemberItem(id) {
     if (!currentSession.value) return
@@ -245,7 +245,7 @@ function useLoot() {
       if (!mm) continue
       const price = Number(mi.price) || 0
       mm.receiptTotal += price
-      mm.receivedItems.push({ itemName: mi.itemName || '（未命名）', price })
+      mm.receivedItems.push({ itemName: mi.itemName || '（未命名）', price, fromMember: mi.fromMember || '' })
     }
 
     for (const m of Object.values(memberMap)) {
