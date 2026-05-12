@@ -1413,7 +1413,7 @@ body {
 .loot-member-summary-row.owed { background: rgba(74,222,128,0.05); }
 .loot-receipt-header {
   display: grid;
-  grid-template-columns: 1fr 110px 90px 36px;
+  grid-template-columns: 95px 1fr 90px 68px 36px;
   font-size: 13px;
   color: var(--text-dim);
   padding: 2px 0;
@@ -1421,7 +1421,7 @@ body {
 }
 .loot-receipt-row {
   display: grid;
-  grid-template-columns: 1fr 110px 90px 36px;
+  grid-template-columns: 95px 1fr 90px 68px 36px;
   gap: 6px;
   align-items: center;
   padding: 3px 0;
