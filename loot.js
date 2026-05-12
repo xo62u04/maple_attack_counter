@@ -189,7 +189,10 @@ function useLoot() {
     }
     const memberItems = (currentSession.value?.memberItems ?? []).filter(i => i.memberName && (Number(i.price) || 0) > 0)
     const totalMemberItemValue = memberItems.reduce((sum, i) => sum + (Number(i.price) || 0), 0)
-    const totalRevenue = validItems.reduce((sum, i) => sum + itemNet(i), 0) + totalMemberItemValue
+    const totalCashRevenue  = validItems.filter(i => i.status === 'sold').reduce((sum, i) => sum + itemNet(i), 0)
+    const totalSelfuseValue = validItems.filter(i => i.status === 'selfuse').reduce((sum, i) => sum + itemNet(i), 0)
+    const totalItemValue    = totalSelfuseValue + totalMemberItemValue
+    const totalRevenue      = totalCashRevenue + totalItemValue
 
     const totalScissorCost = validItems.reduce((sum, i) => {
       if (!i.scissorType) return sum
@@ -210,15 +213,16 @@ function useLoot() {
         name: m.name,
         share: Number(m.share) || 0,
         pct: (Number(m.share) || 0) / totalShares,
-        soldEarned:   0,   // 已賣物品現金（扣AH費）
-        selfuseCost:  0,   // 自用物品市場價值（算作個人收到的報酬）
-        receiptTotal: 0,   // 成員自取物品市值合計
-        scissorPaid:  0,   // 自付剪刀成本
-        grossEarned:  0,   // soldEarned + selfuseCost + receiptTotal
-        earned: 0,         // grossEarned - scissorPaid
+        soldEarned:    0,   // 已賣物品現金（扣AH費）
+        selfuseCost:   0,   // 自用物品市場價值（算作個人收到的報酬）
+        receiptTotal:  0,   // 成員自取物品市值合計
+        scissorPaid:   0,   // 自付剪刀成本
+        snowflakeShare: 0,  // 雪花均攤成本
+        grossEarned:   0,   // soldEarned + selfuseCost + receiptTotal
+        earned: 0,          // grossEarned - scissorPaid - snowflakeShare
         due: 0,
         diff: 0,
-        receivedItems: [], // [{ itemName, price }]
+        receivedItems: [],  // [{ itemName, price }]
       }
     }
 
@@ -241,15 +245,18 @@ function useLoot() {
     }
 
     for (const m of Object.values(memberMap)) {
-      m.grossEarned = Number(m.soldEarned) + Number(m.selfuseCost) + Number(m.receiptTotal)
-      m.earned      = Number(m.grossEarned) - Number(m.scissorPaid)
-      m.due         = Number(netRevenue)    * Number(m.pct)
-      m.diff        = Number(m.earned)      - Number(m.due)
+      m.snowflakeShare = totalSnowflakeCost * m.pct
+      m.grossEarned    = Number(m.soldEarned) + Number(m.selfuseCost) + Number(m.receiptTotal)
+      m.earned         = Number(m.grossEarned) - Number(m.scissorPaid) - Number(m.snowflakeShare)
+      m.due            = Number(netRevenue)    * Number(m.pct)
+      m.diff           = Number(m.earned)      - Number(m.due)
     }
 
     const transfers = calcTransfers(Object.values(memberMap), cubePrice.value)
 
     return {
+      totalCashRevenue,
+      totalItemValue,
       totalRevenue,
       totalScissorCost,
       totalSnowflakeCost,

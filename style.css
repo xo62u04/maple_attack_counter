@@ -1391,21 +1391,22 @@ body {
 }
 .loot-summary-row.danger span:last-child { color: var(--danger); }
 .loot-summary-row.accent span:last-child { color: var(--accent); font-weight: 700; }
+.loot-summary-row.dim { font-size: 15px; color: var(--text-dim); }
 .loot-divider {
   border-bottom: 1px solid var(--border);
   margin: 6px 0;
 }
 .loot-member-summary-header {
   display: grid;
-  grid-template-columns: 1fr 72px 72px 72px 72px 72px 80px;
-  font-size: 13px;
+  grid-template-columns: 1fr 68px 68px 68px 68px 68px 68px 78px;
+  font-size: 12px;
   color: var(--text-dim);
   padding: 2px 0;
 }
 .loot-member-summary-row {
   display: grid;
-  grid-template-columns: 1fr 72px 72px 72px 72px 72px 80px;
-  font-size: 18px;
+  grid-template-columns: 1fr 68px 68px 68px 68px 68px 68px 78px;
+  font-size: 17px;
   padding: 4px 0;
 }
 .loot-member-summary-row.owes { background: rgba(248,113,113,0.05); }
