@@ -1212,7 +1212,16 @@
                 {{ (m.diff ?? 0) > 0.01 ? '+' : '' }}{{ (m.diff ?? 0).toFixed(1) }} 萬
               </span>
             </div>
-            <!-- 已取物品明細（有自取物品才展開） -->
+            <!-- 自用物品明細 -->
+            <template v-for="m in loot.settlementResult.members" :key="'su-' + m.name">
+              <div v-if="m.selfuseItems && m.selfuseItems.length > 0" class="loot-receipt-detail-row">
+                <span class="loot-receipt-detail-name">{{ m.name }} 自用：</span>
+                <span v-for="(si, i) in m.selfuseItems" :key="i" class="loot-receipt-detail-item">
+                  {{ si.itemName }} {{ si.price.toFixed(1) }}萬
+                </span>
+              </div>
+            </template>
+            <!-- 已取物品明細 -->
             <template v-for="m in loot.settlementResult.members" :key="'ri-' + m.name">
               <div v-if="m.receivedItems && m.receivedItems.length > 0" class="loot-receipt-detail-row">
                 <span class="loot-receipt-detail-name">{{ m.name }} 已取：</span>

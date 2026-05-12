@@ -223,6 +223,7 @@ function useLoot() {
         due: 0,
         diff: 0,
         receivedItems: [],  // [{ itemName, price }]
+        selfuseItems:  [],  // [{ itemName, price }]
       }
     }
 
@@ -230,7 +231,10 @@ function useLoot() {
       const mm = memberMap[item.pickedBy]
       if (!mm) continue
       if (item.status === 'sold')    mm.soldEarned  += itemNet(item)
-      if (item.status === 'selfuse') mm.selfuseCost += itemNet(item)
+      if (item.status === 'selfuse') {
+        mm.selfuseCost += itemNet(item)
+        mm.selfuseItems.push({ itemName: item.itemName || '（未命名）', price: itemNet(item) })
+      }
       if (item.scissorType) {
         mm.scissorPaid += (Number(item.qty) || 1) * (item.scissorType / mileageRate.value * 1000)
       }
