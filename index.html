@@ -1176,8 +1176,11 @@
             <div class="loot-summary-row">
               <span>現金收入（已賣物品）</span><span>{{ (loot.settlementResult.totalCashRevenue ?? 0).toFixed(1) }} 萬</span>
             </div>
-            <div class="loot-summary-row dim" v-if="(loot.settlementResult.totalItemValue ?? 0) > 0.01">
-              <span>物品市值（自用／已取，已分配）</span><span>+{{ (loot.settlementResult.totalItemValue ?? 0).toFixed(1) }} 萬</span>
+            <div class="loot-summary-row dim" v-if="(loot.settlementResult.totalSelfuseValue ?? 0) > 0.01">
+              <span>自用物品市值（已分配）</span><span>+{{ (loot.settlementResult.totalSelfuseValue ?? 0).toFixed(1) }} 萬</span>
+            </div>
+            <div class="loot-summary-row dim" v-if="(loot.settlementResult.totalMemberItemValue ?? 0) > 0.01">
+              <span>成員自取物品市值（從各人份額扣除）</span><span>{{ (loot.settlementResult.totalMemberItemValue ?? 0).toFixed(1) }} 萬</span>
             </div>
             <div class="loot-summary-row danger">
               <span>剪刀成本</span><span>-{{ (loot.settlementResult.totalScissorCost ?? 0).toFixed(1) }} 萬</span>

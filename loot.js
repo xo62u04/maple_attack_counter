@@ -191,7 +191,7 @@ function useLoot() {
     const totalMemberItemValue = memberItems.reduce((sum, i) => sum + (Number(i.price) || 0), 0)
     const totalCashRevenue  = validItems.filter(i => i.status === 'sold').reduce((sum, i) => sum + itemNet(i), 0)
     const totalSelfuseValue = validItems.filter(i => i.status === 'selfuse').reduce((sum, i) => sum + itemNet(i), 0)
-    const totalItemValue    = totalSelfuseValue + totalMemberItemValue
+    const totalItemValue    = totalSelfuseValue   // 成員自取物品不計入可分配收入
     const totalRevenue      = totalCashRevenue + totalItemValue
 
     const totalScissorCost = validItems.reduce((sum, i) => {
@@ -256,6 +256,8 @@ function useLoot() {
 
     return {
       totalCashRevenue,
+      totalSelfuseValue,
+      totalMemberItemValue,
       totalItemValue,
       totalRevenue,
       totalScissorCost,
