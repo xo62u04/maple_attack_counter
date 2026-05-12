@@ -216,9 +216,10 @@ function useLoot() {
         soldEarned:    0,   // 已賣物品現金（扣AH費）
         selfuseCost:   0,   // 自用物品市場價值（算作個人收到的報酬）
         receiptTotal:  0,   // 成員自取物品市值合計
+        givenTotal:    0,   // 給出物品市值合計（抵銷應付現金）
         scissorPaid:   0,   // 自付剪刀成本
         snowflakeShare: 0,  // 雪花均攤成本
-        grossEarned:   0,   // soldEarned + selfuseCost + receiptTotal
+        grossEarned:   0,   // soldEarned + selfuseCost + receiptTotal - givenTotal
         earned: 0,          // grossEarned - scissorPaid - snowflakeShare
         due: 0,
         diff: 0,
@@ -241,16 +242,21 @@ function useLoot() {
     }
 
     for (const mi of memberItems) {
-      const mm = memberMap[mi.memberName]
-      if (!mm) continue
+      const receiver = memberMap[mi.memberName]
+      if (!receiver) continue
       const price = Number(mi.price) || 0
-      mm.receiptTotal += price
-      mm.receivedItems.push({ itemName: mi.itemName || '（未命名）', price, fromMember: mi.fromMember || '' })
+      receiver.receiptTotal += price
+      receiver.receivedItems.push({ itemName: mi.itemName || '（未命名）', price, fromMember: mi.fromMember || '' })
+
+      if (mi.fromMember) {
+        const giver = memberMap[mi.fromMember]
+        if (giver) giver.givenTotal += price
+      }
     }
 
     for (const m of Object.values(memberMap)) {
       m.snowflakeShare = totalSnowflakeCost * m.pct
-      m.grossEarned    = Number(m.soldEarned) + Number(m.selfuseCost) + Number(m.receiptTotal)
+      m.grossEarned    = Number(m.soldEarned) + Number(m.selfuseCost) + Number(m.receiptTotal) - Number(m.givenTotal)
       m.earned         = Number(m.grossEarned) - Number(m.scissorPaid) - Number(m.snowflakeShare)
       m.due            = Number(netRevenue)    * Number(m.pct)
       m.diff           = Number(m.earned)      - Number(m.due)

@@ -1398,14 +1398,14 @@ body {
 }
 .loot-member-summary-header {
   display: grid;
-  grid-template-columns: 1fr 68px 68px 68px 68px 68px 68px 78px;
+  grid-template-columns: 1fr 62px 62px 62px 62px 62px 62px 62px 72px;
   font-size: 12px;
   color: var(--text-dim);
   padding: 2px 0;
 }
 .loot-member-summary-row {
   display: grid;
-  grid-template-columns: 1fr 68px 68px 68px 68px 68px 68px 78px;
+  grid-template-columns: 1fr 62px 62px 62px 62px 62px 62px 62px 72px;
   font-size: 17px;
   padding: 4px 0;
 }

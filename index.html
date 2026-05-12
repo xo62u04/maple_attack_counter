@@ -1197,7 +1197,7 @@
             </div>
             <div class="loot-divider"></div>
             <div class="loot-member-summary-header">
-              <span>隊員</span><span>應得</span><span>現金</span><span>自用↑</span><span>已取↓</span><span>剪刀↓</span><span>雪花↓</span><span>差額</span>
+              <span>隊員</span><span>應得</span><span>現金</span><span>自用↑</span><span>已取↓</span><span>給出↑</span><span>剪刀↓</span><span>雪花↓</span><span>差額</span>
             </div>
             <div
               v-for="m in loot.settlementResult.members"
@@ -1210,6 +1210,7 @@
               <span>{{ (m.soldEarned ?? 0).toFixed(1) }} 萬</span>
               <span class="text-accent">{{ (m.selfuseCost ?? 0) > 0.01 ? (m.selfuseCost).toFixed(1) : '-' }}</span>
               <span class="text-warning">{{ (m.receiptTotal ?? 0) > 0.01 ? (m.receiptTotal).toFixed(1) : '-' }}</span>
+              <span class="text-accent">{{ (m.givenTotal ?? 0) > 0.01 ? (m.givenTotal).toFixed(1) : '-' }}</span>
               <span class="text-danger">{{ (m.scissorPaid ?? 0) > 0.01 ? '-' + (m.scissorPaid).toFixed(1) : '-' }}</span>
               <span class="text-danger">{{ (m.snowflakeShare ?? 0) > 0.01 ? '-' + (m.snowflakeShare).toFixed(1) : '-' }}</span>
               <span :class="(m.diff ?? 0) > 0.01 ? 'text-danger' : (m.diff ?? 0) < -0.01 ? 'text-success' : ''">
