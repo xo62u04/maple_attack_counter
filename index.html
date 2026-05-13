@@ -2083,6 +2083,20 @@
         </div>
       </div>
 
+      <!-- ②-b 我的角色（需登入）-->
+      <div v-if="schedule.isLoggedIn && schedule.currentMember" class="sched-subsection">
+        <h3>🎮 我的角色</h3>
+        <div v-for="c in schedule.currentMember.characters" :key="c.id" class="sched-char-row">
+          <input v-model="c.name" class="sched-input-name" placeholder="角色名稱" />
+          <label class="sched-char-level-label">Lv
+            <input type="number" v-model.number="c.level" class="sched-input-num" min="1" max="300" />
+          </label>
+          <button class="btn btn-delete btn-sm" @click="schedule.removeCharacter(schedule.currentUser.name, c.id)">✕</button>
+        </div>
+        <div v-if="schedule.currentMember.characters.length === 0" class="sched-char-empty">尚未新增角色</div>
+        <button class="btn btn-sm" style="margin-top:8px" @click="schedule.addCharacter(schedule.currentUser.name)">＋ 新增角色</button>
+      </div>
+
       <!-- ③ BOSS 設定（管理員才能編輯）-->
       <div class="sched-subsection">
         <h3>⚔️ BOSS 設定</h3>
