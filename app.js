@@ -699,6 +699,7 @@ createApp({
         localStorage.setItem(HEART_SETTINGS_KEY, JSON.stringify(data.heart))
         loadHeartSettings()
       }
+      if (data.schedule) schedule.setState(data.schedule)
     }
 
     function currentSyncData() {
@@ -707,7 +708,8 @@ createApp({
         loot: loot.getState(),
         alchemy: alchemy.getState(),
         equip: equip.getState(),
-        heart: heartFactory.getState()
+        heart: heartFactory.getState(),
+        schedule: schedule.getState(),
       }
     }
 
@@ -717,7 +719,8 @@ createApp({
         loot: data?.loot || loot.getState(),
         alchemy: data?.alchemy || alchemy.getState(),
         equip: data?.equip || equip.getState(),
-        heart: data?.heart || heartFactory.getState()
+        heart: data?.heart || heartFactory.getState(),
+        schedule: data?.schedule || schedule.getState(),
       }
     }
 
@@ -847,6 +850,8 @@ createApp({
     }
 
     Vue.watch(() => JSON.stringify(heartFactory.getState()), saveHeartSettings)
+
+    Vue.watch(() => JSON.stringify(schedule.getState()), () => pushAll())
 
     return {
       activeTab, equipZoom, changeEquipZoom, saveName, selectedSaveKey, saveMessage, savedCharacters,
