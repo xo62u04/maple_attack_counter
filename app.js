@@ -359,17 +359,32 @@ createApp({
       if (schedule.isLoggedIn) schedLoginPin.value = ''
     }
 
-    const schedDragging = ref(false)
-    const schedDragMode = ref('block') // 'block'=塗不可用, 'clear'=清除
+    const schedDragging      = ref(false)
+    const schedDragMode      = ref('block') // 'block'=塗不可用, 'clear'=清除
+    const schedEditingMember = ref('')      // 管理員可切換為任意成員
+
+    // 實際操作的成員：管理員選了誰就是誰，否則只能自己
+    const schedTargetMember = Vue.computed(() =>
+      schedule.isAdmin && schedEditingMember.value
+        ? schedEditingMember.value
+        : schedule.currentUser?.name ?? ''
+    )
+
+    async function doSchedLogin() {
+      if (!schedLoginName.value || !schedLoginPin.value) return
+      await schedule.login(schedLoginName.value, schedLoginPin.value)
+      if (schedule.isLoggedIn) {
+        schedLoginPin.value = ''
+        schedEditingMember.value = ''
+      }
+    }
 
     function _paintCell(name, ws, dayOfWeek, hour) {
-      const status = schedule.cellStatus(ws, name, dayOfWeek, hour)  // 'recurring'|'weekly'|'avail'
+      const status = schedule.cellStatus(ws, name, dayOfWeek, hour)
       if (schedDragMode.value === 'block' && status === 'avail') {
-        // 加不可用：依目前模式決定類型
         if (schedRecurringMode.value) schedule.toggleRecurring(name, dayOfWeek, hour)
         else schedule.toggleWeeklyUnavail(ws, name, dayOfWeek, hour)
       } else if (schedDragMode.value === 'clear' && status !== 'avail') {
-        // 清除：直接清格子本身的類型，不管目前模式
         if (status === 'recurring') schedule.toggleRecurring(name, dayOfWeek, hour)
         else schedule.toggleWeeklyUnavail(ws, name, dayOfWeek, hour)
       }
@@ -377,7 +392,8 @@ createApp({
 
     function onCellMouseDown(dayOfWeek, hour) {
       if (!schedule.isLoggedIn || !schedule.currentWeekSchedule) return
-      const name = schedule.currentUser.name
+      const name = schedTargetMember.value
+      if (!name) return
       const ws   = schedule.currentWeekSchedule.weekStart
       const status = schedule.cellStatus(ws, name, dayOfWeek, hour)
       schedDragMode.value = status !== 'avail' ? 'clear' : 'block'
@@ -387,7 +403,8 @@ createApp({
 
     function onCellMouseEnter(dayOfWeek, hour) {
       if (!schedDragging.value || !schedule.isLoggedIn || !schedule.currentWeekSchedule) return
-      const name = schedule.currentUser.name
+      const name = schedTargetMember.value
+      if (!name) return
       const ws   = schedule.currentWeekSchedule.weekStart
       _paintCell(name, ws, dayOfWeek, hour)
     }
@@ -1007,6 +1024,7 @@ createApp({
       conflictDialog, resolveConflict, formatSyncTime,
       syncBackup, restoreBackup, clearBackup,
       schedLoginName, schedLoginPin, schedRecurringMode, schedNewMemberName,
+      schedEditingMember, schedTargetMember,
       fmtDate: isoDate => parseInt(isoDate.slice(5, 7)) + '/' + parseInt(isoDate.slice(8, 10)),
       doSchedLogin, onCellMouseDown, onCellMouseEnter, onAddScheduleMember,
       editRunDialog, openEditRun, saveEditRun, onMarkDone, goToLootSession,

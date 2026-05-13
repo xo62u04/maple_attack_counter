@@ -2787,6 +2787,12 @@ body {
 .sched-wdc-day  { font-size: 12px; font-weight: 600; color: var(--text-dim); }
 .sched-wdc-date { font-size: 14px; font-weight: 700; }
 
+.sched-avail-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;
+}
+.sched-avail-header h3 { margin: 0; }
+.sched-avail-editing-label { font-size: 13px; color: var(--text-dim); }
+
 /* ── 可用格子表格 ── */
 .sched-avail-grid-wrap { overflow-x: auto; }
 .sched-avail-grid {

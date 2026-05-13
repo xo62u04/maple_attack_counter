@@ -2045,9 +2045,21 @@
         </template>
       </div>
 
-      <!-- ② 我的不可用時段（需登入）-->
+      <!-- ② 不可用時段（需登入）-->
       <div v-if="schedule.isLoggedIn" class="sched-subsection">
-        <h3>🕐 我的不可用時段</h3>
+        <div class="sched-avail-header">
+          <h3>🕐 不可用時段</h3>
+          <template v-if="schedule.isAdmin">
+            <span class="sched-avail-editing-label">編輯對象：</span>
+            <select v-model="schedEditingMember" class="sched-select-sm">
+              <option value="">{{ schedule.currentUser.name }}（自己）</option>
+              <option
+                v-for="m in schedule.scheduleMembers.filter(m => m.name !== schedule.currentUser.name)"
+                :key="m.name" :value="m.name"
+              >{{ m.name }}</option>
+            </select>
+          </template>
+        </div>
         <div class="sched-week-tabs">
           <button
             v-for="(w, i) in schedule.weeklySchedules" :key="w.weekStart"
@@ -2064,7 +2076,7 @@
               <div
                 v-for="h in 24" :key="h"
                 class="sched-grid-cell"
-                :class="schedule.cellStatus(schedule.currentWeekSchedule.weekStart, schedule.currentUser.name, day, h-1)"
+                :class="schedule.cellStatus(schedule.currentWeekSchedule.weekStart, schedTargetMember, day, h-1)"
                 @mousedown.prevent="onCellMouseDown(day, h-1)"
                 @mouseenter="onCellMouseEnter(day, h-1)"
               ></div>
