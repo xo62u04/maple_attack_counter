@@ -2824,7 +2824,12 @@ body {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   padding: 6px 0; border-top: 1px solid var(--border);
 }
-.sched-party-members { display: flex; flex-wrap: wrap; gap: 4px; }
+.sched-party-members { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.sched-slot-chip {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: 6px; padding: 3px 6px;
+}
 .sched-member-chip {
   background: var(--bg-input); border: 1px solid var(--border);
   border-radius: 99px; padding: 2px 8px; font-size: 12px;

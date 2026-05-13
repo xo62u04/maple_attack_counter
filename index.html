@@ -2118,17 +2118,24 @@
             <template v-if="schedule.isAdmin">
               <input v-model="party.label" class="sched-input-label" placeholder="團標籤" />
               <div class="sched-party-members">
-                <span v-for="name in party.members" :key="name" class="sched-member-chip">
-                  {{ name }}
-                  <span class="sched-chip-remove" @click="party.members = party.members.filter(n=>n!==name)">×</span>
-                </span>
-                <select
-                  @change="e => { if(e.target.value && !party.members.includes(e.target.value)) party.members.push(e.target.value); e.target.value='' }"
-                  class="sched-select-sm"
-                >
-                  <option value="">＋ 加入成員</option>
-                  <option v-for="m in schedule.scheduleMembers" :key="m.name" :value="m.name">{{ m.name }}</option>
-                </select>
+                <div v-for="(slot, si) in (party.slots||[])" :key="si" class="sched-slot-chip">
+                  <select v-model="slot.member" class="sched-select-sm">
+                    <option value="">選成員</option>
+                    <option
+                      v-for="m in schedule.scheduleMembers.filter(m => !party.slots.some((s,i) => i !== si && s.member === m.name))"
+                      :key="m.name" :value="m.name"
+                    >{{ m.name }}</option>
+                  </select>
+                  <select v-model="slot.character" class="sched-select-sm">
+                    <option value="">選角色</option>
+                    <option
+                      v-for="c in (schedule.scheduleMembers.find(m => m.name === slot.member)?.characters || [])"
+                      :key="c.id" :value="c.name"
+                    >{{ c.name }} Lv{{ c.level }}</option>
+                  </select>
+                  <span class="sched-chip-remove" @click="party.slots.splice(si, 1)">×</span>
+                </div>
+                <button class="btn btn-sm" @click="party.slots ? party.slots.push({member:'',character:''}) : (party.slots=[{member:'',character:''}])">＋ 加位置</button>
               </div>
               <label>每週
                 <input type="number" v-model.number="party.runsPerWeek" class="sched-input-num" min="1" max="20" />
@@ -2138,7 +2145,7 @@
             </template>
             <template v-else>
               <span class="sched-party-label">{{ party.label }}</span>
-              <span class="sched-party-member-list">{{ party.members.join('、') }}</span>
+              <span class="sched-party-member-list">{{ (party.slots||[]).filter(s=>s.member).map(s=>s.member+(s.character?'（'+s.character+'）':'')).join('、') }}</span>
               <span class="sched-party-runs">{{ party.runsPerWeek }}場/週</span>
             </template>
           </div>
@@ -2215,7 +2222,7 @@
                     {{ ['日','一','二','三','四','五','六'][run.dayOfWeek] }} {{ String(run.hour).padStart(2,'0') }}:00
                   </span>
                 </template>
-                <span class="sched-run-members">{{ run.members.join('、') }}</span>
+                <span class="sched-run-members">{{ (run.slots||[]).filter(s=>s.member).map(s=>s.member+(s.character?'（'+s.character+'）':'')).join('、') || (run.members||[]).join('、') }}</span>
                 <span class="sched-run-status-badge" :class="'badge-' + run.status">
                   {{ { auto:'自動', manual:'手動', confirmed:'已確認', done:'完成', unschedulable:'無法排入' }[run.status] }}
                 </span>

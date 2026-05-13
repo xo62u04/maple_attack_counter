@@ -62,7 +62,7 @@ function useSchedule() {
   function addParty(bossId) {
     const b = scheduleBosses.value.find(b => b.id === bossId)
     if (!b) return
-    b.parties.push({ id: nextId(), label: 'A團', members: [], runsPerWeek: 1 })
+    b.parties.push({ id: nextId(), label: 'A團', slots: [], runsPerWeek: 1 })
   }
   function removeParty(bossId, partyId) {
     const b = scheduleBosses.value.find(b => b.id === bossId)
@@ -279,8 +279,11 @@ function useSchedule() {
         const needed = party.runsPerWeek - lockedCount
         if (needed <= 0) continue
 
+        const rawSlots = party.slots || (party.members || []).map(m => ({ member: m, character: '' }))
+        const memberNames = [...new Set(rawSlots.map(s => s.member).filter(Boolean))]
+
         const memberUnavail = {}
-        for (const name of party.members) {
+        for (const name of memberNames) {
           memberUnavail[name] = buildUnavailSet(name, weekStart)
           if (memberOccupied[name])
             for (const s of memberOccupied[name]) memberUnavail[name].add(s)
@@ -291,7 +294,7 @@ function useSchedule() {
           for (let hour = 0; hour <= 23; hour++) {
             const key = `${day}-${hour}`
             if (occupiedSlots.has(key)) continue
-            const allAvail = party.members.every(n => !memberUnavail[n]?.has(key))
+            const allAvail = memberNames.every(n => !memberUnavail[n]?.has(key))
             if (allAvail) candidates.push({ day, hour, score: scoreSlot(day, hour) })
           }
         }
@@ -307,13 +310,14 @@ function useSchedule() {
             partyId: party.id,
             dayOfWeek: slot.day,
             hour: slot.hour,
-            members: [...party.members],
+            slots: rawSlots.map(s => ({ ...s })),
+            members: memberNames,
             status: 'auto',
             lootSessionId: null,
           }
           newRuns.push(run)
           occupiedSlots.add(key)
-          for (const name of party.members) {
+          for (const name of memberNames) {
             if (!memberOccupied[name]) memberOccupied[name] = new Set()
             memberOccupied[name].add(key)
             memberUnavail[name].add(key)
@@ -325,7 +329,8 @@ function useSchedule() {
           newRuns.push({
             id: nextId(), bossId: boss.id, partyId: party.id,
             dayOfWeek: null, hour: null,
-            members: [...party.members], status: 'unschedulable', lootSessionId: null,
+            slots: rawSlots.map(s => ({ ...s })), members: memberNames,
+            status: 'unschedulable', lootSessionId: null,
           })
         }
       }
@@ -377,7 +382,13 @@ function useSchedule() {
   function setState(s) {
     if (!s) return
     if (s.scheduleMembers)  scheduleMembers.value  = s.scheduleMembers
-    if (s.scheduleBosses)   scheduleBosses.value   = s.scheduleBosses
+    if (s.scheduleBosses) {
+      for (const boss of s.scheduleBosses)
+        for (const party of boss.parties)
+          if (!party.slots)
+            party.slots = (party.members || []).map(m => ({ member: m, character: '' }))
+      scheduleBosses.value = s.scheduleBosses
+    }
     if (s.weeklySchedules)  weeklySchedules.value  = s.weeklySchedules
     let maxId = 0
     for (const b of scheduleBosses.value) {
