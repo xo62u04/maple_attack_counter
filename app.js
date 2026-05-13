@@ -50,6 +50,8 @@ createApp({
       loadAlchemySettings()
       loadHeartSettings()
       if (sync.syncCode.value) await pullAll()
+      schedule.rollForwardWeeks()
+      schedule.loadIdentity()
       _bootstrapping = false
       try {
         const raw = localStorage.getItem(SYNC_BACKUP_KEY)
@@ -336,6 +338,7 @@ createApp({
     const loot = Vue.reactive(useLoot())
     const alchemy = Vue.reactive(useAlchemy())
     const heartFactory = Vue.reactive(useHeartFactory())
+    const schedule = Vue.reactive(useSchedule())
 
     // 職業變更時：更新武器係數；只在 Tab2 技能清單為空時才自動載入（避免覆蓋已設定的技能）
     watch(selectedJobId, (id) => {
@@ -873,6 +876,7 @@ createApp({
       loot, saveLootSettings,
       alchemy, saveAlchemySettings,
       heartFactory,
+      schedule,
       sync, onSetSyncCode,
       conflictDialog, resolveConflict, formatSyncTime,
       syncBackup, restoreBackup, clearBackup,
