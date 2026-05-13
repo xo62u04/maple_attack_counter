@@ -136,6 +136,35 @@ function useLoot() {
     cs.memberItems = []
     cs.snowflakesUsed = 0
   }
+  function createSessionFromRun({ bossName, members, date }) {
+    const sessionName = `${bossName} ${date}`
+    const boss  = bossDropTables.value.find(b => b.bossName === bossName)
+    const drops = (boss?.drops ?? []).map(d => ({
+      id:          nextId(),
+      itemName:    d.itemName,
+      qty:         1,
+      pickedBy:    '',
+      status:      'pending',
+      price:       0,
+      fee:         auctionFee.value,
+      scissorType: d.needsScissors ? d.scissorType : 0,
+    }))
+    const s = {
+      id:             nextId(),
+      name:           sessionName,
+      date,
+      members: members.map(name => {
+        const preset = memberPresets.value.find(p => p.name === name)
+        return { name, share: preset?.defaultShare ?? 1 }
+      }),
+      soldItems:      drops,
+      memberItems:    [],
+      snowflakesUsed: 0,
+    }
+    sessions.value.push(s)
+    currentSessionId.value = s.id
+    return s.id
+  }
   function dropCount(itemName) {
     return currentSession.value?.soldItems.filter(i => i.itemName === itemName).length ?? 0
   }
@@ -335,7 +364,7 @@ function useLoot() {
     addMemberPreset, removeMemberPreset,
     addSessionMemberFromPreset, addSessionMemberManual, removeSessionMember,
     addBoss, removeBoss, addDrop, removeDrop,
-    addDropToSession, removeSessionItem, clearSession, dropCount,
+    addDropToSession, removeSessionItem, clearSession, createSessionFromRun, dropCount,
     addMemberItem, removeMemberItem,
     addSession, deleteSession, switchSession,
     settlementResult,
