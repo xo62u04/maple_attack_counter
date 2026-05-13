@@ -2045,7 +2045,87 @@
         </template>
       </div>
 
-      <!-- ② 不可用時段（需登入）-->
+      <!-- ② 本週排程（所有人可見）-->
+      <div class="sched-subsection">
+        <h3>📋 本週排程</h3>
+        <div class="sched-week-tabs">
+          <button
+            v-for="(w, i) in schedule.weeklySchedules" :key="w.weekStart"
+            class="btn btn-sm" :class="{ active: schedule.scheduleWeekIdx === i }"
+            @click="schedule.scheduleWeekIdx = i"
+          >{{ i === 0 ? '本週' : i === 1 ? '下週' : '下下週' }}（{{ w.weekStart }}）</button>
+          <button v-if="schedule.isAdmin && schedule.currentWeekSchedule" class="btn btn-sm sched-auto-btn"
+            @click="schedule.autoScheduleWeek(schedule.currentWeekSchedule.weekStart)">
+            🔄 自動排程
+          </button>
+        </div>
+
+        <div v-if="schedule.currentWeekSchedule">
+          <div class="sched-week-date-strip">
+            <span v-for="day in [1,2,3,4,5,6,0]" :key="day" class="sched-week-date-cell">
+              <span class="sched-wdc-day">{{ ['日','一','二','三','四','五','六'][day] }}</span>
+              <span class="sched-wdc-date">{{ fmtDate(schedule.slotToDate(schedule.currentWeekSchedule.weekStart, day)) }}</span>
+            </span>
+          </div>
+
+          <div v-if="schedule.currentWeekSchedule.runs.some(r => r.status === 'unschedulable')"
+               class="sched-warn-banner">
+            ⚠️ 部分場次無法自動排入，請手動處理
+          </div>
+
+          <div v-for="boss in schedule.scheduleBosses" :key="boss.id" class="sched-boss-block">
+            <div v-for="party in boss.parties" :key="party.id" class="sched-party-block">
+              <div class="sched-party-block-header">
+                <span class="sched-boss-chip">{{ boss.name }}</span>
+                <span class="sched-party-chip">{{ party.label }}</span>
+                <span class="sched-runs-left">
+                  本週剩 {{ schedule.runsLeft(schedule.currentWeekSchedule.weekStart, boss.id, party.id) }} 場
+                </span>
+              </div>
+              <div
+                v-for="run in schedule.currentWeekSchedule.runs.filter(r => r.bossId===boss.id && r.partyId===party.id)"
+                :key="run.id"
+                class="sched-run-row"
+                :class="run.status"
+              >
+                <template v-if="run.status === 'unschedulable'">
+                  <span class="sched-run-time sched-unschedulable">⚠️ 無法排入</span>
+                </template>
+                <template v-else>
+                  <span class="sched-run-time">
+                    <span class="sched-run-dayname">{{ ['日','一','二','三','四','五','六'][run.dayOfWeek] }}</span>
+                    <span class="sched-run-date">{{ fmtDate(schedule.slotToDate(schedule.currentWeekSchedule.weekStart, run.dayOfWeek)) }}</span>
+                    {{ String(run.hour).padStart(2,'0') }}:00
+                    <span class="sched-run-endtime">~ {{ String(Math.floor((run.hour*60+(boss.durationMin||30))/60)%24).padStart(2,'0') }}:{{ String((run.hour*60+(boss.durationMin||30))%60).padStart(2,'0') }}</span>
+                  </span>
+                </template>
+                <span class="sched-run-members">{{ (run.slots||[]).filter(s=>s.member).map(s=>s.member+(s.character?'（'+s.character+'）':'')).join('、') || (run.members||[]).join('、') }}</span>
+                <span class="sched-run-status-badge" :class="'badge-' + run.status">
+                  {{ { auto:'自動', manual:'手動', confirmed:'已確認', done:'完成', unschedulable:'無法排入' }[run.status] }}
+                </span>
+                <template v-if="schedule.isAdmin && run.status !== 'done'">
+                  <button class="btn btn-sm" @click="openEditRun(run)">✏️</button>
+                  <button v-if="run.status !== 'confirmed' && run.status !== 'unschedulable'"
+                    class="btn btn-sm" @click="schedule.confirmRun(schedule.currentWeekSchedule.weekStart, run.id)">
+                    ✅ 確認
+                  </button>
+                  <button v-if="run.status === 'confirmed'"
+                    class="btn btn-sm sched-done-btn"
+                    @click="onMarkDone(run)">
+                    ✔ 完成→分錢
+                  </button>
+                </template>
+                <a v-if="run.status === 'done' && run.lootSessionId" class="btn btn-sm"
+                  @click="goToLootSession(run.lootSessionId)">
+                  💰 查看分錢
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ 不可用時段（需登入）-->
       <div v-if="schedule.isLoggedIn" class="sched-subsection">
         <div class="sched-avail-header">
           <h3>🕐 不可用時段</h3>
@@ -2203,86 +2283,6 @@
             <option v-for="p in loot.memberPresets" :key="p.name" :value="p.name">{{ p.name }}</option>
           </select>
           <button class="btn btn-sm" @click="onAddScheduleMember">＋ 加入</button>
-        </div>
-      </div>
-
-      <!-- ④ 本週排程 -->
-      <div class="sched-subsection">
-        <h3>📋 本週排程</h3>
-        <div class="sched-week-tabs">
-          <button
-            v-for="(w, i) in schedule.weeklySchedules" :key="w.weekStart"
-            class="btn btn-sm" :class="{ active: schedule.scheduleWeekIdx === i }"
-            @click="schedule.scheduleWeekIdx = i"
-          >{{ i === 0 ? '本週' : i === 1 ? '下週' : '下下週' }}（{{ w.weekStart }}）</button>
-          <button v-if="schedule.isAdmin && schedule.currentWeekSchedule" class="btn btn-sm sched-auto-btn"
-            @click="schedule.autoScheduleWeek(schedule.currentWeekSchedule.weekStart)">
-            🔄 自動排程
-          </button>
-        </div>
-
-        <div v-if="schedule.currentWeekSchedule">
-          <div class="sched-week-date-strip">
-            <span v-for="day in [1,2,3,4,5,6,0]" :key="day" class="sched-week-date-cell">
-              <span class="sched-wdc-day">{{ ['日','一','二','三','四','五','六'][day] }}</span>
-              <span class="sched-wdc-date">{{ fmtDate(schedule.slotToDate(schedule.currentWeekSchedule.weekStart, day)) }}</span>
-            </span>
-          </div>
-
-          <div v-if="schedule.currentWeekSchedule.runs.some(r => r.status === 'unschedulable')"
-               class="sched-warn-banner">
-            ⚠️ 部分場次無法自動排入，請手動處理
-          </div>
-
-          <div v-for="boss in schedule.scheduleBosses" :key="boss.id" class="sched-boss-block">
-            <div v-for="party in boss.parties" :key="party.id" class="sched-party-block">
-              <div class="sched-party-block-header">
-                <span class="sched-boss-chip">{{ boss.name }}</span>
-                <span class="sched-party-chip">{{ party.label }}</span>
-                <span class="sched-runs-left">
-                  本週剩 {{ schedule.runsLeft(schedule.currentWeekSchedule.weekStart, boss.id, party.id) }} 場
-                </span>
-              </div>
-              <div
-                v-for="run in schedule.currentWeekSchedule.runs.filter(r => r.bossId===boss.id && r.partyId===party.id)"
-                :key="run.id"
-                class="sched-run-row"
-                :class="run.status"
-              >
-                <template v-if="run.status === 'unschedulable'">
-                  <span class="sched-run-time sched-unschedulable">⚠️ 無法排入</span>
-                </template>
-                <template v-else>
-                  <span class="sched-run-time">
-                    <span class="sched-run-dayname">{{ ['日','一','二','三','四','五','六'][run.dayOfWeek] }}</span>
-                    <span class="sched-run-date">{{ fmtDate(schedule.slotToDate(schedule.currentWeekSchedule.weekStart, run.dayOfWeek)) }}</span>
-                    {{ String(run.hour).padStart(2,'0') }}:00
-                    <span class="sched-run-endtime">~ {{ String(Math.floor((run.hour*60+(boss.durationMin||30))/60)%24).padStart(2,'0') }}:{{ String((run.hour*60+(boss.durationMin||30))%60).padStart(2,'0') }}</span>
-                  </span>
-                </template>
-                <span class="sched-run-members">{{ (run.slots||[]).filter(s=>s.member).map(s=>s.member+(s.character?'（'+s.character+'）':'')).join('、') || (run.members||[]).join('、') }}</span>
-                <span class="sched-run-status-badge" :class="'badge-' + run.status">
-                  {{ { auto:'自動', manual:'手動', confirmed:'已確認', done:'完成', unschedulable:'無法排入' }[run.status] }}
-                </span>
-                <template v-if="schedule.isAdmin && run.status !== 'done'">
-                  <button class="btn btn-sm" @click="openEditRun(run)">✏️</button>
-                  <button v-if="run.status !== 'confirmed' && run.status !== 'unschedulable'"
-                    class="btn btn-sm" @click="schedule.confirmRun(schedule.currentWeekSchedule.weekStart, run.id)">
-                    ✅ 確認
-                  </button>
-                  <button v-if="run.status === 'confirmed'"
-                    class="btn btn-sm sched-done-btn"
-                    @click="onMarkDone(run)">
-                    ✔ 完成→分錢
-                  </button>
-                </template>
-                <a v-if="run.status === 'done' && run.lootSessionId" class="btn btn-sm"
-                  @click="goToLootSession(run.lootSessionId)">
-                  💰 查看分錢
-                </a>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
