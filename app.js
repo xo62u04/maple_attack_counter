@@ -357,15 +357,14 @@ createApp({
     const schedDragMode = ref('block') // 'block'=塗不可用, 'clear'=清除
 
     function _paintCell(name, ws, dayOfWeek, hour) {
-      const isRecurring = schedRecurringMode.value
-      const isUnavail = isRecurring
-        ? schedule.isRecurringUnavail(name, dayOfWeek, hour)
-        : schedule.isWeeklyUnavail(ws, name, dayOfWeek, hour)
-      if (schedDragMode.value === 'block' && !isUnavail) {
-        if (isRecurring) schedule.toggleRecurring(name, dayOfWeek, hour)
+      const status = schedule.cellStatus(ws, name, dayOfWeek, hour)  // 'recurring'|'weekly'|'avail'
+      if (schedDragMode.value === 'block' && status === 'avail') {
+        // 加不可用：依目前模式決定類型
+        if (schedRecurringMode.value) schedule.toggleRecurring(name, dayOfWeek, hour)
         else schedule.toggleWeeklyUnavail(ws, name, dayOfWeek, hour)
-      } else if (schedDragMode.value === 'clear' && isUnavail) {
-        if (isRecurring) schedule.toggleRecurring(name, dayOfWeek, hour)
+      } else if (schedDragMode.value === 'clear' && status !== 'avail') {
+        // 清除：直接清格子本身的類型，不管目前模式
+        if (status === 'recurring') schedule.toggleRecurring(name, dayOfWeek, hour)
         else schedule.toggleWeeklyUnavail(ws, name, dayOfWeek, hour)
       }
     }
@@ -374,11 +373,8 @@ createApp({
       if (!schedule.isLoggedIn || !schedule.currentWeekSchedule) return
       const name = schedule.currentUser.name
       const ws   = schedule.currentWeekSchedule.weekStart
-      const isRecurring = schedRecurringMode.value
-      const isUnavail = isRecurring
-        ? schedule.isRecurringUnavail(name, dayOfWeek, hour)
-        : schedule.isWeeklyUnavail(ws, name, dayOfWeek, hour)
-      schedDragMode.value = isUnavail ? 'clear' : 'block'
+      const status = schedule.cellStatus(ws, name, dayOfWeek, hour)
+      schedDragMode.value = status !== 'avail' ? 'clear' : 'block'
       schedDragging.value = true
       _paintCell(name, ws, dayOfWeek, hour)
     }
