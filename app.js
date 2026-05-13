@@ -3,7 +3,7 @@ const { createApp, ref, computed, onMounted, watch } = Vue
 createApp({
   setup() {
     // ── Tab 切換 ──
-    const activeTab = ref('calc')
+    const activeTab = ref('equip')
 
     // ── 雲端同步 ──
     const sync = useSync()

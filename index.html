@@ -15,11 +15,11 @@
     <header class="site-header">
       <h1>⚔️ 楓星攻擊力計算機</h1>
       <div class="tab-bar">
-        <button class="tab-btn" :class="{ active: activeTab === 'calc' }" @click="activeTab = 'calc'">
-          ⚔️ 攻擊力計算機
-        </button>
         <button class="tab-btn" :class="{ active: activeTab === 'equip' }" @click="activeTab = 'equip'">
           🎒 裝備模擬器
+        </button>
+        <button class="tab-btn" :class="{ active: activeTab === 'calc' }" @click="activeTab = 'calc'">
+          ⚔️ 攻擊力計算機
         </button>
         <button class="tab-btn" :class="{ active: activeTab === 'loot' }" @click="activeTab = 'loot'">
           💰 分錢系統
