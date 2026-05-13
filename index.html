@@ -2072,7 +2072,10 @@
             <div class="sched-grid-corner"></div>
             <div v-for="h in 24" :key="h" class="sched-grid-hour">{{ h - 1 }}</div>
             <template v-for="day in [1,2,3,4,5,6,0]" :key="day">
-              <div class="sched-grid-day">{{ ['日','一','二','三','四','五','六'][day] }}</div>
+              <div class="sched-grid-day">
+                <span class="sched-grid-day-name">{{ ['日','一','二','三','四','五','六'][day] }}</span>
+                <span class="sched-grid-day-date">{{ fmtDate(schedule.slotToDate(schedule.currentWeekSchedule.weekStart, day)) }}</span>
+              </div>
               <div
                 v-for="h in 24" :key="h"
                 class="sched-grid-cell"
