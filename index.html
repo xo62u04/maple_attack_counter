@@ -2064,7 +2064,8 @@
                 v-for="h in 24" :key="h"
                 class="sched-grid-cell"
                 :class="schedule.cellStatus(schedule.currentWeekSchedule.weekStart, schedule.currentUser.name, day, h-1)"
-                @click="onCellClick(day, h-1)"
+                @mousedown.prevent="onCellMouseDown(day, h-1)"
+                @mouseenter="onCellMouseEnter(day, h-1)"
               ></div>
             </template>
           </div>

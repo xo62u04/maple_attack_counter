@@ -2779,6 +2779,7 @@ body {
   grid-template-columns: 28px repeat(24, 26px);
   gap: 2px;
   min-width: max-content;
+  user-select: none;
 }
 .sched-grid-corner { }
 .sched-grid-hour {
