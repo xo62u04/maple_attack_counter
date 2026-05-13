@@ -49,7 +49,13 @@ createApp({
       loadLootSettings()
       loadAlchemySettings()
       loadHeartSettings()
-      if (sync.syncCode.value) await pullAll()
+      const urlSyncCode = new URLSearchParams(window.location.search).get('sync')
+      if (urlSyncCode && !sync.syncCode.value) {
+        sync.syncCodeDraft.value = urlSyncCode
+        await onSetSyncCode()
+      } else if (sync.syncCode.value) {
+        await pullAll()
+      }
       schedule.rollForwardWeeks()
       schedule.loadIdentity()
       document.addEventListener('mouseup', () => { schedDragging.value = false })
@@ -866,6 +872,24 @@ createApp({
       }
     }
 
+    function _updateSyncUrl(code) {
+      const url = new URL(window.location.href)
+      if (code) url.searchParams.set('sync', code)
+      else url.searchParams.delete('sync')
+      history.replaceState({}, '', url)
+    }
+
+    function copySyncLink() {
+      const url = new URL(window.location.href)
+      url.searchParams.set('sync', sync.syncCode.value)
+      navigator.clipboard.writeText(url.toString())
+    }
+
+    function clearSyncCodeAndUrl() {
+      sync.clearSyncCode()
+      _updateSyncUrl('')
+    }
+
     async function onSetSyncCode() {
       const code = sync.syncCodeDraft.value.trim()
       if (!code) return
@@ -878,12 +902,14 @@ createApp({
 
       if (!cloudData) {
         sync.applySyncCode(code)
+        _updateSyncUrl(code)
         await pushAll()
         return
       }
 
       if (syncDataEquals(currentSyncData(), cloudData)) {
         sync.applySyncCode(code)
+        _updateSyncUrl(code)
         await _applyWithGuard(cloudData)
         return
       }
@@ -913,7 +939,9 @@ createApp({
     async function resolveConflict(choice) {
       if (!conflictDialog.value.show) return
       const { code, cloudData } = conflictDialog.value
-      sync.applySyncCode(code || sync.syncCode.value)
+      const resolvedCode = code || sync.syncCode.value
+      sync.applySyncCode(resolvedCode)
+      _updateSyncUrl(resolvedCode)
       conflictDialog.value = { show: false, code: '', cloudData: null, cloudTime: null, localTime: null }
       if (choice === 'cloud') {
         saveBackup(currentSyncData(), 'local')
@@ -975,7 +1003,7 @@ createApp({
       alchemy, saveAlchemySettings,
       heartFactory,
       schedule,
-      sync, onSetSyncCode,
+      sync, onSetSyncCode, copySyncLink, clearSyncCodeAndUrl,
       conflictDialog, resolveConflict, formatSyncTime,
       syncBackup, restoreBackup, clearBackup,
       schedLoginName, schedLoginPin, schedRecurringMode, schedNewMemberName,
