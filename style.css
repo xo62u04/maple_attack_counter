@@ -2735,3 +2735,174 @@ body {
   cursor: pointer;
   accent-color: var(--accent);
 }
+
+/* ══════════════════════════════════
+   排程系統
+══════════════════════════════════ */
+
+.schedule-tab {
+  padding: 16px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* 登入列 */
+.sched-login-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px; background: var(--bg2); border-radius: 8px; margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.sched-pin-input { width: 100px; }
+.sched-user-label { font-weight: 600; color: var(--text); }
+.sched-admin-badge {
+  background: #7c5cfc; color: #fff;
+  font-size: 11px; padding: 2px 7px; border-radius: 99px;
+}
+.sched-error { color: var(--danger); font-size: 13px; }
+
+/* 子區塊 */
+.sched-subsection {
+  background: var(--bg2); border-radius: 10px;
+  padding: 14px; margin-bottom: 14px;
+}
+.sched-subsection h3 { margin: 0 0 10px; font-size: 15px; }
+
+/* 週 Tab */
+.sched-week-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.sched-week-tabs .btn.active { background: var(--accent); color: #000; }
+.sched-auto-btn { margin-left: auto; }
+
+/* ── 可用格子表格 ── */
+.sched-avail-grid-wrap { overflow-x: auto; }
+.sched-avail-grid {
+  display: grid;
+  grid-template-columns: 28px repeat(24, 26px);
+  gap: 2px;
+  min-width: max-content;
+}
+.sched-grid-corner { }
+.sched-grid-hour {
+  font-size: 10px; color: var(--text-dim);
+  text-align: center; line-height: 20px;
+}
+.sched-grid-day {
+  font-size: 11px; color: var(--text-dim);
+  display: flex; align-items: center; justify-content: center;
+}
+.sched-grid-cell {
+  width: 26px; height: 22px;
+  border-radius: 3px; cursor: pointer;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.sched-grid-cell.recurring { background: #b91c1c; border-color: #ef4444; }
+.sched-grid-cell.weekly    { background: #c2410c; border-color: #fb923c; }
+.sched-grid-cell.avail:hover { background: var(--accent-dim); }
+
+/* 圖例 */
+.sched-avail-legend {
+  display: flex; gap: 12px; margin-top: 8px; font-size: 12px; flex-wrap: wrap;
+}
+.sched-legend-recurring::before { content: ''; display: inline-block; width: 12px; height: 12px; background: #b91c1c; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+.sched-legend-weekly::before    { content: ''; display: inline-block; width: 12px; height: 12px; background: #c2410c; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+.sched-legend-avail::before     { content: ''; display: inline-block; width: 12px; height: 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+.sched-avail-mode { margin-top: 8px; font-size: 13px; }
+
+/* ── BOSS 設定 ── */
+.sched-boss-card {
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px; margin-bottom: 10px;
+}
+.sched-boss-header {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;
+}
+.sched-boss-name { font-weight: 700; font-size: 15px; }
+.sched-boss-level { font-size: 12px; color: var(--text-dim); }
+.sched-party-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 6px 0; border-top: 1px solid var(--border);
+}
+.sched-party-members { display: flex; flex-wrap: wrap; gap: 4px; }
+.sched-member-chip {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 99px; padding: 2px 8px; font-size: 12px;
+  display: flex; align-items: center; gap: 4px;
+}
+.sched-chip-remove { cursor: pointer; color: var(--danger); font-weight: 700; }
+.sched-input-name  { width: 100px; }
+.sched-input-label { width: 60px; }
+.sched-input-num   { width: 55px; }
+.sched-party-label { font-weight: 600; min-width: 40px; }
+.sched-party-member-list { color: var(--text-dim); font-size: 13px; }
+.sched-party-runs  { font-size: 13px; }
+
+/* ── 成員管理 ── */
+.sched-member-mgmt-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+}
+.sched-member-name { font-weight: 600; min-width: 60px; }
+.sched-member-chars { font-size: 12px; color: var(--text-dim); }
+.sched-add-member-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+/* ── 排程列表 ── */
+.sched-boss-block  { margin-bottom: 12px; }
+.sched-party-block { margin-bottom: 8px; }
+.sched-party-block-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+}
+.sched-boss-chip {
+  background: #3b2f7a; color: #c4b5fd;
+  font-size: 12px; padding: 2px 8px; border-radius: 99px; font-weight: 600;
+}
+.sched-party-chip {
+  background: var(--bg3); font-size: 12px; padding: 2px 8px; border-radius: 99px;
+}
+.sched-runs-left { font-size: 12px; color: var(--text-dim); margin-left: auto; }
+
+.sched-run-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 6px 8px; border-radius: 6px; margin-bottom: 4px;
+  background: var(--bg3); border: 1px solid var(--border);
+}
+.sched-run-row.confirmed { border-color: #22c55e; }
+.sched-run-row.done      { border-color: #6b7280; opacity: 0.7; }
+.sched-run-row.unschedulable { border-color: #f97316; }
+
+.sched-run-time   { font-weight: 700; min-width: 70px; font-size: 14px; }
+.sched-run-members { font-size: 13px; color: var(--text-dim); flex: 1; }
+.sched-unschedulable { color: #f97316; }
+
+.sched-run-status-badge {
+  font-size: 11px; padding: 2px 6px; border-radius: 99px;
+}
+.badge-auto         { background: var(--bg2); color: var(--text-dim); }
+.badge-manual       { background: #1e3a5f; color: #93c5fd; }
+.badge-confirmed    { background: #14532d; color: #86efac; }
+.badge-done         { background: #1f2937; color: #9ca3af; }
+.badge-unschedulable { background: #431407; color: #fdba74; }
+
+.sched-done-btn { background: #14532d !important; }
+.sched-warn-banner {
+  background: #431407; color: #fdba74;
+  padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; font-size: 13px;
+}
+
+/* ── Dialog ── */
+.sched-dialog-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center; z-index: 1000;
+}
+.sched-dialog {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px; min-width: 260px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.sched-dialog h4 { margin: 0; }
+.sched-dialog label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.sched-dialog-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* Shared selects */
+.sched-select    { padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: var(--text); }
+.sched-select-sm { padding: 3px 6px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg3); color: var(--text); font-size: 13px; }
