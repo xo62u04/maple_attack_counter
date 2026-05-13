@@ -2132,17 +2132,20 @@
         <button v-if="schedule.isAdmin" class="btn" @click="schedule.addScheduleBoss()">＋ 新增 BOSS</button>
       </div>
 
-      <!-- 管理員：成員管理 -->
-      <div v-if="schedule.isAdmin" class="sched-subsection">
+      <!-- 排程成員管理（管理員 或 尚無成員時開放，讓第一位成員能初始化系統）-->
+      <div v-if="schedule.isAdmin || schedule.scheduleMembers.length === 0" class="sched-subsection">
         <h3>👥 排程成員管理</h3>
+        <p v-if="schedule.scheduleMembers.length === 0" class="sched-bootstrap-hint">
+          尚無成員，請先新增第一位成員（將自動成為管理員）。
+        </p>
         <div v-for="m in schedule.scheduleMembers" :key="m.name" class="sched-member-mgmt-row">
           <span class="sched-member-name">{{ m.name }}</span>
           <span v-if="m.isAdmin" class="sched-admin-badge">管理員</span>
           <span v-else class="sched-member-chars">
             角色：{{ m.characters.map(c => c.name + ' Lv' + c.level).join('、') || '（無）' }}
           </span>
-          <button v-if="!m.isAdmin" class="btn btn-sm" @click="schedule.setMemberAdmin(m.name, true)">設為管理員</button>
-          <button class="btn btn-delete btn-sm" @click="schedule.removeScheduleMember(m.name)">✕</button>
+          <button v-if="!m.isAdmin && schedule.isAdmin" class="btn btn-sm" @click="schedule.setMemberAdmin(m.name, true)">設為管理員</button>
+          <button v-if="schedule.isAdmin" class="btn btn-delete btn-sm" @click="schedule.removeScheduleMember(m.name)">✕</button>
         </div>
         <div class="sched-add-member-row">
           <select v-model="schedNewMemberName" class="sched-select">

@@ -2845,6 +2845,7 @@ body {
 .sched-member-name { font-weight: 600; min-width: 60px; }
 .sched-member-chars { font-size: 12px; color: var(--text-dim); }
 .sched-add-member-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.sched-bootstrap-hint { font-size: 13px; color: var(--text-dim); margin-bottom: 8px; }
 
 /* ── 排程列表 ── */
 .sched-boss-block  { margin-bottom: 12px; }
