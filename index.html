@@ -2207,6 +2207,13 @@
         </div>
 
         <div v-if="schedule.currentWeekSchedule">
+          <div class="sched-week-date-strip">
+            <span v-for="day in [1,2,3,4,5,6,0]" :key="day" class="sched-week-date-cell">
+              <span class="sched-wdc-day">{{ ['日','一','二','三','四','五','六'][day] }}</span>
+              <span class="sched-wdc-date">{{ fmtDate(schedule.slotToDate(schedule.currentWeekSchedule.weekStart, day)) }}</span>
+            </span>
+          </div>
+
           <div v-if="schedule.currentWeekSchedule.runs.some(r => r.status === 'unschedulable')"
                class="sched-warn-banner">
             ⚠️ 部分場次無法自動排入，請手動處理
@@ -2232,11 +2239,10 @@
                 </template>
                 <template v-else>
                   <span class="sched-run-time">
-                    {{ ['日','一','二','三','四','五','六'][run.dayOfWeek] }}
+                    <span class="sched-run-dayname">{{ ['日','一','二','三','四','五','六'][run.dayOfWeek] }}</span>
+                    <span class="sched-run-date">{{ fmtDate(schedule.slotToDate(schedule.currentWeekSchedule.weekStart, run.dayOfWeek)) }}</span>
                     {{ String(run.hour).padStart(2,'0') }}:00
-                    <span class="sched-run-endtime">
-                      ~ {{ String(Math.floor((run.hour*60+(boss.durationMin||30))/60)%24).padStart(2,'0') }}:{{ String((run.hour*60+(boss.durationMin||30))%60).padStart(2,'0') }}
-                    </span>
+                    <span class="sched-run-endtime">~ {{ String(Math.floor((run.hour*60+(boss.durationMin||30))/60)%24).padStart(2,'0') }}:{{ String((run.hour*60+(boss.durationMin||30))%60).padStart(2,'0') }}</span>
                   </span>
                 </template>
                 <span class="sched-run-members">{{ (run.slots||[]).filter(s=>s.member).map(s=>s.member+(s.character?'（'+s.character+'）':'')).join('、') || (run.members||[]).join('、') }}</span>

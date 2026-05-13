@@ -1007,6 +1007,7 @@ createApp({
       conflictDialog, resolveConflict, formatSyncTime,
       syncBackup, restoreBackup, clearBackup,
       schedLoginName, schedLoginPin, schedRecurringMode, schedNewMemberName,
+      fmtDate: isoDate => parseInt(isoDate.slice(5, 7)) + '/' + parseInt(isoDate.slice(8, 10)),
       doSchedLogin, onCellMouseDown, onCellMouseEnter, onAddScheduleMember,
       editRunDialog, openEditRun, saveEditRun, onMarkDone, goToLootSession,
     }

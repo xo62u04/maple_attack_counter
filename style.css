@@ -2774,6 +2774,19 @@ body {
 .sched-week-tabs .btn.active { background: var(--accent); color: #000; }
 .sched-auto-btn { margin-left: auto; }
 
+/* 週日期一覽列 */
+.sched-week-date-strip {
+  display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap;
+}
+.sched-week-date-cell {
+  flex: 1; min-width: 44px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: 6px; padding: 5px 4px;
+}
+.sched-wdc-day  { font-size: 12px; font-weight: 600; color: var(--text-dim); }
+.sched-wdc-date { font-size: 14px; font-weight: 700; }
+
 /* ── 可用格子表格 ── */
 .sched-avail-grid-wrap { overflow-x: auto; }
 .sched-avail-grid {
@@ -2908,7 +2921,9 @@ body {
 .sched-run-row.done      { border-color: #6b7280; opacity: 0.7; }
 .sched-run-row.unschedulable { border-color: #f97316; }
 
-.sched-run-time   { font-weight: 700; min-width: 70px; font-size: 14px; }
+.sched-run-time   { display: flex; align-items: baseline; gap: 4px; font-size: 14px; white-space: nowrap; }
+.sched-run-dayname { font-weight: 700; }
+.sched-run-date   { font-size: 12px; color: var(--accent); font-weight: 600; }
 .sched-run-members { font-size: 13px; color: var(--text-dim); flex: 1; }
 .sched-unschedulable { color: #f97316; }
 
