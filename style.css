@@ -2749,7 +2749,7 @@ body {
 /* 登入列 */
 .sched-login-bar {
   display: flex; align-items: center; gap: 8px;
-  padding: 10px; background: var(--bg2); border-radius: 8px; margin-bottom: 12px;
+  padding: 10px; background: var(--bg-panel); border-radius: 8px; margin-bottom: 12px;
   flex-wrap: wrap;
 }
 .sched-pin-input { width: 100px; }
@@ -2762,7 +2762,7 @@ body {
 
 /* 子區塊 */
 .sched-subsection {
-  background: var(--bg2); border-radius: 10px;
+  background: var(--bg-panel); border-radius: 10px;
   padding: 14px; margin-bottom: 14px;
 }
 .sched-subsection h3 { margin: 0 0 10px; font-size: 15px; }
@@ -2792,7 +2792,7 @@ body {
 .sched-grid-cell {
   width: 26px; height: 22px;
   border-radius: 3px; cursor: pointer;
-  background: var(--bg3);
+  background: var(--bg-input);
   border: 1px solid var(--border);
   transition: background 0.1s;
 }
@@ -2806,7 +2806,7 @@ body {
 }
 .sched-legend-recurring::before { content: ''; display: inline-block; width: 12px; height: 12px; background: #b91c1c; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
 .sched-legend-weekly::before    { content: ''; display: inline-block; width: 12px; height: 12px; background: #c2410c; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
-.sched-legend-avail::before     { content: ''; display: inline-block; width: 12px; height: 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+.sched-legend-avail::before     { content: ''; display: inline-block; width: 12px; height: 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 2px; margin-right: 4px; vertical-align: middle; }
 .sched-avail-mode { margin-top: 8px; font-size: 13px; }
 
 /* ── BOSS 設定 ── */
@@ -2825,7 +2825,7 @@ body {
 }
 .sched-party-members { display: flex; flex-wrap: wrap; gap: 4px; }
 .sched-member-chip {
-  background: var(--bg3); border: 1px solid var(--border);
+  background: var(--bg-input); border: 1px solid var(--border);
   border-radius: 99px; padding: 2px 8px; font-size: 12px;
   display: flex; align-items: center; gap: 4px;
 }
@@ -2857,14 +2857,14 @@ body {
   font-size: 12px; padding: 2px 8px; border-radius: 99px; font-weight: 600;
 }
 .sched-party-chip {
-  background: var(--bg3); font-size: 12px; padding: 2px 8px; border-radius: 99px;
+  background: var(--bg-input); font-size: 12px; padding: 2px 8px; border-radius: 99px;
 }
 .sched-runs-left { font-size: 12px; color: var(--text-dim); margin-left: auto; }
 
 .sched-run-row {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   padding: 6px 8px; border-radius: 6px; margin-bottom: 4px;
-  background: var(--bg3); border: 1px solid var(--border);
+  background: var(--bg-input); border: 1px solid var(--border);
 }
 .sched-run-row.confirmed { border-color: #22c55e; }
 .sched-run-row.done      { border-color: #6b7280; opacity: 0.7; }
@@ -2877,7 +2877,7 @@ body {
 .sched-run-status-badge {
   font-size: 11px; padding: 2px 6px; border-radius: 99px;
 }
-.badge-auto         { background: var(--bg2); color: var(--text-dim); }
+.badge-auto         { background: var(--bg-panel); color: var(--text-dim); }
 .badge-manual       { background: #1e3a5f; color: #93c5fd; }
 .badge-confirmed    { background: #14532d; color: #86efac; }
 .badge-done         { background: #1f2937; color: #9ca3af; }
@@ -2895,7 +2895,7 @@ body {
   display: flex; align-items: center; justify-content: center; z-index: 1000;
 }
 .sched-dialog {
-  background: var(--bg2); border: 1px solid var(--border);
+  background: var(--bg-panel); border: 1px solid var(--border);
   border-radius: 12px; padding: 20px; min-width: 260px;
   display: flex; flex-direction: column; gap: 12px;
 }
@@ -2904,5 +2904,5 @@ body {
 .sched-dialog-actions { display: flex; gap: 8px; justify-content: flex-end; }
 
 /* Shared selects */
-.sched-select    { padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: var(--text); }
-.sched-select-sm { padding: 3px 6px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg3); color: var(--text); font-size: 13px; }
+.sched-select    { padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text); }
+.sched-select-sm { padding: 3px 6px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text); font-size: 13px; }
