@@ -89,12 +89,12 @@ function useSchedule() {
       if (!member.pinHash) {
         member.pinHash = h
         currentUser.value = { name }
-        localStorage.setItem(SCHEDULE_IDENTITY_KEY, JSON.stringify({ name, pinHash: h }))
+        sessionStorage.setItem(SCHEDULE_IDENTITY_KEY, JSON.stringify({ name, pinHash: h }))
         return true
       }
       if (member.pinHash !== h) { loginError.value = 'PIN 錯誤'; return false }
       currentUser.value = { name }
-      localStorage.setItem(SCHEDULE_IDENTITY_KEY, JSON.stringify({ name, pinHash: h }))
+      sessionStorage.setItem(SCHEDULE_IDENTITY_KEY, JSON.stringify({ name, pinHash: h }))
       return true
     } finally {
       loginLoading.value = false
@@ -103,12 +103,12 @@ function useSchedule() {
 
   function logout() {
     currentUser.value = null
-    localStorage.removeItem(SCHEDULE_IDENTITY_KEY)
+    sessionStorage.removeItem(SCHEDULE_IDENTITY_KEY)
   }
 
   function loadIdentity() {
     try {
-      const raw = localStorage.getItem(SCHEDULE_IDENTITY_KEY)
+      const raw = sessionStorage.getItem(SCHEDULE_IDENTITY_KEY)
       if (!raw) return
       const saved = JSON.parse(raw)
       const member = scheduleMembers.value.find(m => m.name === saved.name)
