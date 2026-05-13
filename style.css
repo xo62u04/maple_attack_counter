@@ -2822,6 +2822,10 @@ body {
 }
 .sched-boss-name { font-weight: 700; font-size: 15px; }
 .sched-boss-level { font-size: 12px; color: var(--text-dim); }
+.sched-boss-badge { font-size: 12px; color: var(--text-dim); background: var(--bg-input); border: 1px solid var(--border); border-radius: 99px; padding: 1px 8px; }
+.sched-boss-duration { color: #7ec8a0; border-color: #2a5a3a; }
+.sched-boss-meta-label { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--text-dim); }
+.sched-run-endtime { font-size: 12px; color: var(--text-dim); margin-left: 2px; }
 
 /* Party card */
 .sched-party-card {

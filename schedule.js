@@ -54,7 +54,7 @@ function useSchedule() {
 
   // ── scheduleBosses CRUD ──
   function addScheduleBoss() {
-    scheduleBosses.value.push({ id: nextId(), name: '新王', minLevel: 200, parties: [] })
+    scheduleBosses.value.push({ id: nextId(), name: '新王', minLevel: 200, durationMin: 30, parties: [] })
   }
   function removeScheduleBoss(id) {
     scheduleBosses.value = scheduleBosses.value.filter(b => b.id !== id)
@@ -383,10 +383,12 @@ function useSchedule() {
     if (!s) return
     if (s.scheduleMembers)  scheduleMembers.value  = s.scheduleMembers
     if (s.scheduleBosses) {
-      for (const boss of s.scheduleBosses)
+      for (const boss of s.scheduleBosses) {
+        if (boss.durationMin == null) boss.durationMin = 30
         for (const party of boss.parties)
           if (!party.slots)
             party.slots = (party.members || []).map(m => ({ member: m, character: '' }))
+      }
       scheduleBosses.value = s.scheduleBosses
     }
     if (s.weeklySchedules)  weeklySchedules.value  = s.weeklySchedules
