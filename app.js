@@ -340,6 +340,76 @@ createApp({
     const heartFactory = Vue.reactive(useHeartFactory())
     const schedule = Vue.reactive(useSchedule())
 
+    // ── 排程 UI 狀態 ──
+    const schedLoginName     = ref('')
+    const schedLoginPin      = ref('')
+    const schedRecurringMode = ref(false)
+    const schedNewMemberName = ref('')
+
+    async function doSchedLogin() {
+      if (!schedLoginName.value || !schedLoginPin.value) return
+      await schedule.login(schedLoginName.value, schedLoginPin.value)
+      if (schedule.isLoggedIn) schedLoginPin.value = ''
+    }
+
+    function onCellClick(dayOfWeek, hour) {
+      if (!schedule.isLoggedIn || !schedule.currentWeekSchedule) return
+      const name = schedule.currentUser.name
+      const ws   = schedule.currentWeekSchedule.weekStart
+      if (schedRecurringMode.value) {
+        schedule.toggleRecurring(name, dayOfWeek, hour)
+      } else {
+        schedule.toggleWeeklyUnavail(ws, name, dayOfWeek, hour)
+      }
+    }
+
+    function onAddScheduleMember() {
+      if (!schedNewMemberName.value) return
+      schedule.addScheduleMember(schedNewMemberName.value)
+      schedNewMemberName.value = ''
+    }
+
+    const editRunDialog = ref({ show: false, weekStart: '', runId: null, dayOfWeek: 1, hour: 20 })
+
+    function openEditRun(run) {
+      editRunDialog.value = {
+        show: true,
+        weekStart: schedule.currentWeekSchedule.weekStart,
+        runId: run.id,
+        dayOfWeek: run.dayOfWeek ?? 1,
+        hour: run.hour ?? 20,
+      }
+    }
+
+    function saveEditRun() {
+      schedule.updateRunTime(
+        editRunDialog.value.weekStart,
+        editRunDialog.value.runId,
+        editRunDialog.value.dayOfWeek,
+        editRunDialog.value.hour
+      )
+      editRunDialog.value.show = false
+    }
+
+    function onMarkDone(run) {
+      const week = schedule.currentWeekSchedule
+      if (!week) return
+      const boss = schedule.scheduleBosses.find(b => b.id === run.bossId)
+      const date = schedule.slotToDate(week.weekStart, run.dayOfWeek)
+      const sessionId = loot.createSessionFromRun({
+        bossName: boss?.name ?? '未知王',
+        members:  run.members,
+        date,
+      })
+      schedule.markRunDone(week.weekStart, run.id, sessionId)
+      activeTab.value = 'loot'
+    }
+
+    function goToLootSession(sessionId) {
+      loot.switchSession(sessionId)
+      activeTab.value = 'loot'
+    }
+
     // 職業變更時：更新武器係數；只在 Tab2 技能清單為空時才自動載入（避免覆蓋已設定的技能）
     watch(selectedJobId, (id) => {
       const job = (jobs.value || []).find(j => j.id === id)
@@ -885,6 +955,9 @@ createApp({
       sync, onSetSyncCode,
       conflictDialog, resolveConflict, formatSyncTime,
       syncBackup, restoreBackup, clearBackup,
+      schedLoginName, schedLoginPin, schedRecurringMode, schedNewMemberName,
+      doSchedLogin, onCellClick, onAddScheduleMember,
+      editRunDialog, openEditRun, saveEditRun, onMarkDone, goToLootSession,
     }
   }
 }).mount('#app')
