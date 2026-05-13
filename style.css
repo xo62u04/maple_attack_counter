@@ -2815,48 +2815,70 @@ body {
 /* ── BOSS 設定 ── */
 .sched-boss-card {
   border: 1px solid var(--border); border-radius: 8px;
-  padding: 10px; margin-bottom: 10px;
+  padding: 12px 14px; margin-bottom: 12px;
 }
 .sched-boss-header {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;
 }
 .sched-boss-name { font-weight: 700; font-size: 15px; }
 .sched-boss-level { font-size: 12px; color: var(--text-dim); }
-.sched-party-row {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  padding: 6px 0; border-top: 1px solid var(--border);
+
+/* Party card */
+.sched-party-card {
+  background: color-mix(in srgb, var(--bg-input) 60%, transparent);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; margin-bottom: 8px;
 }
-.sched-party-members { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
-.sched-slot-chip {
-  display: flex; align-items: center; gap: 4px;
-  background: var(--bg-input); border: 1px solid var(--border);
-  border-radius: 6px; padding: 3px 6px;
+.sched-party-card-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-bottom: 8px;
 }
-.sched-member-chip {
-  background: var(--bg-input); border: 1px solid var(--border);
-  border-radius: 99px; padding: 2px 8px; font-size: 12px;
-  display: flex; align-items: center; gap: 4px;
+.sched-party-label-input { width: 68px; font-weight: 600; font-size: 14px; }
+.sched-party-meta { display: flex; align-items: center; gap: 6px; }
+.sched-meta-text { font-size: 13px; color: var(--text-dim); }
+
+/* Slot rows */
+.sched-party-slots { display: flex; flex-direction: column; gap: 6px; }
+.sched-slot-row { display: flex; align-items: center; gap: 6px; }
+.sched-slot-member { width: 90px; flex-shrink: 0; }
+.sched-slot-char   { flex: 1; min-width: 80px; max-width: 180px; }
+
+/* Shared delete icon button */
+.sched-icon-del {
+  background: none; border: none; cursor: pointer;
+  color: var(--danger); font-size: 14px; font-weight: 700;
+  padding: 2px 6px; border-radius: 4px; line-height: 1;
 }
-.sched-chip-remove { cursor: pointer; color: var(--danger); font-weight: 700; }
-.sched-input-name  { width: 100px; }
-.sched-input-label { width: 60px; }
-.sched-input-num   { width: 55px; }
-.sched-party-label { font-weight: 600; min-width: 40px; }
-.sched-party-member-list { color: var(--text-dim); font-size: 13px; }
-.sched-party-runs  { font-size: 13px; }
+.sched-icon-del:hover { background: color-mix(in srgb, var(--danger) 15%, transparent); }
+
+.sched-input-name { width: 100px; }
+.sched-input-num  { width: 52px; }
+
+.sched-party-label { font-weight: 600; font-size: 14px; }
+.sched-party-runs  { font-size: 13px; color: var(--text-dim); }
+.sched-party-member-list { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
 
 /* ── 成員管理 ── */
 .sched-member-mgmt-row {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   padding: 6px 0; border-bottom: 1px solid var(--border);
 }
-.sched-member-name { font-weight: 600; min-width: 60px; }
+.sched-member-name  { font-weight: 600; min-width: 60px; }
 .sched-member-chars { font-size: 12px; color: var(--text-dim); }
 .sched-add-member-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
 .sched-bootstrap-hint { font-size: 13px; color: var(--text-dim); margin-bottom: 8px; }
-.sched-char-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
-.sched-char-level-label { display: flex; align-items: center; gap: 4px; font-size: 13px; }
-.sched-char-empty { font-size: 13px; color: var(--text-dim); padding: 4px 0; }
+
+/* Character list */
+.sched-char-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.sched-char-card {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px 10px;
+}
+.sched-char-name-input { flex: 1; min-width: 80px; max-width: 150px; }
+.sched-char-lv-badge { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--text-dim); flex-shrink: 0; }
+.sched-char-lv-input { width: 52px; }
+.sched-char-empty { font-size: 13px; color: var(--text-dim); padding: 2px 0; }
 
 /* ── 排程列表 ── */
 .sched-boss-block  { margin-bottom: 12px; }
