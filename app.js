@@ -369,6 +369,9 @@ createApp({
         ? schedEditingMember.value
         : schedule.currentUser?.name ?? ''
     )
+    const schedTargetMemberObj = Vue.computed(() =>
+      schedule.scheduleMembers.find(m => m.name === schedTargetMember.value) ?? null
+    )
 
     async function doSchedLogin() {
       if (!schedLoginName.value || !schedLoginPin.value) return
@@ -1024,7 +1027,7 @@ createApp({
       conflictDialog, resolveConflict, formatSyncTime,
       syncBackup, restoreBackup, clearBackup,
       schedLoginName, schedLoginPin, schedRecurringMode, schedNewMemberName,
-      schedEditingMember, schedTargetMember,
+      schedEditingMember, schedTargetMember, schedTargetMemberObj,
       fmtDate: isoDate => parseInt(isoDate.slice(5, 7)) + '/' + parseInt(isoDate.slice(8, 10)),
       doSchedLogin, onCellMouseDown, onCellMouseEnter, onAddScheduleMember,
       editRunDialog, openEditRun, saveEditRun, onMarkDone, goToLootSession,

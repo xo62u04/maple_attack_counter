@@ -2096,20 +2096,20 @@
         </div>
       </div>
 
-      <!-- ②-b 我的角色（需登入）-->
-      <div v-if="schedule.isLoggedIn && schedule.currentMember" class="sched-subsection">
-        <h3>🎮 我的角色</h3>
+      <!-- ②-b 角色管理（需登入；管理員可編輯任意成員）-->
+      <div v-if="schedule.isLoggedIn && schedTargetMemberObj" class="sched-subsection">
+        <h3>🎮 {{ schedTargetMember === schedule.currentUser.name ? '我的角色' : schedTargetMember + ' 的角色' }}</h3>
         <div class="sched-char-list">
-          <div v-for="c in schedule.currentMember.characters" :key="c.id" class="sched-char-card">
+          <div v-for="c in schedTargetMemberObj.characters" :key="c.id" class="sched-char-card">
             <input v-model="c.name" class="sched-char-name-input" placeholder="角色名稱" />
             <span class="sched-char-lv-badge">Lv
               <input type="number" v-model.number="c.level" class="sched-char-lv-input" min="1" max="300" />
             </span>
-            <button class="sched-icon-del" @click="schedule.removeCharacter(schedule.currentUser.name, c.id)">✕</button>
+            <button class="sched-icon-del" @click="schedule.removeCharacter(schedTargetMember, c.id)">✕</button>
           </div>
-          <div v-if="schedule.currentMember.characters.length === 0" class="sched-char-empty">尚未新增角色</div>
+          <div v-if="schedTargetMemberObj.characters.length === 0" class="sched-char-empty">尚未新增角色</div>
         </div>
-        <button class="btn btn-sm" @click="schedule.addCharacter(schedule.currentUser.name)">＋ 新增角色</button>
+        <button class="btn btn-sm" @click="schedule.addCharacter(schedTargetMember)">＋ 新增角色</button>
       </div>
 
       <!-- ③ BOSS 設定（管理員才能編輯）-->
