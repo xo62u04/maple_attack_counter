@@ -1036,7 +1036,7 @@ createApp({
       fmt, fmtFinal, fmtM, fmtDps, dpsFormat, DPS_FORMAT_LABELS, cycleDpsFormat,
       shareUrl,
       equip,
-      slotSummary,
+      slotStatParts,
       exportToTab1,
       addCustomSkill,
       removeSkill,
