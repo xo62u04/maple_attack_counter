@@ -24,6 +24,7 @@ const SLOT_DEFS = [
   { id: 'ring2',     name: '戒指 2',     group: 'accessory' },
   { id: 'ring3',     name: '戒指 3',     group: 'accessory' },
   { id: 'ring4',     name: '戒指 4',     group: 'accessory' },
+  { id: 'badge',     name: '徽章',       group: 'accessory' },
   { id: 'energy',    name: '能源',       group: 'special' },
   { id: 'pet1',      name: '寵物裝備 1', group: 'special' },
   { id: 'pet2',      name: '寵物裝備 2', group: 'special' },
@@ -58,6 +59,11 @@ function makeSlot(def) {
     base: { mainStat: 0, subStat: 0, atk: 0, allStat: 0 },
     scroll: { count: 0, perScroll: 0, stat: def.group === 'weapon' ? 'atk' : 'mainStat' },
     potential: [
+      { type: 'none', value: 0 },
+      { type: 'none', value: 0 },
+      { type: 'none', value: 0 },
+    ],
+    additionalPotential: [
       { type: 'none', value: 0 },
       { type: 'none', value: 0 },
       { type: 'none', value: 0 },
@@ -142,7 +148,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
       const scrollVal = (Number(slot.scroll.count) || 0) * (Number(slot.scroll.perScroll) || 0)
       if (slot.scroll.stat === 'atk') flatAtk += scrollVal
       else flatMain += scrollVal
-      for (const pot of slot.potential) {
+      for (const pot of [...(slot.potential || []), ...(slot.additionalPotential || [])]) {
         const v = Number(pot.value) || 0
         if (v === 0 || pot.type === 'none') continue
         switch (pot.type) {
@@ -364,7 +370,18 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     if (!state) return
     if (state.baseStats)     Object.assign(baseStats.value,     state.baseStats)
     if (state.equipSettings) Object.assign(equipSettings.value, state.equipSettings)
-    if (state.slots)         slots.value       = state.slots
+    if (state.slots) {
+      for (const slot of Object.values(state.slots)) {
+        if (!slot.additionalPotential) {
+          slot.additionalPotential = [
+            { type: 'none', value: 0 },
+            { type: 'none', value: 0 },
+            { type: 'none', value: 0 },
+          ]
+        }
+      }
+      slots.value = state.slots
+    }
     if (state.jobSkills)     jobSkills.value   = state.jobSkills
     if (state.activeBuffs)   activeBuffs.value = state.activeBuffs
     if (state.useEquipSlots !== undefined) useEquipSlots.value = state.useEquipSlots

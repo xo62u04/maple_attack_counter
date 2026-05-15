@@ -489,7 +489,8 @@ createApp({
       const totalMain = (Number(slot.base.mainStat)  || 0) + (slot.scroll.stat === 'mainStat' ? scrollVal : 0)
       if (totalAtk)  parts.push(`A+${totalAtk}`)
       if (totalMain) parts.push(`主+${totalMain}`)
-      const pctLines = slot.potential.filter(p => p.type !== 'none' && (Number(p.value) || 0) > 0)
+      const allPotLines = [...(slot.potential || []), ...(slot.additionalPotential || [])]
+      const pctLines = allPotLines.filter(p => p.type !== 'none' && (Number(p.value) || 0) > 0)
       if (pctLines.length) parts.push(`潛×${pctLines.length}`)
       return parts.join(' ')
     }

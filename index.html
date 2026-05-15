@@ -701,6 +701,17 @@
               <input type="number" v-model.number="pot.value" min="0" class="potential-val" :disabled="pot.type === 'none'" placeholder="值" />
             </div>
           </div>
+
+          <!-- 附加潛能 -->
+          <div class="detail-section">
+            <div class="detail-section-title">💠 附加潛能（最多 3 行）</div>
+            <div v-for="(pot, i) in equip.selectedSlot.value.additionalPotential" :key="'ap'+i" class="potential-row">
+              <select v-model="pot.type" class="potential-type-sel">
+                <option v-for="t in equip.POTENTIAL_TYPES" :key="t.value" :value="t.value">{{ t.label }}</option>
+              </select>
+              <input type="number" v-model.number="pot.value" min="0" class="potential-val" :disabled="pot.type === 'none'" placeholder="值" />
+            </div>
+          </div>
         </div>
 
         <!-- 底部三格：統計 + BUFF + 攻屬比 & DPS -->
