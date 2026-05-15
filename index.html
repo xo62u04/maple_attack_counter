@@ -545,8 +545,14 @@
               :class="{ active: equip.selectedSlotId.value === def.id }"
               @click="equip.selectedSlotId.value = def.id"
             >
-              <span>{{ def.name }}</span>
-              <span class="slot-summary">{{ slotSummary(equip.slots.value[def.id]) }}</span>
+              <span class="slot-name">{{ def.name }}</span>
+              <div class="slot-stat-chips">
+                <span
+                  v-for="(part, pi) in slotStatParts(equip.slots.value[def.id])"
+                  :key="pi"
+                  :class="['slot-chip', part.cls]"
+                >{{ part.text }}</span>
+              </div>
             </div>
           </template>
         </div>

@@ -481,18 +481,38 @@ createApp({
     }
 
     // ── 裝備槽摘要（左欄清單顯示用）──
-    function slotSummary(slot) {
-      if (!slot) return ''
-      const parts = []
+    function slotStatParts(slot) {
+      if (!slot) return []
       const scrollVal = (Number(slot.scroll.count) || 0) * (Number(slot.scroll.perScroll) || 0)
-      const totalAtk  = (Number(slot.base.atk)      || 0) + (slot.scroll.stat === 'atk'      ? scrollVal : 0)
-      const totalMain = (Number(slot.base.mainStat)  || 0) + (slot.scroll.stat === 'mainStat' ? scrollVal : 0)
-      if (totalAtk)  parts.push(`A+${totalAtk}`)
-      if (totalMain) parts.push(`主+${totalMain}`)
-      const allPotLines = [...(slot.potential || []), ...(slot.additionalPotential || [])]
-      const pctLines = allPotLines.filter(p => p.type !== 'none' && (Number(p.value) || 0) > 0)
-      if (pctLines.length) parts.push(`潛×${pctLines.length}`)
-      return parts.join(' ')
+      let flatMain = (Number(slot.base.mainStat) || 0) + (Number(slot.base.allStat) || 0)
+      let flatSub  = (Number(slot.base.subStat)  || 0) + (Number(slot.base.allStat) || 0)
+      let flatAtk  = Number(slot.base.atk) || 0
+      if (slot.scroll.stat === 'atk') flatAtk  += scrollVal
+      else                            flatMain += scrollVal
+      let pctMain = 0, pctSub = 0, pctAtk = 0
+      const allLines = [...(slot.potential || []), ...(slot.additionalPotential || []), ...(slot.setEffect || [])]
+      for (const p of allLines) {
+        const v = Number(p.value) || 0
+        if (!v || p.type === 'none') continue
+        switch (p.type) {
+          case 'mainStatFlat': flatMain += v; break
+          case 'subStatFlat':  flatSub  += v; break
+          case 'allStatFlat':  flatMain += v; flatSub += v; break
+          case 'atkFlat':      flatAtk  += v; break
+          case 'mainStatPct':  pctMain  += v; break
+          case 'subStatPct':   pctSub   += v; break
+          case 'allStatPct':   pctMain  += v; pctSub += v; break
+          case 'atkPct':       pctAtk   += v; break
+        }
+      }
+      const parts = []
+      if (flatMain > 0) parts.push({ text: `主+${flatMain}`,     cls: 'ss-main' })
+      if (flatSub  > 0) parts.push({ text: `副+${flatSub}`,      cls: 'ss-sub'  })
+      if (flatAtk  > 0) parts.push({ text: `A+${flatAtk}`,       cls: 'ss-atk'  })
+      if (pctMain  > 0) parts.push({ text: `%主${pctMain}`,      cls: 'ss-main' })
+      if (pctSub   > 0) parts.push({ text: `%副${pctSub}`,       cls: 'ss-sub'  })
+      if (pctAtk   > 0) parts.push({ text: `%A${pctAtk}`,        cls: 'ss-atk'  })
+      return parts
     }
 
     // ── 匯出到 Tab 1 ──
