@@ -688,6 +688,31 @@ body {
   margin-bottom: 5px;
 }
 
+/* ── 套效 新增/刪除 ── */
+.set-effect-add-btn {
+  background: #1a3a2a;
+  color: var(--success);
+  border: 1px solid #2a5a3a;
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 4px;
+  white-space: nowrap;
+}
+.set-effect-add-btn:hover { background: #2a4a3a; }
+.set-effect-remove-btn {
+  background: transparent;
+  color: var(--danger, #e05);
+  border: 1px solid #5a2a2a;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.set-effect-remove-btn:hover { background: #3a1a1a; }
+
 /* ── 職業技能 新增/刪除 ── */
 .btn-add-skill {
   background: #1a3a2a;

@@ -712,6 +712,19 @@
               <input type="number" v-model.number="pot.value" min="0" class="potential-val" :disabled="pot.type === 'none'" placeholder="值" />
             </div>
           </div>
+
+          <!-- 套效（僅武器欄位） -->
+          <div class="detail-section" v-if="equip.selectedSlot.value.group === 'weapon'">
+            <div class="detail-section-title">🔗 套效</div>
+            <div v-for="(line, i) in equip.selectedSlot.value.setEffect" :key="'se'+i" class="potential-row">
+              <select v-model="line.type" class="potential-type-sel">
+                <option v-for="t in equip.SET_EFFECT_TYPES" :key="t.value" :value="t.value">{{ t.label }}</option>
+              </select>
+              <input type="number" v-model.number="line.value" min="0" class="potential-val" placeholder="值" />
+              <button class="set-effect-remove-btn" @click="equip.removeSetEffectLine(i)">✕</button>
+            </div>
+            <button class="set-effect-add-btn" @click="equip.addSetEffectLine()">＋ 新增詞條</button>
+          </div>
         </div>
 
         <!-- 底部三格：統計 + BUFF + 攻屬比 & DPS -->

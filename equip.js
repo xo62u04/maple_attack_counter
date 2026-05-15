@@ -31,6 +31,22 @@ const SLOT_DEFS = [
   { id: 'pet3',      name: '寵物裝備 3', group: 'special' },
 ]
 
+const SET_EFFECT_TYPES = [
+  { value: 'mainStatPct',  label: '%主屬性' },
+  { value: 'mainStatFlat', label: '主屬性+' },
+  { value: 'subStatPct',   label: '%副屬性' },
+  { value: 'subStatFlat',  label: '副屬性+' },
+  { value: 'allStatPct',   label: '%全屬性' },
+  { value: 'allStatFlat',  label: '全屬性+' },
+  { value: 'atkPct',       label: '%攻擊力' },
+  { value: 'atkFlat',      label: '攻擊力+' },
+  { value: 'critRate',     label: '爆擊率+%' },
+  { value: 'critDmg',      label: '爆擊傷害+%' },
+  { value: 'bossDmg',      label: 'BOSS傷害+%' },
+  { value: 'totalDmg',     label: '總傷害+%' },
+  { value: 'ignoreDef',    label: '無視防禦+%' },
+]
+
 const POTENTIAL_TYPES = [
   { value: 'none',         label: '(無)' },
   { value: 'mainStatPct',  label: '%主屬性' },
@@ -67,7 +83,8 @@ function makeSlot(def) {
       { type: 'none', value: 0 },
       { type: 'none', value: 0 },
       { type: 'none', value: 0 },
-    ]
+    ],
+    setEffect: []
   }
 }
 
@@ -148,7 +165,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
       const scrollVal = (Number(slot.scroll.count) || 0) * (Number(slot.scroll.perScroll) || 0)
       if (slot.scroll.stat === 'atk') flatAtk += scrollVal
       else flatMain += scrollVal
-      for (const pot of [...(slot.potential || []), ...(slot.additionalPotential || [])]) {
+      for (const pot of [...(slot.potential || []), ...(slot.additionalPotential || []), ...(slot.setEffect || [])]) {
         const v = Number(pot.value) || 0
         if (v === 0 || pot.type === 'none') continue
         switch (pot.type) {
@@ -379,6 +396,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
             { type: 'none', value: 0 },
           ]
         }
+        if (!slot.setEffect) slot.setEffect = []
       }
       slots.value = state.slots
     }
@@ -386,6 +404,13 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     if (state.activeBuffs)   activeBuffs.value = state.activeBuffs
     if (state.useEquipSlots !== undefined) useEquipSlots.value = state.useEquipSlots
     if (state.potions)       potions.value     = state.potions
+  }
+
+  function addSetEffectLine() {
+    selectedSlot.value.setEffect.push({ type: 'mainStatPct', value: 0 })
+  }
+  function removeSetEffectLine(idx) {
+    selectedSlot.value.setEffect.splice(idx, 1)
   }
 
   function initJobSkills(jobId) {
@@ -610,7 +635,8 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
   }
 
   return {
-    SLOT_DEFS, POTENTIAL_TYPES, makeSlot,
+    SLOT_DEFS, POTENTIAL_TYPES, SET_EFFECT_TYPES, makeSlot,
+    addSetEffectLine, removeSetEffectLine,
     baseStats, equipSettings, useEquipSlots,
     slots, selectedSlotId, selectedSlot,
     jobSkills, activeBuffs,
