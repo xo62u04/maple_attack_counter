@@ -506,12 +506,12 @@ createApp({
         }
       }
       const parts = []
-      if (flatMain > 0) parts.push({ text: `主+${flatMain}`,     cls: 'ss-main' })
-      if (flatSub  > 0) parts.push({ text: `副+${flatSub}`,      cls: 'ss-sub'  })
-      if (flatAtk  > 0) parts.push({ text: `A+${flatAtk}`,       cls: 'ss-atk'  })
-      if (pctMain  > 0) parts.push({ text: `%主${pctMain}`,      cls: 'ss-main' })
-      if (pctSub   > 0) parts.push({ text: `%副${pctSub}`,       cls: 'ss-sub'  })
-      if (pctAtk   > 0) parts.push({ text: `%A${pctAtk}`,        cls: 'ss-atk'  })
+      if (flatMain > 0) parts.push({ text: `主+${flatMain}`,      cls: 'ss-main' })
+      if (flatSub  > 0) parts.push({ text: `副+${flatSub}`,       cls: 'ss-sub'  })
+      if (flatAtk  > 0) parts.push({ text: `攻+${flatAtk}`,       cls: 'ss-atk'  })
+      if (pctMain  > 0) parts.push({ text: `${pctMain}%主`,       cls: 'ss-main' })
+      if (pctSub   > 0) parts.push({ text: `${pctSub}%副`,        cls: 'ss-sub'  })
+      if (pctAtk   > 0) parts.push({ text: `${pctAtk}%攻`,        cls: 'ss-atk'  })
       return parts
     }
 
