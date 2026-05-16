@@ -388,17 +388,22 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     if (state.baseStats)     Object.assign(baseStats.value,     state.baseStats)
     if (state.equipSettings) Object.assign(equipSettings.value, state.equipSettings)
     if (state.slots) {
-      for (const slot of Object.values(state.slots)) {
-        if (!slot.additionalPotential) {
-          slot.additionalPotential = [
+      // 以所有 SLOT_DEFS 的預設值為底，再把存檔覆蓋上去
+      // 這樣新增的裝備槽（如徽章）在舊存檔中也能正常顯示
+      const base = Object.fromEntries(SLOT_DEFS.map(d => [d.id, makeSlot(d)]))
+      for (const [id, saved] of Object.entries(state.slots)) {
+        if (!base[id]) continue
+        if (!saved.additionalPotential) {
+          saved.additionalPotential = [
             { type: 'none', value: 0 },
             { type: 'none', value: 0 },
             { type: 'none', value: 0 },
           ]
         }
-        if (!slot.setEffect) slot.setEffect = []
+        if (!saved.setEffect) saved.setEffect = []
+        base[id] = saved
       }
-      slots.value = state.slots
+      slots.value = base
     }
     if (state.jobSkills)     jobSkills.value   = state.jobSkills
     if (state.activeBuffs)   activeBuffs.value = state.activeBuffs
