@@ -59,8 +59,8 @@
       "subStat": "LUK",
       "attackType": "magical",
       "weapons": [
-        { "name": "長杖", "coefficient": 1.20 },
-        { "name": "短杖", "coefficient": 1.20 }
+        { "name": "長杖", "coefficient": 1.00 },
+        { "name": "短杖", "coefficient": 1.00 }
       ],
       "skills": []
     },
@@ -72,8 +72,8 @@
       "subStat": "LUK",
       "attackType": "magical",
       "weapons": [
-        { "name": "長杖", "coefficient": 1.20 },
-        { "name": "短杖", "coefficient": 1.20 }
+        { "name": "長杖", "coefficient": 1.00 },
+        { "name": "短杖", "coefficient": 1.00 }
       ],
       "skills": []
     },
@@ -85,8 +85,8 @@
       "subStat": "LUK",
       "attackType": "magical",
       "weapons": [
-        { "name": "長杖", "coefficient": 1.20 },
-        { "name": "短杖", "coefficient": 1.20 }
+        { "name": "長杖", "coefficient": 1.00 },
+        { "name": "短杖", "coefficient": 1.00 }
       ],
       "skills": []
     },
@@ -212,8 +212,8 @@
       "subStat": "LUK",
       "attackType": "magical",
       "weapons": [
-        { "name": "長杖", "coefficient": 1.20 },
-        { "name": "短杖", "coefficient": 1.20 }
+        { "name": "長杖", "coefficient": 1.00 },
+        { "name": "短杖", "coefficient": 1.00 }
       ],
       "skills": []
     },
@@ -225,7 +225,7 @@
       "subStat": "LUK",
       "attackType": "magical",
       "weapons": [
-        { "name": "長杖", "coefficient": 1.20 }
+        { "name": "長杖", "coefficient": 1.00 }
       ],
       "skills": [
         { "name": "黑暗光環 (Dark Aura) ATK%", "type": "atkPct", "value": 8, "enabled": true }

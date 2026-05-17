@@ -224,7 +224,7 @@ function useLoot() {
     const totalRevenue      = totalCashRevenue + totalItemValue
 
     const totalScissorCost = validItems.reduce((sum, i) => {
-      if (!i.scissorType) return sum
+      if (!i.scissorType || i.status !== 'sold') return sum
       return sum + (Number(i.qty) || 1) * (i.scissorType / mileageRate.value * 1000)
     }, 0)
 
@@ -265,7 +265,7 @@ function useLoot() {
         mm.selfuseCost += itemNet(item)
         mm.selfuseItems.push({ itemName: item.itemName || '（未命名）', price: itemNet(item) })
       }
-      if (item.scissorType) {
+      if (item.scissorType && item.status === 'sold') {
         mm.scissorPaid += (Number(item.qty) || 1) * (item.scissorType / mileageRate.value * 1000)
       }
     }

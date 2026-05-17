@@ -49,6 +49,7 @@ createApp({
       loadLootSettings()
       loadAlchemySettings()
       loadHeartSettings()
+      loadScheduleCache()
       const urlSyncCode = new URLSearchParams(window.location.search).get('sync')
       if (urlSyncCode && !sync.syncCode.value) {
         sync.syncCodeDraft.value = urlSyncCode
@@ -839,7 +840,7 @@ createApp({
         localStorage.setItem(HEART_SETTINGS_KEY, JSON.stringify(data.heart))
         loadHeartSettings()
       }
-      if (data.schedule) schedule.setState(data.schedule)
+      if (data.schedule) { schedule.setState(data.schedule); _saveScheduleCache(data.schedule) }
     }
 
     function currentSyncData() {
@@ -987,6 +988,7 @@ createApp({
       if (choice === 'cloud') {
         saveBackup(currentSyncData(), 'local')
         await _applyWithGuard(cloudData)
+        schedule.loadIdentity()
       } else {
         saveBackup(cloudData, 'cloud')
         await pushAll()
@@ -1014,6 +1016,21 @@ createApp({
     Vue.watch(() => JSON.stringify(heartFactory.getState()), saveHeartSettings)
 
     Vue.watch(() => JSON.stringify(schedule.getState()), () => pushAll())
+
+    const SCHEDULE_CACHE_KEY = 'maple_schedule_cache'
+
+    function loadScheduleCache() {
+      try {
+        const raw = localStorage.getItem(SCHEDULE_CACHE_KEY)
+        if (raw) schedule.setState(JSON.parse(raw))
+      } catch {}
+    }
+
+    function _saveScheduleCache(data) {
+      try {
+        localStorage.setItem(SCHEDULE_CACHE_KEY, JSON.stringify(data))
+      } catch {}
+    }
 
     return {
       activeTab, equipZoom, changeEquipZoom, saveName, selectedSaveKey, saveMessage, savedCharacters,
