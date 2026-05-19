@@ -61,6 +61,8 @@ createApp({
       schedule.loadIdentity()
       document.addEventListener('mouseup', () => { schedDragging.value = false })
       _bootstrapping = false
+      _saveScheduleCache(schedule.getState())
+      await pushAll()
       try {
         const raw = localStorage.getItem(SYNC_BACKUP_KEY)
         if (raw) syncBackup.value = JSON.parse(raw)
