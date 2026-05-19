@@ -849,7 +849,11 @@ createApp({
         localStorage.setItem(HEART_SETTINGS_KEY, JSON.stringify(data.heart))
         loadHeartSettings()
       }
-      if (data.schedule) { schedule.setState(data.schedule); _saveScheduleCache(data.schedule) }
+      if (data.schedule) {
+        schedule.setState(data.schedule)
+        schedule.rollForwardWeeks()
+        _saveScheduleCache(schedule.getState())
+      }
     }
 
     function currentSyncData() {
@@ -1031,7 +1035,7 @@ createApp({
     function loadScheduleCache() {
       try {
         const raw = localStorage.getItem(SCHEDULE_CACHE_KEY)
-        if (raw) schedule.setState(JSON.parse(raw))
+        if (raw) { schedule.setState(JSON.parse(raw)); schedule.rollForwardWeeks() }
       } catch {}
     }
 
