@@ -1165,7 +1165,7 @@
                 placeholder="0"
               />
               <span v-else class="loot-item-na">-</span>
-              <select v-if="item.scissorType > 0" v-model.number="item.scissorType" class="loot-select-sm">
+              <select v-if="item.scissorType > 0 && item.status !== 'selfuse'" v-model.number="item.scissorType" class="loot-select-sm">
                 <option :value="3900">普通(3900)</option>
                 <option :value="7100">高級(7100)</option>
               </select>
