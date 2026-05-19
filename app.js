@@ -60,6 +60,13 @@ createApp({
       schedule.rollForwardWeeks()
       schedule.loadIdentity()
       document.addEventListener('mouseup', () => { schedDragging.value = false })
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          schedule.rollForwardWeeks()
+          _saveScheduleCache(schedule.getState())
+          pushAll()
+        }
+      })
       _bootstrapping = false
       _saveScheduleCache(schedule.getState())
       await pushAll()
