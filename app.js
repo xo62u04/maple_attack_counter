@@ -51,7 +51,7 @@ createApp({
       loadHeartSettings()
       loadScheduleCache()
       const urlSyncCode = new URLSearchParams(window.location.search).get('sync')
-      if (urlSyncCode && !sync.syncCode.value) {
+      if (urlSyncCode) {
         sync.syncCodeDraft.value = urlSyncCode
         await onSetSyncCode()
       } else if (sync.syncCode.value) {
