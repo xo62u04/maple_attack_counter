@@ -421,7 +421,7 @@ createApp({
       schedNewMemberName.value = ''
     }
 
-    const editRunDialog = ref({ show: false, weekStart: '', runId: null, dayOfWeek: 1, hour: 20 })
+    const editRunDialog = ref({ show: false, weekStart: '', runId: null, dayOfWeek: 1, slot: 40 })
 
     function openEditRun(run) {
       editRunDialog.value = {
@@ -429,7 +429,7 @@ createApp({
         weekStart: schedule.currentWeekSchedule.weekStart,
         runId: run.id,
         dayOfWeek: run.dayOfWeek ?? 1,
-        hour: run.hour ?? 20,
+        slot: run.slot ?? (run.hour != null ? run.hour * 2 : 40),
       }
     }
 
@@ -438,7 +438,7 @@ createApp({
         editRunDialog.value.weekStart,
         editRunDialog.value.runId,
         editRunDialog.value.dayOfWeek,
-        editRunDialog.value.hour
+        editRunDialog.value.slot
       )
       editRunDialog.value.show = false
     }
@@ -1069,6 +1069,9 @@ createApp({
       schedLoginName, schedLoginPin, schedRecurringMode, schedNewMemberName,
       schedEditingMember, schedTargetMember, schedTargetMemberObj,
       fmtDate: isoDate => parseInt(isoDate.slice(5, 7)) + '/' + parseInt(isoDate.slice(8, 10)),
+      fmtSlot: schedule.fmtSlot,
+      SLOT_START: schedule.SLOT_START,
+      SLOT_END: schedule.SLOT_END,
       doSchedLogin, onCellMouseDown, onCellMouseEnter, onAddScheduleMember,
       editRunDialog, openEditRun, saveEditRun, onMarkDone, goToLootSession,
     }

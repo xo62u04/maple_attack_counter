@@ -2125,8 +2125,8 @@
                   <span class="sched-run-time">
                     <span class="sched-run-dayname">{{ ['日','一','二','三','四','五','六'][run.dayOfWeek] }}</span>
                     <span class="sched-run-date">{{ fmtDate(schedule.slotToDate(schedule.currentWeekSchedule.weekStart, run.dayOfWeek)) }}</span>
-                    {{ String(run.hour).padStart(2,'0') }}:00
-                    <span class="sched-run-endtime">~ {{ String(Math.floor((run.hour*60+(boss.durationMin||30))/60)%24).padStart(2,'0') }}:{{ String((run.hour*60+(boss.durationMin||30))%60).padStart(2,'0') }}</span>
+                    {{ fmtSlot(run.slot ?? (run.hour ?? 0) * 2) }}
+                    <span class="sched-run-endtime">~ {{ String(Math.floor(((run.slot ?? (run.hour ?? 0)*2)*30+(boss.durationMin||30))/60)%24).padStart(2,'0') }}:{{ String(((run.slot ?? (run.hour ?? 0)*2)*30+(boss.durationMin||30))%60).padStart(2,'0') }}</span>
                   </span>
                 </template>
                 <span class="sched-run-members">{{ (run.slots||[]).filter(s=>s.member).map(s=>s.member+(s.character?'（'+s.character+'）':'')).join('、') || (run.members||[]).join('、') }}</span>
@@ -2180,18 +2180,18 @@
         <div v-if="schedule.currentWeekSchedule" class="sched-avail-grid-wrap">
           <div class="sched-avail-grid">
             <div class="sched-grid-corner"></div>
-            <div v-for="h in 24" :key="h" class="sched-grid-hour">{{ h - 1 }}</div>
+            <div v-for="s in 10" :key="s" class="sched-grid-hour">{{ fmtSlot(SLOT_START + s - 1) }}</div>
             <template v-for="day in [1,2,3,4,5,6,0]" :key="day">
               <div class="sched-grid-day">
                 <span class="sched-grid-day-name">{{ ['日','一','二','三','四','五','六'][day] }}</span>
                 <span class="sched-grid-day-date">{{ fmtDate(schedule.slotToDate(schedule.currentWeekSchedule.weekStart, day)) }}</span>
               </div>
               <div
-                v-for="h in 24" :key="h"
+                v-for="s in 10" :key="s"
                 class="sched-grid-cell"
-                :class="schedule.cellStatus(schedule.currentWeekSchedule.weekStart, schedTargetMember, day, h-1)"
-                @mousedown.prevent="onCellMouseDown(day, h-1)"
-                @mouseenter="onCellMouseEnter(day, h-1)"
+                :class="schedule.cellStatus(schedule.currentWeekSchedule.weekStart, schedTargetMember, day, SLOT_START + s - 1)"
+                @mousedown.prevent="onCellMouseDown(day, SLOT_START + s - 1)"
+                @mouseenter="onCellMouseEnter(day, SLOT_START + s - 1)"
               ></div>
             </template>
           </div>
@@ -2326,8 +2326,8 @@
             </select>
           </label>
           <label>時間
-            <select v-model.number="editRunDialog.hour" class="sched-select">
-              <option v-for="h in 24" :key="h" :value="h-1">{{ String(h-1).padStart(2,'0') }}:00</option>
+            <select v-model.number="editRunDialog.slot" class="sched-select">
+              <option v-for="s in 10" :key="s" :value="SLOT_START + s - 1">{{ fmtSlot(SLOT_START + s - 1) }}</option>
             </select>
           </label>
           <div class="sched-dialog-actions">

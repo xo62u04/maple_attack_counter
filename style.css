@@ -2848,7 +2848,7 @@ body {
 .sched-avail-grid-wrap { overflow-x: auto; }
 .sched-avail-grid {
   display: grid;
-  grid-template-columns: 46px repeat(24, 26px);
+  grid-template-columns: 46px repeat(10, 52px);
   gap: 2px;
   min-width: max-content;
   user-select: none;
@@ -2864,7 +2864,7 @@ body {
 .sched-grid-day-name { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1; }
 .sched-grid-day-date { font-size: 10px; color: var(--text-dim); line-height: 1; }
 .sched-grid-cell {
-  width: 26px; height: 22px;
+  width: 52px; height: 22px;
   border-radius: 3px; cursor: pointer;
   background: var(--bg-input);
   border: 1px solid var(--border);

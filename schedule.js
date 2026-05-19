@@ -174,61 +174,69 @@ function useSchedule() {
     }
   }
 
+  // 時間單位：30分鐘 slot（0=0:00, 38=19:00, 47=23:30）
+  const SLOT_START = 38  // 19:00
+  const SLOT_END   = 47  // 23:30
+
+  function fmtSlot(s) {
+    return String(Math.floor(s / 2)).padStart(2, '0') + ':' + (s % 2 ? '30' : '00')
+  }
+
   // ── 不可用時段 ──
-  function toggleRecurring(memberName, dayOfWeek, hour) {
+  function toggleRecurring(memberName, dayOfWeek, slot) {
     const m = scheduleMembers.value.find(m => m.name === memberName)
     if (!m) return
     const idx = m.recurringUnavailable.findIndex(s =>
-      s.dayOfWeek === dayOfWeek && s.startHour <= hour && s.endHour > hour
+      s.dayOfWeek === dayOfWeek && s.startHour <= slot && s.endHour > slot
     )
     if (idx >= 0) {
       const old = m.recurringUnavailable.splice(idx, 1)[0]
-      if (old.startHour < hour)
-        m.recurringUnavailable.push({ dayOfWeek, startHour: old.startHour, endHour: hour })
-      if (old.endHour > hour + 1)
-        m.recurringUnavailable.push({ dayOfWeek, startHour: hour + 1, endHour: old.endHour })
+      if (old.startHour < slot)
+        m.recurringUnavailable.push({ dayOfWeek, startHour: old.startHour, endHour: slot })
+      if (old.endHour > slot + 1)
+        m.recurringUnavailable.push({ dayOfWeek, startHour: slot + 1, endHour: old.endHour })
     } else {
-      m.recurringUnavailable.push({ dayOfWeek, startHour: hour, endHour: hour + 1 })
+      m.recurringUnavailable.push({ dayOfWeek, startHour: slot, endHour: slot + 1 })
     }
   }
 
-  function isRecurringUnavail(memberName, dayOfWeek, hour) {
+  function isRecurringUnavail(memberName, dayOfWeek, slot) {
     const m = scheduleMembers.value.find(m => m.name === memberName)
     if (!m) return false
     return m.recurringUnavailable.some(s =>
-      s.dayOfWeek === dayOfWeek && s.startHour <= hour && s.endHour > hour
+      s.dayOfWeek === dayOfWeek && s.startHour <= slot && s.endHour > slot
     )
   }
 
-  function toggleWeeklyUnavail(weekStart, memberName, dayOfWeek, hour) {
+  function toggleWeeklyUnavail(weekStart, memberName, dayOfWeek, slot) {
     const week = weeklySchedules.value.find(w => w.weekStart === weekStart)
     if (!week) return
     if (!week.memberWeeklyUnavailable[memberName])
       week.memberWeeklyUnavailable[memberName] = []
-    const slots = week.memberWeeklyUnavailable[memberName]
-    const idx = slots.findIndex(s =>
-      s.dayOfWeek === dayOfWeek && s.startHour <= hour && s.endHour > hour
+    const arr = week.memberWeeklyUnavailable[memberName]
+    const idx = arr.findIndex(s =>
+      s.dayOfWeek === dayOfWeek && s.startHour <= slot && s.endHour > slot
     )
     if (idx >= 0) {
-      const old = slots.splice(idx, 1)[0]
-      if (old.startHour < hour)
-        slots.push({ dayOfWeek, startHour: old.startHour, endHour: hour })
-      if (old.endHour > hour + 1)
-        slots.push({ dayOfWeek, startHour: hour + 1, endHour: old.endHour })
+      const old = arr.splice(idx, 1)[0]
+      if (old.startHour < slot)
+        arr.push({ dayOfWeek, startHour: old.startHour, endHour: slot })
+      if (old.endHour > slot + 1)
+        arr.push({ dayOfWeek, startHour: slot + 1, endHour: old.endHour })
     } else {
-      slots.push({ dayOfWeek, startHour: hour, endHour: hour + 1 })
+      arr.push({ dayOfWeek, startHour: slot, endHour: slot + 1 })
     }
   }
 
-  function isWeeklyUnavail(weekStart, memberName, dayOfWeek, hour) {
+  function isWeeklyUnavail(weekStart, memberName, dayOfWeek, slot) {
     const week = weeklySchedules.value.find(w => w.weekStart === weekStart)
-    const slots = week?.memberWeeklyUnavailable?.[memberName] ?? []
-    return slots.some(s => s.dayOfWeek === dayOfWeek && s.startHour <= hour && s.endHour > hour)
+    const arr = week?.memberWeeklyUnavailable?.[memberName] ?? []
+    return arr.some(s => s.dayOfWeek === dayOfWeek && s.startHour <= slot && s.endHour > slot)
   }
 
-  function cellStatus(weekStart, memberName, dayOfWeek, hour) {
-    if (isRecurringUnavail(memberName, dayOfWeek, hour)) return 'recurring'
-    if (isWeeklyUnavail(weekStart, memberName, dayOfWeek, hour)) return 'weekly'
+  function cellStatus(weekStart, memberName, dayOfWeek, slot) {
+    if (isRecurringUnavail(memberName, dayOfWeek, slot)) return 'recurring'
+    if (isWeeklyUnavail(weekStart, memberName, dayOfWeek, slot)) return 'weekly'
     return 'avail'
   }
 
@@ -247,11 +255,9 @@ function useSchedule() {
     return unavail
   }
 
-  function scoreSlot(dayOfWeek, hour) {
+  function scoreSlot(dayOfWeek, slot) {
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
-    if (!isWeekend && hour >= 18 && hour <= 22) return 3
-    if (isWeekend) return 2
-    return 1
+    return isWeekend ? 2 : 3
   }
 
   function autoScheduleWeek(weekStart) {
@@ -263,12 +269,12 @@ function useSchedule() {
     )
     const newRuns = [...locked]
 
-    const occupiedSlots = new Set(locked.map(r => `${r.dayOfWeek}-${r.hour}`))
+    const occupiedSlots = new Set(locked.map(r => `${r.dayOfWeek}-${r.slot ?? r.hour * 2}`))
     const memberOccupied = {}
     for (const run of locked)
       for (const name of run.members) {
         if (!memberOccupied[name]) memberOccupied[name] = new Set()
-        memberOccupied[name].add(`${run.dayOfWeek}-${run.hour}`)
+        memberOccupied[name].add(`${run.dayOfWeek}-${run.slot ?? run.hour * 2}`)
       }
 
     for (const boss of scheduleBosses.value) {
@@ -291,25 +297,25 @@ function useSchedule() {
 
         const candidates = []
         for (let day = 0; day <= 6; day++) {
-          for (let hour = 0; hour <= 23; hour++) {
-            const key = `${day}-${hour}`
+          for (let timeSlot = SLOT_START; timeSlot <= SLOT_END; timeSlot++) {
+            const key = `${day}-${timeSlot}`
             if (occupiedSlots.has(key)) continue
             const allAvail = memberNames.every(n => !memberUnavail[n]?.has(key))
-            if (allAvail) candidates.push({ day, hour, score: scoreSlot(day, hour) })
+            if (allAvail) candidates.push({ day, timeSlot, score: scoreSlot(day, timeSlot) })
           }
         }
         candidates.sort((a, b) => b.score - a.score)
 
         let scheduled = 0
-        for (const slot of candidates) {
+        for (const cand of candidates) {
           if (scheduled >= needed) break
-          const key = `${slot.day}-${slot.hour}`
+          const key = `${cand.day}-${cand.timeSlot}`
           const run = {
             id: nextId(),
             bossId: boss.id,
             partyId: party.id,
-            dayOfWeek: slot.day,
-            hour: slot.hour,
+            dayOfWeek: cand.day,
+            slot: cand.timeSlot,
             slots: rawSlots.map(s => ({ ...s })),
             members: memberNames,
             status: 'auto',
@@ -328,7 +334,7 @@ function useSchedule() {
         for (let i = scheduled; i < needed; i++) {
           newRuns.push({
             id: nextId(), bossId: boss.id, partyId: party.id,
-            dayOfWeek: null, hour: null,
+            dayOfWeek: null, slot: null,
             slots: rawSlots.map(s => ({ ...s })), members: memberNames,
             status: 'unschedulable', lootSessionId: null,
           })
@@ -345,13 +351,13 @@ function useSchedule() {
     }
   }
 
-  function updateRunTime(weekStart, runId, dayOfWeek, hour) {
+  function updateRunTime(weekStart, runId, dayOfWeek, slot) {
     const week = weeklySchedules.value.find(w => w.weekStart === weekStart)
     if (!week) return
     const run = week.runs.find(r => r.id === runId)
     if (!run) return
     run.dayOfWeek = dayOfWeek
-    run.hour      = hour
+    run.slot      = slot
     run.status    = 'manual'
   }
 
@@ -374,6 +380,7 @@ function useSchedule() {
   // ── getState / setState ──
   function getState() {
     return {
+      v: 2,
       scheduleMembers:  JSON.parse(JSON.stringify(scheduleMembers.value)),
       scheduleBosses:   JSON.parse(JSON.stringify(scheduleBosses.value)),
       weeklySchedules:  JSON.parse(JSON.stringify(weeklySchedules.value)),
@@ -381,6 +388,20 @@ function useSchedule() {
   }
   function setState(s) {
     if (!s) return
+    // v1→v2: startHour/endHour were full hours (0-23); now they are 30-min slots (0-47)
+    if (!s.v || s.v < 2) {
+      for (const m of (s.scheduleMembers || []))
+        for (const u of (m.recurringUnavailable || []))
+          { u.startHour *= 2; u.endHour *= 2 }
+      for (const w of (s.weeklySchedules || [])) {
+        for (const arr of Object.values(w.memberWeeklyUnavailable || {}))
+          for (const u of arr)
+            { u.startHour *= 2; u.endHour *= 2 }
+        for (const r of (w.runs || []))
+          if (r.slot == null && r.hour != null)
+            { r.slot = r.hour * 2; delete r.hour }
+      }
+    }
     if (s.scheduleMembers)  scheduleMembers.value  = s.scheduleMembers
     if (s.scheduleBosses) {
       for (const boss of s.scheduleBosses) {
@@ -413,6 +434,7 @@ function useSchedule() {
     addScheduleBoss, removeScheduleBoss, addParty, removeParty,
     login, logout, loadIdentity,
     currentMember, isAdmin, isLoggedIn,
+    SLOT_START, SLOT_END, fmtSlot,
     getWeekStart, addDays, slotToDate, todayWeekStart, runsLeft, rollForwardWeeks,
     toggleRecurring, isRecurringUnavail,
     toggleWeeklyUnavail, isWeeklyUnavail, cellStatus,
