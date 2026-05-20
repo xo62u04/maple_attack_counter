@@ -1003,6 +1003,48 @@
           </div>
         </div><!-- end pot-compare-section -->
 
+        <!-- 📊 詞條比較器 -->
+        <div class="ability-compare-section">
+          <div class="panel-title">
+            📊 詞條比較器
+            <span class="pot-subtitle">（以目前全部裝備為基底，比較每條詞條各自的傷害增益）</span>
+          </div>
+          <button class="ability-compare-add-btn" @click="equip.addAbilityCompareLine()">＋ 新增詞條</button>
+          <div v-if="equip.abilityCompareLines.value.length === 0" class="ability-compare-empty">
+            點「＋ 新增詞條」加入要比較的詞條
+          </div>
+          <table v-else class="ability-compare-table">
+            <thead>
+              <tr>
+                <th>排名</th>
+                <th>詞條類型</th>
+                <th>數值</th>
+                <th>BOSS↑%</th>
+                <th>小怪↑%</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, i) in equip.abilityCompareResult.value" :key="row.id"
+                  :class="i === 0 ? 'ability-rank-1' : i === 1 ? 'ability-rank-2' : i === 2 ? 'ability-rank-3' : ''">
+                <td class="ability-rank-cell">{{ i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i+1) }}</td>
+                <td>
+                  <select v-model="equip.abilityCompareLines.value.find(l => l.id === row.id).type" class="pot-type-sel">
+                    <option v-for="pt in equip.POT_COMPARE_TYPES.filter(p => p.value !== 'none')" :key="pt.value" :value="pt.value">{{ pt.label }}</option>
+                  </select>
+                </td>
+                <td>
+                  <input type="number" v-model.number="equip.abilityCompareLines.value.find(l => l.id === row.id).value"
+                         class="ability-compare-val" min="0" step="1" />
+                </td>
+                <td class="ability-boss-pct">+{{ row.bossPct.toFixed(2) }}%</td>
+                <td class="ability-mob-pct">+{{ row.mobPct.toFixed(2) }}%</td>
+                <td><button class="pot-remove-btn" @click="equip.removeAbilityCompareLine(row.id)">✕</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div><!-- end ability-compare-section -->
+
       </section>
     </main>
     </div><!-- end equip wrapper -->

@@ -617,6 +617,86 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     }
   })
 
+  // ── 詞條比較器（精確版：完整重算傷害公式，正確處理 floor 與乘法複合）──
+  function _calcPotGainExact(lines, r, t, s) {
+    if (!r.step1 || !r.finalAtk || !r.avgBoss) return { bossPct: 0, mobPct: 0 }
+
+    let dPctMain = 0, dPctSub = 0, dPctAtk = 0
+    let dFlatMain = 0, dFlatSub = 0, dFlatAtk = 0
+    let dBossDmg = 0, dTotalDmg = 0, dCritRate = 0, dCritDmg = 0
+    let newIgnoreEff = t.ignoreDefTotal / 100
+
+    for (const line of lines) {
+      const v = Number(line.value) || 0
+      if (!v || line.type === 'none') continue
+      switch (line.type) {
+        case 'mainStatPct':  dPctMain  += v; break
+        case 'subStatPct':   dPctSub   += v; break
+        case 'allStatPct':   dPctMain  += v; dPctSub += v; break
+        case 'mainStatFlat': dFlatMain += v; break
+        case 'subStatFlat':  dFlatSub  += v; break
+        case 'allStatFlat':  dFlatMain += v; dFlatSub += v; break
+        case 'atkFlat':      dFlatAtk  += v; break
+        case 'atkPct':       dPctAtk   += v; break
+        case 'critRate':     dCritRate += v; break
+        case 'critDmg':      dCritDmg  += v; break
+        case 'bossDmg':      dBossDmg  += v; break
+        case 'totalDmg':     dTotalDmg += v; break
+        case 'ignoreDef':    newIgnoreEff = 1 - (1 - newIgnoreEff) * (1 - v / 100); break
+      }
+    }
+
+    const newRealMain = Math.floor((r.finalMain + dFlatMain) * (1 + (t.pctMain + dPctMain) / 100))
+    const newRealSub  = Math.floor((r.finalSub  + dFlatSub)  * (1 + (t.pctSub  + dPctSub)  / 100))
+    const newStep1    = 4 * newRealMain + newRealSub
+
+    const newRealAtk  = Math.floor((r.finalAtk + dFlatAtk) * (1 + (r.finalAtkPct + dPctAtk) / 100))
+    const skillPct    = Number(s.skillPct) || 100
+    const newStep4    = newStep1 * r.coeff * newRealAtk * 0.01 * skillPct / 100
+
+    const newStep5Boss = 1 + (t.bossDmg + dBossDmg + t.totalDmg + dTotalDmg) / 100
+    const newStep5Mob  = 1 + (t.totalDmg + dTotalDmg) / 100
+    const newStep6Boss = 1 - (Number(s.bossDefPct)    || 0) / 100 * (1 - newIgnoreEff)
+    const newStep6Mob  = 1 - (Number(s.monsterDefPct) || 0) / 100 * (1 - newIgnoreEff)
+
+    const newCritRate = Math.min(100, (Number(s.critRate) || 0) + t.critRate + dCritRate)
+    const newCritDmg  = (Number(s.maxCritBonus) || 0) + t.critDmg + dCritDmg
+    const minC        = Number(s.minCritBonus) || 0
+    const newCritMult = 1 + newCritRate / 100 * (minC + newCritDmg) / 200
+
+    const mastery     = (Number(s.mastery) || 0) / 100
+    const newAvgBoss  = newStep4 * newStep5Boss * newStep6Boss * (1 + mastery) / 2 * newCritMult
+    const newAvgMob   = newStep4 * newStep5Mob  * newStep6Mob  * (1 + mastery) / 2 * newCritMult
+
+    return {
+      bossPct: (newAvgBoss / r.avgBoss - 1) * 100,
+      mobPct:  (newAvgMob  / r.avgMob  - 1) * 100,
+    }
+  }
+
+  let _acNextId = 1
+  const abilityCompareLines = Vue.ref([])
+
+  function addAbilityCompareLine() {
+    abilityCompareLines.value.push({ id: _acNextId++, type: 'mainStatPct', value: 3 })
+  }
+  function removeAbilityCompareLine(id) {
+    abilityCompareLines.value = abilityCompareLines.value.filter(l => l.id !== id)
+  }
+
+  const abilityCompareResult = Vue.computed(() => {
+    const r = dmgResult.value
+    const t = totals.value
+    const s = equipSettings.value
+    return abilityCompareLines.value
+      .map(line => {
+        const { bossPct, mobPct } = _calcPotGainExact([line], r, t, s)
+        const label = POT_COMPARE_TYPES.find(pt => pt.value === line.type)?.label ?? line.type
+        return { id: line.id, type: line.type, value: line.value, label, bossPct, mobPct }
+      })
+      .sort((a, b) => b.bossPct - a.bossPct)
+  })
+
   function initPartyBuffs() {
     activeBuffs.value = (partyBuffsRef.value || []).map(b => Object.assign({}, b, {
       enabled: false,
@@ -650,6 +730,8 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     upgradeEfficiencyBoss, upgradeEfficiencyMob,
     oneMainFlatGain, oneAtkFlatGain,
     POT_COMPARE_TYPES, potCompareNew, potCompareResult,
+    abilityCompareLines, abilityCompareResult,
+    addAbilityCompareLine, removeAbilityCompareLine,
     getState, setState,
     initJobSkills, initPartyBuffs, importFromTab1,
   }
