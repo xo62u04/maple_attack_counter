@@ -172,12 +172,10 @@ function useLoot() {
   // ── 最小轉帳算法 ──
   function calcTransfers(members, cubePrice) {
     const usesCubes = cubePrice > 0
-    const toUnit = (wan) => usesCubes
-      ? Math.round(wan / cubePrice)
-      : Math.round(wan * 10) / 10
 
-    const debtors   = members.filter(m => m.diff > 0.01).map(m => ({ name: m.name, amount: toUnit(m.diff) }))
-    const creditors = members.filter(m => m.diff < -0.01).map(m => ({ name: m.name, amount: toUnit(-m.diff) }))
+    // 以萬為單位做貪婪匹配，避免各方獨立 round 造成顆數不一致
+    const debtors   = members.filter(m => m.diff > 0.01).map(m => ({ name: m.name, amount: m.diff }))
+    const creditors = members.filter(m => m.diff < -0.01).map(m => ({ name: m.name, amount: -m.diff }))
 
     debtors.sort((a, b) => b.amount - a.amount)
     creditors.sort((a, b) => b.amount - a.amount)
@@ -186,18 +184,30 @@ function useLoot() {
     let di = 0, ci = 0
     while (di < debtors.length && ci < creditors.length) {
       const pay = Math.min(debtors[di].amount, creditors[ci].amount)
-      if (pay > 0) {
+      if (pay > 0.01) {
+        let displayAmount, unit, cashRemainder
+        if (usesCubes) {
+          displayAmount = Math.floor(pay / cubePrice)
+          unit = '顆方塊'
+          const remainder = Math.round((pay - displayAmount * cubePrice) * 10) / 10
+          cashRemainder = remainder > 0.05 ? remainder : 0
+        } else {
+          displayAmount = Math.round(pay * 10) / 10
+          unit = '萬楓幣'
+          cashRemainder = 0
+        }
         result.push({
           from: debtors[di].name,
           to:   creditors[ci].name,
-          amount: pay,
-          unit: usesCubes ? '顆方塊' : '萬楓幣',
+          amount: displayAmount,
+          unit,
+          cashRemainder,
         })
       }
       debtors[di].amount   -= pay
       creditors[ci].amount -= pay
-      if (debtors[di].amount   <= 0) di++
-      if (creditors[ci].amount <= 0) ci++
+      if (debtors[di].amount   <= 0.01) di++
+      if (creditors[ci].amount <= 0.01) ci++
     }
     return result
   }

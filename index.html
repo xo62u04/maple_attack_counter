@@ -1279,6 +1279,7 @@
                 <span> 給 </span>
                 <span class="text-success">{{ t.to }}</span>
                 <span class="loot-transfer-amount"> {{ t.amount }} {{ t.unit }}</span>
+                <span v-if="t.cashRemainder" class="loot-transfer-amount"> + {{ t.cashRemainder }} 萬</span>
               </div>
             </div>
           </div>
