@@ -266,9 +266,15 @@ function useHeartFactory() {
     const s4    = SCROLLS.find(s => s.id === ch.slot4)
     if (slots.some(s => !s) || !s4) return null
 
-    const triggerSet   = new Set(ch.triggerAtks)
-    const hammerCost   = ch.hammerType === '100' ? (hammer100.value || 0) : (hammer50.value || 0)
-    const successProb  = ch.hammerType === '100' ? 1.0 : 0.5
+    const triggerSet    = new Set(ch.triggerAtks)
+    const hammerCost    = ch.hammerType === '100' ? (hammer100.value || 0) : (hammer50.value || 0)
+    const hammerProb    = ch.hammerType === '100' ? 1.0 : 0.5   // 鐵鎚開槽機率
+    const scrollRate    = s4.rate                                // 開槽後卷軸過的機率
+    const s4ScrollCost  = scrollCosts.value[s4.id] || 0
+    // 每次觸發鐵鎚的期望費用：鎚費（必付）+ 開槽後才花卷軸費
+    const hammerTotalExpCost = hammerCost + hammerProb * s4ScrollCost
+    // 拿到鎚後ATK的最終機率 = 鐵鎚開槽 × 卷軸有過
+    const probUp = hammerProb * scrollRate
 
     const scrollCostTotal  = slots.reduce((sum, sc) => sum + (scrollCosts.value[sc.id] || 0), 0)
     const baseCostPerHeart = materialCost.value + scrollCostTotal
@@ -317,8 +323,10 @@ function useHeartFactory() {
           sellHammered  = VALID_ATK.has(hammeredAtk)
             ? expectedMarketValue(hammeredAtk, hSubs)
             : sellBase
-          // 50%鎚：只試一次，沒中就接受原ATK；100%：保證成功
-          netEV = successProb * sellHammered + (1 - successProb) * sellBase - hammerCost
+          // 正確機率：鐵鎚開槽（hammerProb）× 卷軸過（scrollRate）才拿到鎚後ATK
+          // 鐵鎚失敗 OR 卷軸沒過 → 維持原ATK（sellBase）
+          // 費用：鎚費必付；卷軸費只有開槽後才花
+          netEV = probUp * sellHammered + (1 - probUp) * sellBase - hammerTotalExpCost
         } else {
           netEV = sellBase
         }
@@ -338,11 +346,11 @@ function useHeartFactory() {
     const expNetRevPerHeart     = validTable.reduce((s, r) => s + r.prob * r.netEV, 0)
     const expHammerCostPerHeart = validTable
       .filter(r => r.useHammer)
-      .reduce((s, r) => s + r.prob * hammerCost, 0)
+      .reduce((s, r) => s + r.prob * hammerTotalExpCost, 0)
 
     return {
       scrollCostTotal, baseCostPerHeart,
-      hammerCost, successProb,
+      hammerCost, s4ScrollCost, hammerProb, scrollRate, probUp, hammerTotalExpCost,
       validTable, wasteProb,
       expNetRevPerHeart,
       expHammerCostPerHeart,

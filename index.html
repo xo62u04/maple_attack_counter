@@ -2161,8 +2161,13 @@
           <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px">
             <div class="heart-ev-row" style="min-width:190px"><span>3槽卷軸成本</span><span>{{ heartFactory.conditionalHammerAnalysis.scrollCostTotal }} 萬</span></div>
             <div class="heart-ev-row" style="min-width:190px"><span>材料＋卷軸（基礎成本）</span><span>{{ heartFactory.conditionalHammerAnalysis.baseCostPerHeart }} 萬</span></div>
-            <div class="heart-ev-row" style="min-width:190px"><span>鐵鎚單次費用</span><span>{{ heartFactory.conditionalHammerAnalysis.hammerCost }} 萬</span></div>
-            <div class="heart-ev-row" style="min-width:190px"><span>期望鐵鎚成本/顆</span><span>{{ heartFactory.conditionalHammerAnalysis.expHammerCostPerHeart.toFixed(2) }} 萬</span></div>
+            <div class="heart-ev-row" style="min-width:190px"><span>鐵鎚費用</span><span>{{ heartFactory.conditionalHammerAnalysis.hammerCost }} 萬</span></div>
+            <div class="heart-ev-row" style="min-width:190px"><span>槽4卷軸費用</span><span>{{ heartFactory.conditionalHammerAnalysis.s4ScrollCost }} 萬</span></div>
+            <div class="heart-ev-row" style="min-width:190px">
+              <span>成功拿到鎚後ATK機率</span>
+              <span>{{ (heartFactory.conditionalHammerAnalysis.hammerProb*100).toFixed(0) }}% × {{ (heartFactory.conditionalHammerAnalysis.scrollRate*100).toFixed(0) }}% = <strong>{{ (heartFactory.conditionalHammerAnalysis.probUp*100).toFixed(0) }}%</strong></span>
+            </div>
+            <div class="heart-ev-row" style="min-width:190px"><span>每次觸發期望花費（鎚+卷）</span><span>{{ heartFactory.conditionalHammerAnalysis.hammerTotalExpCost.toFixed(1) }} 萬</span></div>
           </div>
 
           <!-- 結果表 -->
@@ -2188,7 +2193,7 @@
                 🔨 →
                 <strong style="color:#e8b86d">{{ r.hammeredAtk }}攻</strong>
                 <span class="heart-dim">{{ r.hammeredLabel && r.hammeredLabel !== '無副屬' ? ' '+r.hammeredLabel : '' }}</span>
-                <span class="heart-dim">（{{ (heartFactory.conditionalHammerAnalysis.successProb*100).toFixed(0) }}%）</span>
+                <span class="heart-dim">（開槽{{ (heartFactory.conditionalHammerAnalysis.hammerProb*100).toFixed(0) }}%×卷{{ (heartFactory.conditionalHammerAnalysis.scrollRate*100).toFixed(0) }}%=<strong>{{ (heartFactory.conditionalHammerAnalysis.probUp*100).toFixed(0) }}%</strong>）</span>
               </template>
               <template v-else><span class="heart-dim">不用鎚</span></template>
             </span>
