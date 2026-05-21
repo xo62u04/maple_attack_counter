@@ -1885,6 +1885,36 @@
             </select>
           </div>
 
+          <!-- 鐵鎚使用模式（僅當有選鐵鎚時才顯示）-->
+          <template v-if="heartFactory.optimizer.hammerType !== 'none'">
+            <div class="heart-slot-row" style="align-items:flex-start; gap:10px; flex-wrap:wrap">
+              <span class="heart-slot-label">鐵鎚模式</span>
+              <label class="heart-check-row" style="margin-right:12px">
+                <input type="radio" v-model="heartFactory.optimizer.hammerMode" value="always" />
+                每顆都槌（期望成本法）
+              </label>
+              <label class="heart-check-row">
+                <input type="radio" v-model="heartFactory.optimizer.hammerMode" value="conditional" />
+                條件槌（只在以下攻擊力才用一次）
+              </label>
+            </div>
+            <div v-if="heartFactory.optimizer.hammerMode === 'conditional'"
+                 class="heart-slot-row" style="align-items:center; gap:8px; flex-wrap:wrap">
+              <span class="heart-slot-label">觸發 ATK</span>
+              <label v-for="atk in [5,6,7,8,9,10,11,12]" :key="atk" class="heart-check-row" style="margin-right:6px">
+                <input type="checkbox"
+                       :checked="heartFactory.conditionalHammer.triggerAtks.includes(atk)"
+                       @change="e => {
+                         const arr = heartFactory.conditionalHammer.triggerAtks
+                         if (e.target.checked) { if (!arr.includes(atk)) arr.push(atk) }
+                         else { const i = arr.indexOf(atk); if (i !== -1) arr.splice(i, 1) }
+                       }" />
+                +{{ atk }}
+              </label>
+              <span class="heart-dim" style="font-size:12px">（3槽點完後，若攻擊力落在勾選值才用鎚）</span>
+            </div>
+          </template>
+
           <div class="heart-divider"></div>
 
           <!-- 排名表 -->
@@ -2548,7 +2578,7 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="heart.js?v=20260521b"></script>
+  <script src="heart.js?v=20260522a"></script>
   <script src="equip.js?v=20260516a"></script>
   <script src="loot.js?v=20260512b"></script>
   <script src="alchemy.js?v=20260509-1"></script>

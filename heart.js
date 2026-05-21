@@ -87,7 +87,7 @@ function useHeartFactory() {
     qty:    10,
   })
 
-  const optimizer = ref({ hammerType: 'none', qty: 40 })
+  const optimizer = ref({ hammerType: 'none', qty: 40, hammerMode: 'always' })
 
   const conditionalHammer = ref({
     hammerType: '50',
@@ -525,6 +525,7 @@ function useHeartFactory() {
     const synthCost  = condStrategy.value.synthCost ?? 0
     const frameRate  = (condStrategy.value.synthFrameRate ?? 0) / 100
 
+    const hammerMode = optimizer.value.hammerMode || 'always'
     const results = []
 
     for (let i = 0; i < 8; i++) {
@@ -537,130 +538,285 @@ function useHeartFactory() {
           for (const s4 of s4List) {
             if (s4 && isMixedMagic([...slots3, s4])) continue
 
-            // 條件點法：10%卷（至多前2張）當關卡，全爆就停；60%卷及剩餘10%卷在關卡至少一張過後才點
-            const is10 = sc => sc.rate < 0.5
-            const sorted3   = [...slots3].sort((a, b) => Number(is10(b)) - Number(is10(a)))
-            const gate10s   = sorted3.filter(is10)
-            const rest60s   = sorted3.filter(sc => !is10(sc))
-            const gateSlots = gate10s.slice(0, 2)
-            const condSlots = [...gate10s.slice(2), ...rest60s, ...(s4 ? [s4] : [])]
+            if (hammerMode === 'conditional' && s4) {
+              // ── 條件鐵鎚模式：先算3槽，再依觸發ATK決定是否用鎚（只試一次）──
+              const triggerSet    = new Set(conditionalHammer.value.triggerAtks || [7, 9, 10])
+              const hammerProb    = hammerType === '50' ? 0.5 : 1.0
+              const hammerCostOne = hammerType === '50' ? (hammer50.value || 0) : (hammer100.value || 0)
+              const s4ScrollCost  = scrollCosts.value[s4.id] || 0
+              const costPerUse    = hammerCostOne + hammerProb * s4ScrollCost  // 每次用鎚的期望花費
 
-            const hasGate   = gateSlots.length > 0
-            const pGateFail = hasGate ? gateSlots.reduce((p, sc) => p * (1 - sc.rate), 1) : 0
-            const pGatePass = 1 - pGateFail
+              // 3槽條件點法（不含s4）
+              const is10c      = sc => sc.rate < 0.5
+              const sorted3c   = [...slots3].sort((a, b) => Number(is10c(b)) - Number(is10c(a)))
+              const gate10sc   = sorted3c.filter(is10c)
+              const rest60sc   = sorted3c.filter(sc => !is10c(sc))
+              const gateSlotsc = gate10sc.slice(0, 2)
+              const condSlotsc = [...gate10sc.slice(2), ...rest60sc]  // 不含s4
 
-            const gateScrollCost = gateSlots.reduce((sum, sc) => sum + (scrollCosts.value[sc.id] || 0), 0)
-            const condScrollCost = condSlots.reduce((sum, sc) => sum + (scrollCosts.value[sc.id] || 0), 0)
-            const scrollCostTotal  = gateScrollCost + pGatePass * condScrollCost
-            const hammerCostCond   = pGatePass * hammerExpCost
-            const costPerHeart     = materialCost.value + scrollCostTotal + hammerCostCond
+              const hasGatec   = gateSlotsc.length > 0
+              const pGateFailc = hasGatec ? gateSlotsc.reduce((p, sc) => p * (1 - sc.rate), 1) : 0
+              const pGatePassc = 1 - pGateFailc
 
-            // 枚舉結果（條件式）
-            const rawOutcomes = []
-            if (!hasGate) {
-              // 純60%：全部無條件點
-              const allSlots = [...slots3, ...(s4 ? [s4] : [])]
-              const n = allSlots.length
-              for (let mask = 0; mask < (1 << n); mask++) {
-                let prob = 1, atk = 0
-                const subs = {}
-                for (let b = 0; b < n; b++) {
-                  const bit = (mask >> (n - 1 - b)) & 1
-                  prob *= bit ? allSlots[b].rate : (1 - allSlots[b].rate)
-                  if (bit) {
-                    atk += allSlots[b].atk
-                    for (const [kk, v] of Object.entries(allSlots[b].subs)) subs[kk] = (subs[kk] || 0) + v
-                  }
-                }
-                rawOutcomes.push({ prob, atk, subs })
-              }
-            } else {
-              // 有10%關卡：關卡全爆→廢品（停手），至少一張過→點其餘卷軸
-              const nGate = gateSlots.length
-              const nCond = condSlots.length
-              for (let gmask = 0; gmask < (1 << nGate); gmask++) {
-                let gProb = 1, gAtk = 0
-                const gSubs = {}
-                let anyGatePass = false
-                for (let b = 0; b < nGate; b++) {
-                  const bit = (gmask >> (nGate - 1 - b)) & 1
-                  gProb *= bit ? gateSlots[b].rate : (1 - gateSlots[b].rate)
-                  if (bit) {
-                    anyGatePass = true
-                    gAtk += gateSlots[b].atk
-                    for (const [kk, v] of Object.entries(gateSlots[b].subs)) gSubs[kk] = (gSubs[kk] || 0) + v
-                  }
-                }
-                if (!anyGatePass) {
-                  rawOutcomes.push({ prob: gProb, atk: 0, subs: {} })
-                } else {
-                  for (let cmask = 0; cmask < (1 << nCond); cmask++) {
-                    let cProb = 1, cAtk = gAtk
-                    const cSubs = { ...gSubs }
-                    for (let b = 0; b < nCond; b++) {
-                      const bit = (cmask >> (nCond - 1 - b)) & 1
-                      cProb *= bit ? condSlots[b].rate : (1 - condSlots[b].rate)
-                      if (bit) {
-                        cAtk += condSlots[b].atk
-                        for (const [kk, v] of Object.entries(condSlots[b].subs)) cSubs[kk] = (cSubs[kk] || 0) + v
-                      }
+              const gateScrollCostc = gateSlotsc.reduce((sum, sc) => sum + (scrollCosts.value[sc.id] || 0), 0)
+              const condScrollCostc = condSlotsc.reduce((sum, sc) => sum + (scrollCosts.value[sc.id] || 0), 0)
+              const scrollCostTotal_c = gateScrollCostc + pGatePassc * condScrollCostc
+
+              // 枚舉3槽成果
+              const rawOut3 = []
+              if (!hasGatec) {
+                const n = slots3.length
+                for (let mask = 0; mask < (1 << n); mask++) {
+                  let prob = 1, atk = 0
+                  const subs = {}
+                  for (let b = 0; b < n; b++) {
+                    const bit = (mask >> (n - 1 - b)) & 1
+                    prob *= bit ? slots3[b].rate : (1 - slots3[b].rate)
+                    if (bit) {
+                      atk += slots3[b].atk
+                      for (const [kk, v] of Object.entries(slots3[b].subs)) subs[kk] = (subs[kk] || 0) + v
                     }
-                    rawOutcomes.push({ prob: gProb * cProb, atk: cAtk, subs: cSubs })
+                  }
+                  rawOut3.push({ prob, atk, subs })
+                }
+              } else {
+                const nG = gateSlotsc.length, nC = condSlotsc.length
+                for (let gmask = 0; gmask < (1 << nG); gmask++) {
+                  let gProb = 1, gAtk = 0
+                  const gSubs = {}
+                  let anyPass = false
+                  for (let b = 0; b < nG; b++) {
+                    const bit = (gmask >> (nG - 1 - b)) & 1
+                    gProb *= bit ? gateSlotsc[b].rate : (1 - gateSlotsc[b].rate)
+                    if (bit) {
+                      anyPass = true; gAtk += gateSlotsc[b].atk
+                      for (const [kk, v] of Object.entries(gateSlotsc[b].subs)) gSubs[kk] = (gSubs[kk] || 0) + v
+                    }
+                  }
+                  if (!anyPass) {
+                    rawOut3.push({ prob: gProb, atk: 0, subs: {} })
+                  } else {
+                    for (let cmask = 0; cmask < (1 << nC); cmask++) {
+                      let cProb = 1, cAtk = gAtk
+                      const cSubs = { ...gSubs }
+                      for (let b = 0; b < nC; b++) {
+                        const bit = (cmask >> (nC - 1 - b)) & 1
+                        cProb *= bit ? condSlotsc[b].rate : (1 - condSlotsc[b].rate)
+                        if (bit) {
+                          cAtk += condSlotsc[b].atk
+                          for (const [kk, v] of Object.entries(condSlotsc[b].subs)) cSubs[kk] = (cSubs[kk] || 0) + v
+                        }
+                      }
+                      rawOut3.push({ prob: gProb * cProb, atk: cAtk, subs: cSubs })
+                    }
                   }
                 }
               }
-            }
 
-            // 聚合
-            const grouped = new Map()
-            for (const { prob, atk, subs } of rawOutcomes) {
-              const k = `${atk}_${subsKey(subs)}`
-              if (!grouped.has(k)) grouped.set(k, { atk, subs, prob: 0 })
-              grouped.get(k).prob += prob
-            }
+              // 合并3槽成果（用於計算觸發機率 × 鎚費）
+              const grouped3 = new Map()
+              for (const { prob, atk, subs } of rawOut3) {
+                const k = `${atk}_${subsKey(subs)}`
+                if (!grouped3.has(k)) grouped3.set(k, { atk, subs, prob: 0 })
+                grouped3.get(k).prob += prob
+              }
+              const outcomes3 = [...grouped3.values()]
 
-            // 分類：廢品（回收）/ 空白（不知道）/ 可賣
-            let pScrap = 0, expRevPerHeart = 0
-            const outcomes = []
-            for (const { atk, subs, prob } of grouped.values()) {
-              const valid = VALID_ATK.has(atk)
-              const ev    = valid ? expectedMarketValueNullable(atk, subs) : null
-              // 0元 也算廢品（回收）; null = 不知道; >0 = 可賣
-              const isScrap   = !valid || ev === 0
-              const isUnknown = valid && ev === null
-              if (isScrap)        pScrap         += prob
-              else if (!isUnknown) expRevPerHeart += prob * ev
-              outcomes.push({ atk, subs, label: subsLabel(subs), prob, ev, isScrap, isUnknown })
-            }
-            outcomes.sort((a, b) => b.atk - a.atk || a.label.localeCompare(b.label))
+              // 期望鎚費（只有觸發ATK才花費，只試一次）
+              const expHammerContrib_c = outcomes3
+                .filter(o => triggerSet.has(o.atk))
+                .reduce((sum, o) => sum + o.prob * costPerUse, 0)
+              const costPerHeart_c = materialCost.value + scrollCostTotal_c + expHammerContrib_c
 
-            // 回收計算（連續近似）
-            const s = pScrap
-            const totalScrolled    = qty * 2 / (2 - s)
-            const totalSynthesized = totalScrolled - qty
-            const synthHeartCost   = synthCost + scrollCostTotal + hammerCostCond
-            const totalCost        = qty * costPerHeart + totalSynthesized * synthHeartCost
+              // 展開最終成果（觸發ATK → 一次鎚，成功加s4，失敗原ATK）
+              const rawFinal = []
+              for (const { prob, atk, subs } of outcomes3) {
+                if (triggerSet.has(atk)) {
+                  const probWin  = hammerProb * s4.rate
+                  const probLose = 1 - probWin
+                  const wSubs = { ...subs }
+                  for (const [kk, v] of Object.entries(s4.subs)) wSubs[kk] = (wSubs[kk] || 0) + v
+                  rawFinal.push({ prob: prob * probWin,  atk: atk + s4.atk, subs: wSubs })
+                  rawFinal.push({ prob: prob * probLose, atk, subs })
+                } else {
+                  rawFinal.push({ prob, atk, subs })
+                }
+              }
 
-            // 合成出框加成
-            const pSell = outcomes.filter(o => !o.isScrap && !o.isUnknown).reduce((a, o) => a + o.prob, 0)
-            const avgNetDiff = pSell > 0
-              ? outcomes.filter(o => !o.isScrap && !o.isUnknown)
-                  .reduce((a, o) => a + (o.prob / pSell) * ((getNetPriceNullable(o.atk, o.subs, true) ?? 0) - (getNetPriceNullable(o.atk, o.subs, false) ?? 0)), 0)
-              : 0
-            const totalFrameBonus  = totalSynthesized * pSell * frameRate * avgNetDiff
-            const totalRevenue     = totalScrolled * expRevPerHeart + totalFrameBonus
-            const totalProfit      = totalRevenue - totalCost
-            const expProfitPerHeart = totalProfit / qty
+              // 聚合最終成果
+              const groupedF = new Map()
+              for (const { prob, atk, subs } of rawFinal) {
+                const k = `${atk}_${subsKey(subs)}`
+                if (!groupedF.has(k)) groupedF.set(k, { atk, subs, prob: 0 })
+                groupedF.get(k).prob += prob
+              }
+              let pScrap_c = 0, expRevPerHeart_c = 0
+              const outcomes_c = []
+              for (const { atk, subs, prob } of groupedF.values()) {
+                const valid = VALID_ATK.has(atk)
+                const ev    = valid ? expectedMarketValueNullable(atk, subs) : null
+                const isScrap   = !valid || ev === 0
+                const isUnknown = valid && ev === null
+                if (isScrap)         pScrap_c         += prob
+                else if (!isUnknown) expRevPerHeart_c += prob * ev
+                outcomes_c.push({ atk, subs, label: subsLabel(subs), prob, ev, isScrap, isUnknown })
+              }
+              outcomes_c.sort((a, b) => b.atk - a.atk || a.label.localeCompare(b.label))
 
-            const label = slots3.map(s => s.name).join(' / ') + (s4 ? ` + 🔨${s4.name}` : '')
-            results.push({
-              label, costPerHeart, scrollCostTotal,
-              pScrap, expRevPerHeart,
-              totalScrolled, totalSynthesized,
-              totalCost, totalRevenue, totalProfit,
-              expProfit: expProfitPerHeart,
-              outcomes,
-            })
+              // 回收計算（條件模式）
+              const s_c = pScrap_c
+              const totalScrolled_c    = qty * 2 / (2 - s_c)
+              const totalSynthesized_c = totalScrolled_c - qty
+              const synthHeartCost_c   = synthCost + scrollCostTotal_c + expHammerContrib_c
+              const totalCost_c        = qty * costPerHeart_c + totalSynthesized_c * synthHeartCost_c
+
+              const pSell_c = outcomes_c.filter(o => !o.isScrap && !o.isUnknown).reduce((a, o) => a + o.prob, 0)
+              const avgNetDiff_c = pSell_c > 0
+                ? outcomes_c.filter(o => !o.isScrap && !o.isUnknown)
+                    .reduce((a, o) => a + (o.prob / pSell_c) * ((getNetPriceNullable(o.atk, o.subs, true) ?? 0) - (getNetPriceNullable(o.atk, o.subs, false) ?? 0)), 0)
+                : 0
+              const totalFrameBonus_c  = totalSynthesized_c * pSell_c * frameRate * avgNetDiff_c
+              const totalRevenue_c     = totalScrolled_c * expRevPerHeart_c + totalFrameBonus_c
+              const totalProfit_c      = totalRevenue_c - totalCost_c
+              const expProfitPerHeart_c = totalProfit_c / qty
+
+              const label_c = slots3.map(s => s.name).join(' / ') + ` + 🔨(條件)${s4.name}`
+              results.push({
+                label: label_c, costPerHeart: costPerHeart_c, scrollCostTotal: scrollCostTotal_c,
+                pScrap: pScrap_c, expRevPerHeart: expRevPerHeart_c,
+                totalScrolled: totalScrolled_c, totalSynthesized: totalSynthesized_c,
+                totalCost: totalCost_c, totalRevenue: totalRevenue_c, totalProfit: totalProfit_c,
+                expProfit: expProfitPerHeart_c,
+                outcomes: outcomes_c,
+              })
+
+            } else {
+              // ── 一般模式（每顆都槌到開為止）──
+              // 條件點法：10%卷（至多前2張）當關卡，全爆就停；60%卷及剩餘10%卷在關卡至少一張過後才點
+              const is10 = sc => sc.rate < 0.5
+              const sorted3   = [...slots3].sort((a, b) => Number(is10(b)) - Number(is10(a)))
+              const gate10s   = sorted3.filter(is10)
+              const rest60s   = sorted3.filter(sc => !is10(sc))
+              const gateSlots = gate10s.slice(0, 2)
+              const condSlots = [...gate10s.slice(2), ...rest60s, ...(s4 ? [s4] : [])]
+
+              const hasGate   = gateSlots.length > 0
+              const pGateFail = hasGate ? gateSlots.reduce((p, sc) => p * (1 - sc.rate), 1) : 0
+              const pGatePass = 1 - pGateFail
+
+              const gateScrollCost = gateSlots.reduce((sum, sc) => sum + (scrollCosts.value[sc.id] || 0), 0)
+              const condScrollCost = condSlots.reduce((sum, sc) => sum + (scrollCosts.value[sc.id] || 0), 0)
+              const scrollCostTotal  = gateScrollCost + pGatePass * condScrollCost
+              const hammerCostCond   = pGatePass * hammerExpCost
+              const costPerHeart     = materialCost.value + scrollCostTotal + hammerCostCond
+
+              // 枚舉結果（條件式）
+              const rawOutcomes = []
+              if (!hasGate) {
+                // 純60%：全部無條件點
+                const allSlots = [...slots3, ...(s4 ? [s4] : [])]
+                const n = allSlots.length
+                for (let mask = 0; mask < (1 << n); mask++) {
+                  let prob = 1, atk = 0
+                  const subs = {}
+                  for (let b = 0; b < n; b++) {
+                    const bit = (mask >> (n - 1 - b)) & 1
+                    prob *= bit ? allSlots[b].rate : (1 - allSlots[b].rate)
+                    if (bit) {
+                      atk += allSlots[b].atk
+                      for (const [kk, v] of Object.entries(allSlots[b].subs)) subs[kk] = (subs[kk] || 0) + v
+                    }
+                  }
+                  rawOutcomes.push({ prob, atk, subs })
+                }
+              } else {
+                // 有10%關卡：關卡全爆→廢品（停手），至少一張過→點其餘卷軸
+                const nGate = gateSlots.length
+                const nCond = condSlots.length
+                for (let gmask = 0; gmask < (1 << nGate); gmask++) {
+                  let gProb = 1, gAtk = 0
+                  const gSubs = {}
+                  let anyGatePass = false
+                  for (let b = 0; b < nGate; b++) {
+                    const bit = (gmask >> (nGate - 1 - b)) & 1
+                    gProb *= bit ? gateSlots[b].rate : (1 - gateSlots[b].rate)
+                    if (bit) {
+                      anyGatePass = true
+                      gAtk += gateSlots[b].atk
+                      for (const [kk, v] of Object.entries(gateSlots[b].subs)) gSubs[kk] = (gSubs[kk] || 0) + v
+                    }
+                  }
+                  if (!anyGatePass) {
+                    rawOutcomes.push({ prob: gProb, atk: 0, subs: {} })
+                  } else {
+                    for (let cmask = 0; cmask < (1 << nCond); cmask++) {
+                      let cProb = 1, cAtk = gAtk
+                      const cSubs = { ...gSubs }
+                      for (let b = 0; b < nCond; b++) {
+                        const bit = (cmask >> (nCond - 1 - b)) & 1
+                        cProb *= bit ? condSlots[b].rate : (1 - condSlots[b].rate)
+                        if (bit) {
+                          cAtk += condSlots[b].atk
+                          for (const [kk, v] of Object.entries(condSlots[b].subs)) cSubs[kk] = (cSubs[kk] || 0) + v
+                        }
+                      }
+                      rawOutcomes.push({ prob: gProb * cProb, atk: cAtk, subs: cSubs })
+                    }
+                  }
+                }
+              }
+
+              // 聚合
+              const grouped = new Map()
+              for (const { prob, atk, subs } of rawOutcomes) {
+                const k = `${atk}_${subsKey(subs)}`
+                if (!grouped.has(k)) grouped.set(k, { atk, subs, prob: 0 })
+                grouped.get(k).prob += prob
+              }
+
+              // 分類：廢品（回收）/ 空白（不知道）/ 可賣
+              let pScrap = 0, expRevPerHeart = 0
+              const outcomes = []
+              for (const { atk, subs, prob } of grouped.values()) {
+                const valid = VALID_ATK.has(atk)
+                const ev    = valid ? expectedMarketValueNullable(atk, subs) : null
+                // 0元 也算廢品（回收）; null = 不知道; >0 = 可賣
+                const isScrap   = !valid || ev === 0
+                const isUnknown = valid && ev === null
+                if (isScrap)        pScrap         += prob
+                else if (!isUnknown) expRevPerHeart += prob * ev
+                outcomes.push({ atk, subs, label: subsLabel(subs), prob, ev, isScrap, isUnknown })
+              }
+              outcomes.sort((a, b) => b.atk - a.atk || a.label.localeCompare(b.label))
+
+              // 回收計算（連續近似）
+              const s = pScrap
+              const totalScrolled    = qty * 2 / (2 - s)
+              const totalSynthesized = totalScrolled - qty
+              const synthHeartCost   = synthCost + scrollCostTotal + hammerCostCond
+              const totalCost        = qty * costPerHeart + totalSynthesized * synthHeartCost
+
+              // 合成出框加成
+              const pSell = outcomes.filter(o => !o.isScrap && !o.isUnknown).reduce((a, o) => a + o.prob, 0)
+              const avgNetDiff = pSell > 0
+                ? outcomes.filter(o => !o.isScrap && !o.isUnknown)
+                    .reduce((a, o) => a + (o.prob / pSell) * ((getNetPriceNullable(o.atk, o.subs, true) ?? 0) - (getNetPriceNullable(o.atk, o.subs, false) ?? 0)), 0)
+                : 0
+              const totalFrameBonus  = totalSynthesized * pSell * frameRate * avgNetDiff
+              const totalRevenue     = totalScrolled * expRevPerHeart + totalFrameBonus
+              const totalProfit      = totalRevenue - totalCost
+              const expProfitPerHeart = totalProfit / qty
+
+              const label = slots3.map(s => s.name).join(' / ') + (s4 ? ` + 🔨${s4.name}` : '')
+              results.push({
+                label, costPerHeart, scrollCostTotal,
+                pScrap, expRevPerHeart,
+                totalScrolled, totalSynthesized,
+                totalCost, totalRevenue, totalProfit,
+                expProfit: expProfitPerHeart,
+                outcomes,
+              })
+            } // end if conditional / else always
           }
         }
       }
