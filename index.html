@@ -2259,6 +2259,197 @@
         </template>
       </section>
 
+      <!-- ⑧ 補點策略比較 -->
+      <section class="heart-section">
+        <h2 class="heart-section-title">⑧ 補點策略比較（10%過但60%沒中，slot3該怎麼辦？）</h2>
+        <div class="heart-note" style="margin-bottom:12px">
+          當關卡卷（10%）通過、主卷（60%）卻沒中時，第三個槽位有三種選擇：
+          <b>①標準</b>（繼續點主卷60%）、<b>②補10%</b>（改點一張10%卷衝+10攻）、<b>③不補點</b>（直接接受+5攻賣出）。
+          哪個更賺取決於市場價格，這裡幫你計算。
+        </div>
+
+        <!-- 設定 -->
+        <div class="heart-cond-config" style="flex-wrap:wrap; gap:10px 20px">
+          <div class="heart-cond-field">
+            <div class="heart-cond-label">關卡卷（10%）</div>
+            <select v-model="heartFactory.adaptiveScroll.gate" class="heart-sel">
+              <option v-for="sc in heartFactory.SCROLLS.filter(s => s.rate < 0.5)" :key="sc.id" :value="sc.id">
+                {{ sc.name }}（{{ heartFactory.scrollCosts[sc.id]||0 }}萬）
+              </option>
+            </select>
+          </div>
+          <div class="heart-cond-field">
+            <div class="heart-cond-label">主卷（60%）</div>
+            <select v-model="heartFactory.adaptiveScroll.main" class="heart-sel">
+              <option v-for="sc in heartFactory.SCROLLS.filter(s => s.rate >= 0.5)" :key="sc.id" :value="sc.id">
+                {{ sc.name }}（{{ heartFactory.scrollCosts[sc.id]||0 }}萬）
+              </option>
+            </select>
+          </div>
+          <div class="heart-cond-field">
+            <div class="heart-cond-label">60%沒中時補什麼？</div>
+            <select v-model="heartFactory.adaptiveScroll.fallback" class="heart-sel">
+              <option value="skip">不補點（直接賣）</option>
+              <option v-for="sc in heartFactory.SCROLLS.filter(s => s.rate < 0.5)" :key="sc.id" :value="sc.id">
+                補{{ sc.name }}（{{ heartFactory.scrollCosts[sc.id]||0 }}萬）
+              </option>
+            </select>
+          </div>
+          <div class="heart-cond-field">
+            <div class="heart-cond-label">起始顆數</div>
+            <input type="number" v-model.number="heartFactory.adaptiveScroll.qty" min="1" class="heart-qty-input" />
+          </div>
+        </div>
+
+        <div class="heart-divider"></div>
+
+        <template v-if="heartFactory.adaptiveScrollAnalysis">
+          <!-- 三欄比較 -->
+          <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-bottom:12px">
+
+            <!-- A: 標準 -->
+            <div class="heart-panel" style="padding:10px">
+              <div class="heart-cond-subtitle" style="margin-bottom:6px">① 標準（永遠點主卷）</div>
+              <div class="heart-note" style="margin-bottom:6px">
+                slot3 不管 slot2 中沒中都點
+                <b>{{ heartFactory.adaptiveScrollAnalysis.main.name }}</b>
+              </div>
+              <div class="heart-note">每顆成本 <b>{{ heartFactory.adaptiveScrollAnalysis.standard.costPerHeart.toFixed(1) }}萬</b></div>
+              <div class="heart-note">廢品率 <b>{{ (heartFactory.adaptiveScrollAnalysis.standard.pScrap*100).toFixed(1) }}%</b></div>
+              <div style="margin:4px 0">
+                <span v-for="o in heartFactory.adaptiveScrollAnalysis.standard.outcomes.filter(o => !o.isScrap)" :key="o.atk+'_'+o.label"
+                      style="margin-right:6px; font-size:13px"
+                      :class="o.isUnknown ? 'heart-dim' : 'heart-profit'">
+                  <b>+{{ o.atk }}攻</b>{{ o.label !== '無副屬' ? o.label : '' }}:{{ (o.prob*100).toFixed(2) }}%
+                </span>
+              </div>
+              <div class="heart-divider" style="margin:6px 0"></div>
+              <div class="heart-note">{{ heartFactory.adaptiveScroll.qty }}顆期望利潤</div>
+              <div :class="heartFactory.adaptiveScrollAnalysis.standard.totalProfit>=0?'heart-profit':'heart-loss'" style="font-size:16px; font-weight:bold">
+                {{ heartFactory.adaptiveScrollAnalysis.standard.totalProfit>=0?'+':'' }}{{ heartFactory.adaptiveScrollAnalysis.standard.totalProfit.toFixed(0) }}萬
+              </div>
+            </div>
+
+            <!-- B: 補10% -->
+            <div class="heart-panel" style="padding:10px" :style="heartFactory.adaptiveScroll.fallback==='skip' ? 'opacity:0.4' : ''">
+              <div class="heart-cond-subtitle" style="margin-bottom:6px">② 補10%（60%沒中改點10%）</div>
+              <template v-if="heartFactory.adaptiveScrollAnalysis.withFallback">
+                <div class="heart-note" style="margin-bottom:6px">
+                  slot3：主卷過→<b>{{ heartFactory.adaptiveScrollAnalysis.main.name }}</b>；主卷沒過→<b>{{ heartFactory.adaptiveScrollAnalysis.fallback.name }}</b>
+                </div>
+                <div class="heart-note">每顆成本 <b>{{ heartFactory.adaptiveScrollAnalysis.withFallback.costPerHeart.toFixed(1) }}萬</b></div>
+                <div class="heart-note">廢品率 <b>{{ (heartFactory.adaptiveScrollAnalysis.withFallback.pScrap*100).toFixed(1) }}%</b></div>
+                <div style="margin:4px 0">
+                  <span v-for="o in heartFactory.adaptiveScrollAnalysis.withFallback.outcomes.filter(o => !o.isScrap)" :key="o.atk+'_'+o.label"
+                        style="margin-right:6px; font-size:13px"
+                        :class="o.isUnknown ? 'heart-dim' : 'heart-profit'">
+                    <b>+{{ o.atk }}攻</b>{{ o.label !== '無副屬' ? o.label : '' }}:{{ (o.prob*100).toFixed(2) }}%
+                  </span>
+                </div>
+                <div class="heart-divider" style="margin:6px 0"></div>
+                <div class="heart-note">{{ heartFactory.adaptiveScroll.qty }}顆期望利潤</div>
+                <div :class="heartFactory.adaptiveScrollAnalysis.withFallback.totalProfit>=0?'heart-profit':'heart-loss'" style="font-size:16px; font-weight:bold">
+                  {{ heartFactory.adaptiveScrollAnalysis.withFallback.totalProfit>=0?'+':'' }}{{ heartFactory.adaptiveScrollAnalysis.withFallback.totalProfit.toFixed(0) }}萬
+                </div>
+              </template>
+              <template v-else>
+                <div class="heart-note" style="color:#aaa">← 請在左上選擇補什麼10%卷</div>
+              </template>
+            </div>
+
+            <!-- C: 不補點 -->
+            <div class="heart-panel" style="padding:10px">
+              <div class="heart-cond-subtitle" style="margin-bottom:6px">③ 不補點（直接接受+{{ heartFactory.adaptiveScrollAnalysis.gate.atk }}攻）</div>
+              <div class="heart-note" style="margin-bottom:6px">
+                slot3：主卷過→<b>{{ heartFactory.adaptiveScrollAnalysis.main.name }}</b>；主卷沒過→<b>不點</b>
+              </div>
+              <div class="heart-note">每顆成本 <b>{{ heartFactory.adaptiveScrollAnalysis.withSkip.costPerHeart.toFixed(1) }}萬</b></div>
+              <div class="heart-note">廢品率 <b>{{ (heartFactory.adaptiveScrollAnalysis.withSkip.pScrap*100).toFixed(1) }}%</b></div>
+              <div style="margin:4px 0">
+                <span v-for="o in heartFactory.adaptiveScrollAnalysis.withSkip.outcomes.filter(o => !o.isScrap)" :key="o.atk+'_'+o.label"
+                      style="margin-right:6px; font-size:13px"
+                      :class="o.isUnknown ? 'heart-dim' : 'heart-profit'">
+                  <b>+{{ o.atk }}攻</b>{{ o.label !== '無副屬' ? o.label : '' }}:{{ (o.prob*100).toFixed(2) }}%
+                </span>
+              </div>
+              <div class="heart-divider" style="margin:6px 0"></div>
+              <div class="heart-note">{{ heartFactory.adaptiveScroll.qty }}顆期望利潤</div>
+              <div :class="heartFactory.adaptiveScrollAnalysis.withSkip.totalProfit>=0?'heart-profit':'heart-loss'" style="font-size:16px; font-weight:bold">
+                {{ heartFactory.adaptiveScrollAnalysis.withSkip.totalProfit>=0?'+':'' }}{{ heartFactory.adaptiveScrollAnalysis.withSkip.totalProfit.toFixed(0) }}萬
+              </div>
+            </div>
+
+          </div>
+
+          <!-- 最優推薦 -->
+          <div v-if="heartFactory.adaptiveScrollAnalysis.withFallback" class="heart-note" style="padding:8px; background:#1a2030; border-radius:6px; border-left:3px solid #f0c040">
+            <template v-if="heartFactory.adaptiveScrollAnalysis.withFallback.totalProfit >= heartFactory.adaptiveScrollAnalysis.standard.totalProfit &&
+                            heartFactory.adaptiveScrollAnalysis.withFallback.totalProfit >= heartFactory.adaptiveScrollAnalysis.withSkip.totalProfit">
+              🏆 <b>推薦補10%</b> — 衝到+{{ heartFactory.adaptiveScrollAnalysis.gate.atk + heartFactory.adaptiveScrollAnalysis.fallback.atk }}攻的機率值得那張10%卷的費用
+            </template>
+            <template v-else-if="heartFactory.adaptiveScrollAnalysis.withSkip.totalProfit >= heartFactory.adaptiveScrollAnalysis.standard.totalProfit &&
+                                 heartFactory.adaptiveScrollAnalysis.withSkip.totalProfit >= heartFactory.adaptiveScrollAnalysis.withFallback.totalProfit">
+              🏆 <b>推薦不補點</b> — 省下10%卷費用比偶爾中+{{ heartFactory.adaptiveScrollAnalysis.gate.atk + heartFactory.adaptiveScrollAnalysis.fallback.atk }}攻划算
+            </template>
+            <template v-else>
+              🏆 <b>推薦標準策略</b> — slot3 繼續點主卷60%最划算
+            </template>
+            <span class="heart-dim" style="display:block; margin-top:4px; font-size:12px">
+              ① {{ heartFactory.adaptiveScrollAnalysis.standard.totalProfit.toFixed(0) }}萬 ／
+              ② {{ heartFactory.adaptiveScrollAnalysis.withFallback.totalProfit.toFixed(0) }}萬 ／
+              ③ {{ heartFactory.adaptiveScrollAnalysis.withSkip.totalProfit.toFixed(0) }}萬
+            </span>
+          </div>
+
+          <!-- 三策略詳細出心機率 -->
+          <div class="heart-divider" style="margin-top:14px"></div>
+          <div class="heart-cond-subtitle" style="margin-top:10px; margin-bottom:8px">各 ATK 出現機率對比</div>
+          <table style="width:100%; border-collapse:collapse; font-size:13px">
+            <thead>
+              <tr style="color:#a0a0b0; border-bottom:1px solid #333">
+                <th style="text-align:left; padding:4px 8px">ATK</th>
+                <th style="text-align:right; padding:4px 8px">① 標準</th>
+                <th style="text-align:right; padding:4px 8px">② 補10%</th>
+                <th style="text-align:right; padding:4px 8px">③ 不補點</th>
+                <th style="text-align:right; padding:4px 8px">市值</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template v-for="atk in [20,17,15,14,12,11,10,9,7,5,0]" :key="atk">
+                <template v-if="
+                  [heartFactory.adaptiveScrollAnalysis.standard,
+                   heartFactory.adaptiveScrollAnalysis.withFallback || heartFactory.adaptiveScrollAnalysis.withSkip,
+                   heartFactory.adaptiveScrollAnalysis.withSkip].some(v => v && v.outcomes.some(o => o.atk === atk))
+                ">
+                  <tr style="border-bottom:1px solid #222">
+                    <td style="padding:4px 8px">
+                      <b :class="atk===0?'heart-dim':''">{{ atk === 0 ? '廢品' : '+'+atk+'攻' }}</b>
+                    </td>
+                    <td style="text-align:right; padding:4px 8px">
+                      {{ ((heartFactory.adaptiveScrollAnalysis.standard.outcomes.find(o=>o.atk===atk)||{prob:0}).prob*100).toFixed(2) }}%
+                    </td>
+                    <td style="text-align:right; padding:4px 8px" :style="!heartFactory.adaptiveScrollAnalysis.withFallback?'color:#555':''">
+                      {{ heartFactory.adaptiveScrollAnalysis.withFallback
+                          ? ((heartFactory.adaptiveScrollAnalysis.withFallback.outcomes.find(o=>o.atk===atk)||{prob:0}).prob*100).toFixed(2)+'%'
+                          : '—' }}
+                    </td>
+                    <td style="text-align:right; padding:4px 8px">
+                      {{ ((heartFactory.adaptiveScrollAnalysis.withSkip.outcomes.find(o=>o.atk===atk)||{prob:0}).prob*100).toFixed(2) }}%
+                    </td>
+                    <td style="text-align:right; padding:4px 8px; color:#a0a0b0; font-size:12px">
+                      {{ atk === 0 ? '回收' : (heartFactory.adaptiveScrollAnalysis.standard.outcomes.find(o=>o.atk===atk)?.ev != null
+                          ? heartFactory.adaptiveScrollAnalysis.standard.outcomes.find(o=>o.atk===atk).ev.toFixed(0)+'萬'
+                          : '未填') }}
+                    </td>
+                  </tr>
+                </template>
+              </template>
+            </tbody>
+          </table>
+        </template>
+        <div v-else class="heart-note" style="color:#888">請先設定關卡卷與主卷</div>
+      </section>
+
     </main><!-- end heart tab -->
 
     <!-- ══════════════════════════════════════════ Tab 6：BOSS 排程 ══ -->
@@ -2578,7 +2769,7 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="heart.js?v=20260522b"></script>
+  <script src="heart.js?v=20260522c"></script>
   <script src="equip.js?v=20260516a"></script>
   <script src="loot.js?v=20260512b"></script>
   <script src="alchemy.js?v=20260509-1"></script>

@@ -105,6 +105,14 @@ function useHeartFactory() {
     qty:            40,
   })
 
+  // ⑧ 補點策略比較
+  const adaptiveScroll = ref({
+    gate:     'p10_str',   // 10% 關卡卷
+    main:     'p60_atk',   // 60% 主卷（slot2，以及 slot3 在主卷有過時）
+    fallback: 'skip',      // slot3 在關卡過但主卷沒過時：'skip' 或某 10% 卷 id
+    qty:      40,
+  })
+
   // ── getState / setState ────────────────────────────────────
   function getState() {
     return {
@@ -122,6 +130,7 @@ function useHeartFactory() {
       optimizer:          { ...optimizer.value },
       condStrategy:       { ...condStrategy.value },
       conditionalHammer:  JSON.parse(JSON.stringify(conditionalHammer.value)),
+      adaptiveScroll:     { ...adaptiveScroll.value },
     }
   }
 
@@ -141,6 +150,7 @@ function useHeartFactory() {
     if (s.optimizer)         Object.assign(optimizer.value,         s.optimizer)
     if (s.condStrategy)      Object.assign(condStrategy.value,      s.condStrategy)
     if (s.conditionalHammer) Object.assign(conditionalHammer.value, JSON.parse(JSON.stringify(s.conditionalHammer)))
+    if (s.adaptiveScroll)    Object.assign(adaptiveScroll.value,    s.adaptiveScroll)
   }
 
   // ── 材料成本 ───────────────────────────────────────────────
@@ -515,6 +525,116 @@ function useHeartFactory() {
     }
   })
 
+  // ── ⑧ 補點策略比較 ────────────────────────────────────────────
+  const adaptiveScrollAnalysis = computed(() => {
+    const gate     = SCROLLS.find(s => s.id === adaptiveScroll.value.gate)
+    const main     = SCROLLS.find(s => s.id === adaptiveScroll.value.main)
+    const fallback = adaptiveScroll.value.fallback === 'skip' ? null
+                     : SCROLLS.find(s => s.id === adaptiveScroll.value.fallback)
+    if (!gate || !main) return null
+    if (isMixedMagic([gate, main])) return null
+    if (fallback && isMixedMagic([gate, fallback])) return null
+
+    const qty       = adaptiveScroll.value.qty || 1
+    const synthCost = condStrategy.value.synthCost  ?? 0
+    const frameRate = (condStrategy.value.synthFrameRate ?? 0) / 100
+
+    const gateCost     = scrollCosts.value[gate.id] || 0
+    const mainCost     = scrollCosts.value[main.id] || 0
+
+    // 計算單一變體的分析資料
+    // slot3Pass = gate 過且 main 過時 slot3 用的卷；slot3Fail = gate 過但 main 沒過時 slot3 用的卷（null=不點）
+    function calcVariant(slot3Pass, slot3Fail) {
+      const pG  = gate.rate
+      const pM  = main.rate
+      const pSP = slot3Pass ? slot3Pass.rate : 0
+      const pSF = slot3Fail ? slot3Fail.rate : 0
+
+      const slot3PassCost = slot3Pass ? (scrollCosts.value[slot3Pass.id] || 0) : 0
+      const slot3FailCost = slot3Fail ? (scrollCosts.value[slot3Fail.id] || 0) : 0
+
+      // 期望卷軸總花費
+      const scrollCostTotal =
+        gateCost +
+        pG * mainCost +
+        pG * pM * slot3PassCost +
+        pG * (1 - pM) * slot3FailCost
+
+      const costPerHeart = materialCost.value + scrollCostTotal
+
+      // 枚舉成果
+      const rawOutcomes = []
+      // 關卡沒過 → 廢品
+      rawOutcomes.push({ prob: 1 - pG, atk: 0, subs: {} })
+      // 關卡過，主卷過：
+      if (slot3Pass) {
+        rawOutcomes.push({ prob: pG * pM * pSP,       atk: gate.atk + main.atk + slot3Pass.atk, subs: addSubs(addSubs(gate.subs, main.subs), slot3Pass.subs) })
+        rawOutcomes.push({ prob: pG * pM * (1 - pSP), atk: gate.atk + main.atk,                 subs: addSubs(gate.subs, main.subs) })
+      } else {
+        rawOutcomes.push({ prob: pG * pM, atk: gate.atk + main.atk, subs: addSubs(gate.subs, main.subs) })
+      }
+      // 關卡過，主卷沒過：
+      if (slot3Fail) {
+        rawOutcomes.push({ prob: pG * (1 - pM) * pSF,       atk: gate.atk + slot3Fail.atk, subs: addSubs(gate.subs, slot3Fail.subs) })
+        rawOutcomes.push({ prob: pG * (1 - pM) * (1 - pSF), atk: gate.atk,                 subs: { ...gate.subs } })
+      } else {
+        rawOutcomes.push({ prob: pG * (1 - pM), atk: gate.atk, subs: { ...gate.subs } })
+      }
+
+      // 聚合
+      const grouped = new Map()
+      for (const { prob, atk, subs } of rawOutcomes) {
+        if (prob <= 0) continue
+        const k = `${atk}_${subsKey(subs)}`
+        if (!grouped.has(k)) grouped.set(k, { atk, subs, prob: 0 })
+        grouped.get(k).prob += prob
+      }
+
+      let pScrap = 0, expRevPerHeart = 0
+      const outcomes = []
+      for (const { atk, subs, prob } of grouped.values()) {
+        const valid    = VALID_ATK.has(atk)
+        const ev       = valid ? expectedMarketValueNullable(atk, subs) : null
+        const isScrap   = !valid || ev === 0
+        const isUnknown = valid && ev === null
+        if (isScrap)         pScrap          += prob
+        else if (!isUnknown) expRevPerHeart  += prob * ev
+        outcomes.push({ atk, subs, label: subsLabel(subs), prob, ev, isScrap, isUnknown })
+      }
+      outcomes.sort((a, b) => b.atk - a.atk)
+
+      // 回收計算
+      const s = pScrap
+      const totalScrolled    = qty * 2 / (2 - s)
+      const totalSynthesized = totalScrolled - qty
+      const synthHeartCost   = synthCost + scrollCostTotal
+      const totalCost        = qty * costPerHeart + totalSynthesized * synthHeartCost
+
+      const pSell = outcomes.filter(o => !o.isScrap && !o.isUnknown).reduce((a, o) => a + o.prob, 0)
+      const avgNetDiff = pSell > 0
+        ? outcomes.filter(o => !o.isScrap && !o.isUnknown)
+            .reduce((a, o) => a + (o.prob / pSell) * ((getNetPriceNullable(o.atk, o.subs, true) ?? 0) - (getNetPriceNullable(o.atk, o.subs, false) ?? 0)), 0)
+        : 0
+      const totalFrameBonus  = totalSynthesized * pSell * frameRate * avgNetDiff
+      const totalRevenue     = totalScrolled * expRevPerHeart + totalFrameBonus
+      const totalProfit      = totalRevenue - totalCost
+      const expProfit        = totalProfit / qty
+
+      return { scrollCostTotal, costPerHeart, pScrap, expRevPerHeart, outcomes,
+               totalScrolled, totalSynthesized, totalCost, totalRevenue, totalProfit, expProfit }
+    }
+
+    return {
+      gate, main, fallback,
+      // 標準：slot3 永遠點主卷（不管主卷slot2中沒中）
+      standard:     calcVariant(main, main),
+      // 補10%：slot3 在主卷沒中時改點 fallback（10%卷）
+      withFallback: fallback ? calcVariant(main, fallback) : null,
+      // 不補點：slot3 在主卷沒中時直接跳過
+      withSkip:     calcVariant(main, null),
+    }
+  })
+
   // ── 最佳策略排行（含回收）──────────────────────────────────────
   const strategyRanking = computed(() => {
     const hammerType    = optimizer.value.hammerType
@@ -840,6 +960,7 @@ function useHeartFactory() {
     materialCost,
     condStrategy, condStrategyAnalysis,
     conditionalHammer, conditionalHammerAnalysis,
+    adaptiveScroll, adaptiveScrollAnalysis,
     allOutcomes, batchOutcomes, batchAnalysis, strategyRanking,
     getState, setState,
   }
