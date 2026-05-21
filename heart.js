@@ -89,6 +89,14 @@ function useHeartFactory() {
 
   const optimizer = ref({ hammerType: 'none', qty: 40 })
 
+  const conditionalHammer = ref({
+    hammerType: '50',
+    slot4:      'p10_str',
+    triggerAtks: [7, 9, 10],
+    slots:      ['p10_str', 'p10_str', 'p10_str'],
+    qty:        40,
+  })
+
   const condStrategy = ref({
     scroll10:       'p10_str',
     scroll60:       'p60_atk',
@@ -111,8 +119,9 @@ function useHeartFactory() {
       marketPrices:       { ...marketPrices.value },
       marketPriceFilter:  { ...marketPriceFilter.value },
       batch:              JSON.parse(JSON.stringify(batch.value)),
-      optimizer:    { ...optimizer.value },
-      condStrategy: { ...condStrategy.value },
+      optimizer:          { ...optimizer.value },
+      condStrategy:       { ...condStrategy.value },
+      conditionalHammer:  JSON.parse(JSON.stringify(conditionalHammer.value)),
     }
   }
 
@@ -128,9 +137,10 @@ function useHeartFactory() {
     auctionFee.value   = s.auctionFee   ?? 3
     if (s.marketPrices)       Object.assign(marketPrices.value,       s.marketPrices)
     if (s.marketPriceFilter)  Object.assign(marketPriceFilter.value,  s.marketPriceFilter)
-    if (s.batch)              Object.assign(batch.value,              s.batch)
-    if (s.optimizer)     Object.assign(optimizer.value,     s.optimizer)
-    if (s.condStrategy)  Object.assign(condStrategy.value,  s.condStrategy)
+    if (s.batch)             Object.assign(batch.value,             s.batch)
+    if (s.optimizer)         Object.assign(optimizer.value,         s.optimizer)
+    if (s.condStrategy)      Object.assign(condStrategy.value,      s.condStrategy)
+    if (s.conditionalHammer) Object.assign(conditionalHammer.value, JSON.parse(JSON.stringify(s.conditionalHammer)))
   }
 
   // ── 材料成本 ───────────────────────────────────────────────
@@ -246,6 +256,97 @@ function useHeartFactory() {
       outcomes, expRevPerHeart,
       qty, totalScrolled, totalSynthesized, totalUsable,
       totalCost, totalRevenue, totalFrameBonus, totalProfit, effCostPerUsable,
+    }
+  })
+
+  // ── 黃金鐵鎚條件使用期望值 ──────────────────────────────────────
+  const conditionalHammerAnalysis = computed(() => {
+    const ch    = conditionalHammer.value
+    const slots = ch.slots.map(id => SCROLLS.find(s => s.id === id))
+    const s4    = SCROLLS.find(s => s.id === ch.slot4)
+    if (slots.some(s => !s) || !s4) return null
+
+    const triggerSet   = new Set(ch.triggerAtks)
+    const hammerCost   = ch.hammerType === '100' ? (hammer100.value || 0) : (hammer50.value || 0)
+    const successProb  = ch.hammerType === '100' ? 1.0 : 0.5
+
+    const scrollCostTotal  = slots.reduce((sum, sc) => sum + (scrollCosts.value[sc.id] || 0), 0)
+    const baseCostPerHeart = materialCost.value + scrollCostTotal
+
+    // 枚舉 3 槽出心
+    const raw3 = []
+    for (let mask = 0; mask < 8; mask++) {
+      let prob = 1, atk = 0
+      const subs = {}
+      for (let j = 0; j < 3; j++) {
+        const bit = (mask >> (2 - j)) & 1
+        prob *= bit ? slots[j].rate : (1 - slots[j].rate)
+        if (bit) {
+          atk += slots[j].atk
+          for (const [k, v] of Object.entries(slots[j].subs)) subs[k] = (subs[k] || 0) + v
+        }
+      }
+      raw3.push({ prob, atk, subs })
+    }
+
+    // 聚合相同 (atk, subs) 的機率
+    const grouped = new Map()
+    for (const { prob, atk, subs } of raw3) {
+      const k = `${atk}_${subsKey(subs)}`
+      if (!grouped.has(k)) grouped.set(k, { atk, subs, prob: 0 })
+      grouped.get(k).prob += prob
+    }
+
+    const validTable = []
+    let wasteProb = 0
+
+    for (const { atk, subs, prob } of grouped.values()) {
+      const valid     = VALID_ATK.has(atk)
+      const useHammer = valid && triggerSet.has(atk)
+      const label     = subsLabel(subs)
+
+      let netEV = 0, sellBase = 0, sellHammered = null
+      let hammeredAtk = null, hammeredLabel = null
+
+      if (valid) {
+        sellBase = expectedMarketValue(atk, subs)
+        if (useHammer) {
+          hammeredAtk   = atk + s4.atk
+          const hSubs   = addSubs(subs, s4.subs)
+          hammeredLabel = subsLabel(hSubs)
+          sellHammered  = VALID_ATK.has(hammeredAtk)
+            ? expectedMarketValue(hammeredAtk, hSubs)
+            : sellBase
+          // 50%鎚：只試一次，沒中就接受原ATK；100%：保證成功
+          netEV = successProb * sellHammered + (1 - successProb) * sellBase - hammerCost
+        } else {
+          netEV = sellBase
+        }
+        validTable.push({
+          atk, subs, label, prob, useHammer,
+          hammeredAtk, hammeredLabel, sellBase, sellHammered,
+          netEV,
+          profit: netEV - baseCostPerHeart,
+        })
+      } else {
+        wasteProb += prob
+      }
+    }
+
+    validTable.sort((a, b) => a.atk - b.atk || a.label.localeCompare(b.label))
+
+    const expNetRevPerHeart     = validTable.reduce((s, r) => s + r.prob * r.netEV, 0)
+    const expHammerCostPerHeart = validTable
+      .filter(r => r.useHammer)
+      .reduce((s, r) => s + r.prob * hammerCost, 0)
+
+    return {
+      scrollCostTotal, baseCostPerHeart,
+      hammerCost, successProb,
+      validTable, wasteProb,
+      expNetRevPerHeart,
+      expHammerCostPerHeart,
+      expProfitPerHeart: expNetRevPerHeart - baseCostPerHeart,
     }
   })
 
@@ -571,6 +672,7 @@ function useHeartFactory() {
     batch, optimizer,
     materialCost,
     condStrategy, condStrategyAnalysis,
+    conditionalHammer, conditionalHammerAnalysis,
     allOutcomes, batchOutcomes, batchAnalysis, strategyRanking,
     getState, setState,
   }

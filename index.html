@@ -2087,6 +2087,143 @@
         </template>
       </section>
 
+      <!-- ⑦ 黃金鐵鎚條件使用 -->
+      <section class="heart-section">
+        <h2 class="heart-section-title">⑦ 黃金鐵鎚條件使用期望值</h2>
+        <div class="heart-note" style="margin-bottom:10px">
+          只在 3 槽衝出特定攻擊值時才用一次鐵鎚（50% 鎚只試一次，失敗就接受原 ATK，不重試）。
+        </div>
+
+        <!-- 設定 -->
+        <div class="heart-cond-config" style="align-items:flex-start">
+
+          <!-- 3 槽策略 -->
+          <div class="heart-cond-field">
+            <div class="heart-cond-label">衝卷策略（3 槽）</div>
+            <div v-for="(_, i) in [0,1,2]" :key="i" style="display:flex; align-items:center; gap:6px; margin-bottom:4px">
+              <span class="heart-slot-label" style="min-width:28px">槽{{ i+1 }}</span>
+              <select v-model="heartFactory.conditionalHammer.slots[i]" class="heart-sel">
+                <option v-for="sc in heartFactory.SCROLLS" :key="sc.id" :value="sc.id">
+                  {{ sc.name }}（{{ (sc.rate*100).toFixed(0) }}%）
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 鐵鎚設定 -->
+          <div class="heart-cond-field">
+            <div class="heart-cond-label">鐵鎚類型</div>
+            <select v-model="heartFactory.conditionalHammer.hammerType" class="heart-sel">
+              <option value="50">50%（{{ heartFactory.hammer50||0 }}萬/次，失敗不重試）</option>
+              <option value="100">100%（{{ heartFactory.hammer100||0 }}萬/次，保證成功）</option>
+            </select>
+            <div class="heart-note" style="margin-top:4px; font-size:12px">
+              ※ 與批量分析不同：50%鎚本區只算一次成本，不乘以 2
+            </div>
+          </div>
+
+          <!-- 槽4卷軸 -->
+          <div class="heart-cond-field">
+            <div class="heart-cond-label">槽4 卷軸（鐵鎚後點）</div>
+            <select v-model="heartFactory.conditionalHammer.slot4" class="heart-sel">
+              <option v-for="sc in heartFactory.SCROLLS" :key="sc.id" :value="sc.id">
+                {{ sc.name }}（{{ (sc.rate*100).toFixed(0) }}%，+{{ sc.atk }}攻）
+              </option>
+            </select>
+          </div>
+
+        </div>
+
+        <!-- 觸發閾值 -->
+        <div style="margin:10px 0 6px; display:flex; align-items:center; flex-wrap:wrap; gap:6px">
+          <span style="font-size:13px; font-weight:600; color:#e8b86d; margin-right:4px">達到以下攻擊值才用鐵鎚：</span>
+          <label
+            v-for="atk in [...heartFactory.VALID_ATK].sort((a,b)=>a-b)"
+            :key="atk"
+            style="display:inline-flex; align-items:center; gap:3px; font-size:13px; cursor:pointer; background:#2a2a3a; padding:2px 8px; border-radius:4px;"
+            :style="heartFactory.conditionalHammer.triggerAtks.includes(atk) ? 'border:1px solid #e8b86d; color:#e8b86d' : 'border:1px solid #444; color:#888'"
+          >
+            <input type="checkbox"
+                   :checked="heartFactory.conditionalHammer.triggerAtks.includes(atk)"
+                   @change="e => {
+                     const arr = heartFactory.conditionalHammer.triggerAtks
+                     if (e.target.checked) { if (!arr.includes(atk)) arr.push(atk) }
+                     else { heartFactory.conditionalHammer.triggerAtks = arr.filter(x => x !== atk) }
+                   }" />
+            {{ atk }}攻
+          </label>
+        </div>
+
+        <div class="heart-divider"></div>
+
+        <template v-if="heartFactory.conditionalHammerAnalysis">
+          <!-- 成本摘要 -->
+          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px">
+            <div class="heart-ev-row" style="min-width:190px"><span>3槽卷軸成本</span><span>{{ heartFactory.conditionalHammerAnalysis.scrollCostTotal }} 萬</span></div>
+            <div class="heart-ev-row" style="min-width:190px"><span>材料＋卷軸（基礎成本）</span><span>{{ heartFactory.conditionalHammerAnalysis.baseCostPerHeart }} 萬</span></div>
+            <div class="heart-ev-row" style="min-width:190px"><span>鐵鎚單次費用</span><span>{{ heartFactory.conditionalHammerAnalysis.hammerCost }} 萬</span></div>
+            <div class="heart-ev-row" style="min-width:190px"><span>期望鐵鎚成本/顆</span><span>{{ heartFactory.conditionalHammerAnalysis.expHammerCostPerHeart.toFixed(2) }} 萬</span></div>
+          </div>
+
+          <!-- 結果表 -->
+          <div class="heart-outcome-head" style="grid-template-columns:2fr 1fr 2fr 1.2fr 1.2fr 1.3fr 1.3fr">
+            <span>3槽結果</span>
+            <span>機率</span>
+            <span>鐵鎚動作</span>
+            <span>原ATK售價</span>
+            <span>鎚後ATK售價</span>
+            <span>期望淨EV</span>
+            <span>利潤/顆</span>
+          </div>
+          <div
+            v-for="r in heartFactory.conditionalHammerAnalysis.validTable"
+            :key="r.atk+'_'+r.label"
+            class="heart-outcome-row"
+            style="grid-template-columns:2fr 1fr 2fr 1.2fr 1.2fr 1.3fr 1.3fr"
+          >
+            <span><strong>{{ r.atk }}攻</strong> <span class="heart-dim">{{ r.label || '無副屬' }}</span></span>
+            <span>{{ (r.prob*100).toFixed(2) }}%</span>
+            <span>
+              <template v-if="r.useHammer">
+                🔨 →
+                <strong style="color:#e8b86d">{{ r.hammeredAtk }}攻</strong>
+                <span class="heart-dim">{{ r.hammeredLabel && r.hammeredLabel !== '無副屬' ? ' '+r.hammeredLabel : '' }}</span>
+                <span class="heart-dim">（{{ (heartFactory.conditionalHammerAnalysis.successProb*100).toFixed(0) }}%）</span>
+              </template>
+              <template v-else><span class="heart-dim">不用鎚</span></template>
+            </span>
+            <span class="heart-dim">{{ r.sellBase > 0 ? r.sellBase.toFixed(0) : '—' }}</span>
+            <span class="heart-dim">{{ r.useHammer && r.sellHammered > 0 ? r.sellHammered.toFixed(0) : '—' }}</span>
+            <span>{{ r.netEV.toFixed(0) }} 萬</span>
+            <span :class="r.profit >= 0 ? 'heart-profit' : 'heart-loss'">
+              {{ r.profit >= 0 ? '+' : '' }}{{ r.profit.toFixed(0) }} 萬
+            </span>
+          </div>
+          <div v-if="heartFactory.conditionalHammerAnalysis.wasteProb > 0.0001"
+               class="heart-outcome-row heart-waste"
+               style="grid-template-columns:2fr 1fr 2fr 1.2fr 1.2fr 1.3fr 1.3fr">
+            <span>廢品</span>
+            <span>{{ (heartFactory.conditionalHammerAnalysis.wasteProb*100).toFixed(2) }}%</span>
+            <span>—</span><span>—</span><span>—</span><span>0 萬</span>
+            <span class="heart-loss">{{ (-heartFactory.conditionalHammerAnalysis.baseCostPerHeart).toFixed(0) }} 萬</span>
+          </div>
+
+          <div class="heart-divider" style="margin:12px 0"></div>
+
+          <div class="heart-ev-row">
+            <span>期望收益（含鐵鎚後售價）</span>
+            <span>{{ heartFactory.conditionalHammerAnalysis.expNetRevPerHeart.toFixed(0) }} 萬</span>
+          </div>
+          <div class="heart-ev-row heart-ev-total"
+               :class="heartFactory.conditionalHammerAnalysis.expProfitPerHeart >= 0 ? 'heart-profit' : 'heart-loss'">
+            <span>每顆期望利潤</span>
+            <span>
+              {{ heartFactory.conditionalHammerAnalysis.expProfitPerHeart >= 0 ? '+' : '' }}{{ heartFactory.conditionalHammerAnalysis.expProfitPerHeart.toFixed(0) }} 萬
+            </span>
+          </div>
+        </template>
+      </section>
+
     </main><!-- end heart tab -->
 
     <!-- ══════════════════════════════════════════ Tab 6：BOSS 排程 ══ -->
