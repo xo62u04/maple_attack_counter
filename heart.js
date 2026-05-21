@@ -538,9 +538,12 @@ function useHeartFactory() {
           for (const s4 of s4List) {
             if (s4 && isMixedMagic([...slots3, s4])) continue
 
-            if (hammerMode === 'conditional' && s4) {
-              // ── 條件鐵鎚模式：先算3槽，再依觸發ATK決定是否用鎚（只試一次）──
-              const triggerSet    = new Set(conditionalHammer.value.triggerAtks || [7, 9, 10])
+            if (s4) {
+              // ── 鐵鎚單次模式（always = 每顆都槌一次；conditional = 觸發ATK才槌一次）──
+              // 兩者都只試一次，失敗不重試
+              const triggerSet = hammerMode === 'conditional'
+                ? new Set(conditionalHammer.value.triggerAtks || [7, 9, 10])
+                : null  // null = 所有ATK都觸發（每顆都槌）
               const hammerProb    = hammerType === '50' ? 0.5 : 1.0
               const hammerCostOne = hammerType === '50' ? (hammer50.value || 0) : (hammer100.value || 0)
               const s4ScrollCost  = scrollCosts.value[s4.id] || 0
@@ -622,16 +625,16 @@ function useHeartFactory() {
               }
               const outcomes3 = [...grouped3.values()]
 
-              // 期望鎚費（只有觸發ATK才花費，只試一次）
+              // 期望鎚費（只試一次，失敗不重試）
               const expHammerContrib_c = outcomes3
-                .filter(o => triggerSet.has(o.atk))
+                .filter(o => triggerSet === null || triggerSet.has(o.atk))
                 .reduce((sum, o) => sum + o.prob * costPerUse, 0)
               const costPerHeart_c = materialCost.value + scrollCostTotal_c + expHammerContrib_c
 
-              // 展開最終成果（觸發ATK → 一次鎚，成功加s4，失敗原ATK）
+              // 展開最終成果（觸發ATK → 一次鎚，成功加s4，失敗原ATK，不重試）
               const rawFinal = []
               for (const { prob, atk, subs } of outcomes3) {
-                if (triggerSet.has(atk)) {
+                if (triggerSet === null || triggerSet.has(atk)) {
                   const probWin  = hammerProb * s4.rate
                   const probLose = 1 - probWin
                   const wSubs = { ...subs }
@@ -680,7 +683,7 @@ function useHeartFactory() {
               const totalProfit_c      = totalRevenue_c - totalCost_c
               const expProfitPerHeart_c = totalProfit_c / qty
 
-              const label_c = slots3.map(s => s.name).join(' / ') + ` + 🔨(條件)${s4.name}`
+              const label_c = slots3.map(s => s.name).join(' / ') + ` + 🔨${triggerSet ? '(條件)' : ''}${s4.name}`
               results.push({
                 label: label_c, costPerHeart: costPerHeart_c, scrollCostTotal: scrollCostTotal_c,
                 pScrap: pScrap_c, expRevPerHeart: expRevPerHeart_c,

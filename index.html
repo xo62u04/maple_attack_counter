@@ -1891,11 +1891,11 @@
               <span class="heart-slot-label">鐵鎚模式</span>
               <label class="heart-check-row" style="margin-right:12px">
                 <input type="radio" v-model="heartFactory.optimizer.hammerMode" value="always" />
-                每顆都槌（期望成本法）
+                每顆都槌（只試一次，失敗就賣）
               </label>
               <label class="heart-check-row">
                 <input type="radio" v-model="heartFactory.optimizer.hammerMode" value="conditional" />
-                條件槌（只在以下攻擊力才用一次）
+                條件槌（只在指定ATK才試一次）
               </label>
             </div>
             <div v-if="heartFactory.optimizer.hammerMode === 'conditional'"
@@ -2578,7 +2578,7 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="heart.js?v=20260522a"></script>
+  <script src="heart.js?v=20260522b"></script>
   <script src="equip.js?v=20260516a"></script>
   <script src="loot.js?v=20260512b"></script>
   <script src="alchemy.js?v=20260509-1"></script>
