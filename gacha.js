@@ -80,7 +80,7 @@ function useGacha() {
   // mpPer10M：每 1000萬楓幣 可換幾點里程（使用者輸入）
   const mpPer10M = ref(1000)
 
-  // ── 市價輸入（楓幣），key = item.id ──
+  // ── 市價輸入（萬楓幣），key = item.id ──
   const prices = ref({})
 
   // ── 每抽成本（楓幣）──
@@ -93,10 +93,11 @@ function useGacha() {
   // ── 帶計算的物品清單 ──
   const enriched = computed(() =>
     ITEMS.map(item => {
-      const price = Number(prices.value[item.id]) || 0
-      const avgPulls = 100 / item.rate          // 平均抽到次數
+      const priceWan = Number(prices.value[item.id]) || 0
+      const price    = priceWan * 10000             // 轉換：萬楓幣 → 楓幣
+      const avgPulls = 100 / item.rate              // 平均抽到次數
       const avgCost  = avgPulls * costPerPull.value // 平均花費（楓幣）
-      const evPerPull = (item.rate / 100) * price   // 每抽期望值
+      const evPerPull = (item.rate / 100) * price   // 每抽期望值（楓幣）
       const profit   = price > 0 ? price - avgCost : null
       const profitPct = price > 0 && avgCost > 0
         ? ((price - avgCost) / avgCost * 100)
