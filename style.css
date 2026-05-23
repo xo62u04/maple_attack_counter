@@ -3224,3 +3224,6 @@ body {
 .dist-to    { color: #7af07a; font-weight: bold; min-width: 60px; }
 .dist-amt   { color: #f0d060; margin-left: auto; }
 .dist-perfect { color: #7af07a; font-size: 13px; }
+.dist-type-label { font-size: 12px; color: #aaa; text-align: center; }
+.dist-row-framed td { background: rgba(100,200,120, 0.06); }
+.dist-row-hammered td { background: rgba(200,160,60, 0.07); }

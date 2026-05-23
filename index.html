@@ -1661,15 +1661,28 @@
           <div class="dist-inventory">
             <table class="dist-inv-table">
               <thead>
-                <tr><th>攻擊力</th><th>數量（顆）</th><th>參考單價（③節最低價）</th></tr>
+                <tr>
+                  <th>攻擊力</th>
+                  <th>一般（顆）</th>
+                  <th>有框（顆）</th>
+                  <th>有鎚（顆）</th>
+                  <th>一般/有鎚 單價</th>
+                  <th>有框單價</th>
+                </tr>
               </thead>
               <tbody>
                 <tr v-for="atk in heartFactory.DIST_ATKS" :key="atk">
                   <td class="dist-atk-label">{{ atk }}攻</td>
-                  <td><input type="number" v-model.number="heartFactory.distributor.hearts[atk]" min="0" step="1" class="dist-inv-input" placeholder="0" /></td>
+                  <td><input type="number" v-model.number="heartFactory.distributor.hearts[atk].n" min="0" step="1" class="dist-inv-input" placeholder="0" /></td>
+                  <td><input type="number" v-model.number="heartFactory.distributor.hearts[atk].f" min="0" step="1" class="dist-inv-input" placeholder="0" /></td>
+                  <td><input type="number" v-model.number="heartFactory.distributor.hearts[atk].h" min="0" step="1" class="dist-inv-input" placeholder="0" /></td>
                   <td class="dist-ref-price">
                     <span v-if="heartFactory.distPriceForAtk(atk) > 0">{{ heartFactory.distPriceForAtk(atk).toFixed(0) }} 萬</span>
-                    <span v-else class="dist-no-price">—（請先填③節市價）</span>
+                    <span v-else class="dist-no-price">—</span>
+                  </td>
+                  <td class="dist-ref-price">
+                    <span v-if="heartFactory.distPriceForAtkFramed(atk) > 0">{{ heartFactory.distPriceForAtkFramed(atk).toFixed(0) }} 萬</span>
+                    <span v-else class="dist-no-price">—</span>
                   </td>
                 </tr>
               </tbody>
@@ -1692,6 +1705,8 @@
                 <thead>
                   <tr>
                     <th>攻擊力</th>
+                    <th>類型</th>
+                    <th>單價</th>
                     <th>總計</th>
                     <th v-for="m in heartFactory.distributor.members" :key="m.name">
                       {{ m.name }}<br/><span class="dist-th-pct">{{ m.pct }}%</span>
@@ -1699,29 +1714,32 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="atk in heartFactory.distributorResult.activeAtks" :key="atk">
-                    <td class="dist-atk-label">{{ atk }}攻</td>
-                    <td class="dist-total">{{ heartFactory.distributor.hearts[atk] }}</td>
+                  <tr v-for="(row, ri) in heartFactory.distributorResult.rows" :key="ri"
+                      :class="{ 'dist-row-framed': row.type === 'f', 'dist-row-hammered': row.type === 'h' }">
+                    <td class="dist-atk-label">{{ row.atk }}攻</td>
+                    <td class="dist-type-label">{{ row.label }}</td>
+                    <td class="dist-ref-price">{{ row.price > 0 ? row.price.toFixed(0) + ' 萬' : '—' }}</td>
+                    <td class="dist-total">{{ row.qty }}</td>
                     <td v-for="(m, i) in heartFactory.distributor.members" :key="i"
-                        :class="heartFactory.distributorResult.allocation[i][atk] > 0 ? 'dist-has' : 'dist-zero'">
-                      {{ heartFactory.distributorResult.allocation[i][atk] }}
+                        :class="row.dist[i] > 0 ? 'dist-has' : 'dist-zero'">
+                      {{ row.dist[i] }}
                     </td>
                   </tr>
                   <!-- 金額小計 -->
                   <tr class="dist-value-row">
-                    <td colspan="2" class="dist-atk-label">實際金額</td>
+                    <td colspan="4" class="dist-atk-label">實際金額</td>
                     <td v-for="(m, i) in heartFactory.distributor.members" :key="i" class="dist-val">
                       {{ heartFactory.distributorResult.actualVal[i] > 0 ? heartFactory.distributorResult.actualVal[i].toFixed(0) + ' 萬' : '—' }}
                     </td>
                   </tr>
                   <tr class="dist-value-row">
-                    <td colspan="2" class="dist-atk-label">理想金額</td>
+                    <td colspan="4" class="dist-atk-label">理想金額</td>
                     <td v-for="(m, i) in heartFactory.distributor.members" :key="i" class="dist-val">
                       {{ heartFactory.distributorResult.idealVal[i] > 0 ? heartFactory.distributorResult.idealVal[i].toFixed(0) + ' 萬' : '—' }}
                     </td>
                   </tr>
                   <tr class="dist-balance-row">
-                    <td colspan="2" class="dist-atk-label">餘額</td>
+                    <td colspan="4" class="dist-atk-label">餘額</td>
                     <td v-for="(b, i) in heartFactory.distributorResult.balances" :key="i"
                         :class="b > 0.01 ? 'dist-owes' : b < -0.01 ? 'dist-owed' : 'dist-even'">
                       <template v-if="Math.abs(b) > 0.01">
