@@ -2510,13 +2510,16 @@
           <div class="dist-inventory">
             <table class="dist-inv-table">
               <thead>
-                <tr><th>攻擊力</th><th>數量（顆）</th><th>單價（萬楓幣）</th></tr>
+                <tr><th>攻擊力</th><th>數量（顆）</th><th>參考單價（③節均價）</th></tr>
               </thead>
               <tbody>
                 <tr v-for="atk in heartFactory.DIST_ATKS" :key="atk">
                   <td class="dist-atk-label">{{ atk }}攻</td>
                   <td><input type="number" v-model.number="heartFactory.distributor.hearts[atk]" min="0" step="1" class="dist-inv-input" placeholder="0" /></td>
-                  <td><input type="number" v-model.number="heartFactory.distributor.prices[atk]" min="0" step="100" class="dist-inv-input" placeholder="未填" /></td>
+                  <td class="dist-ref-price">
+                    <span v-if="heartFactory.distPriceForAtk(atk) > 0">{{ heartFactory.distPriceForAtk(atk).toFixed(0) }} 萬</span>
+                    <span v-else class="dist-no-price">—（請先填③節市價）</span>
+                  </td>
                 </tr>
               </tbody>
             </table>

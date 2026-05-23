@@ -114,8 +114,15 @@ function useHeartFactory() {
       { name: '玩家2', pct: 50 },
     ],
     hearts: Object.fromEntries(DIST_ATKS.map(a => [a, 0])),
-    prices: Object.fromEntries(DIST_ATKS.map(a => [a, 0])),
   })
+
+  // 從 ③ 節 marketPrices 計算各攻擊力的代表價格（所有副屬無潛均價）
+  function distPriceForAtk(atk) {
+    const noKeys = Object.keys(marketPrices.value).filter(k => k.startsWith(`${atk}_`) && k.endsWith('_no'))
+    const filled = noKeys.map(k => Number(marketPrices.value[k]) || 0).filter(v => v > 0)
+    if (filled.length === 0) return 0
+    return filled.reduce((a, b) => a + b, 0) / filled.length
+  }
 
   function addMember() {
     distributor.value.members.push({ name: `玩家${distributor.value.members.length + 1}`, pct: 0 })
@@ -155,7 +162,7 @@ function useHeartFactory() {
 
     for (const atk of activeAtks) {
       const qty   = d.hearts[atk] || 0
-      const price = d.prices[atk] || 0
+      const price = distPriceForAtk(atk)   // 自動從③節市價帶入
       const dist  = largestRemainder(qty, members.map(m => m.pct), totalPct)
       for (let i = 0; i < members.length; i++) {
         allocation[i][atk] = dist[i]
@@ -210,7 +217,7 @@ function useHeartFactory() {
       condStrategy:       { ...condStrategy.value },
       conditionalHammer:  JSON.parse(JSON.stringify(conditionalHammer.value)),
       adaptiveScroll:     { ...adaptiveScroll.value },
-      distributor:        JSON.parse(JSON.stringify(distributor.value)),
+      distributor: { members: JSON.parse(JSON.stringify(distributor.value.members)), hearts: { ...distributor.value.hearts } },
     }
   }
 
@@ -234,7 +241,6 @@ function useHeartFactory() {
     if (s.distributor) {
       if (s.distributor.members) distributor.value.members = s.distributor.members
       if (s.distributor.hearts)  Object.assign(distributor.value.hearts, s.distributor.hearts)
-      if (s.distributor.prices)  Object.assign(distributor.value.prices, s.distributor.prices)
     }
   }
 
@@ -1047,7 +1053,7 @@ function useHeartFactory() {
     conditionalHammer, conditionalHammerAnalysis,
     adaptiveScroll, adaptiveScrollAnalysis,
     allOutcomes, batchOutcomes, batchAnalysis, strategyRanking,
-    DIST_ATKS, distributor, addMember, removeMember, distributorResult,
+    DIST_ATKS, distributor, addMember, removeMember, distPriceForAtk, distributorResult,
     getState, setState,
   }
 }
