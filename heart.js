@@ -19,7 +19,8 @@ function useHeartFactory() {
     return hasMagic && hasPhysical
   }
 
-  const VALID_ATK = new Set([5, 7, 9, 10, 11, 12, 14, 15, 17, 20])
+  const VALID_ATK  = new Set([5, 7, 9, 10, 11, 12, 14, 15, 17, 20])
+  const DIST_ATKS  = [5, 7, 9, 10, 11, 12, 14, 15, 17, 20]
 
   // ── 副屬性工具函式 ─────────────────────────────────────────
 
@@ -106,6 +107,84 @@ function useHeartFactory() {
   })
 
   // ⑧ 補點策略比較
+  // ── ⑨ 金之心分配器 ──────────────────────────────────────────
+  const distributor = ref({
+    members: [
+      { name: '玩家1', pct: 50 },
+      { name: '玩家2', pct: 50 },
+    ],
+    hearts: Object.fromEntries(DIST_ATKS.map(a => [a, 0])),
+    prices: Object.fromEntries(DIST_ATKS.map(a => [a, 0])),
+  })
+
+  function addMember() {
+    distributor.value.members.push({ name: `玩家${distributor.value.members.length + 1}`, pct: 0 })
+  }
+  function removeMember(i) {
+    if (distributor.value.members.length <= 2) return
+    distributor.value.members.splice(i, 1)
+  }
+
+  // 最大剩餘法分配整數顆數
+  function largestRemainder(total, pcts, totalPct) {
+    if (total <= 0 || totalPct <= 0) return pcts.map(() => 0)
+    const exact  = pcts.map(p => total * (Number(p) || 0) / totalPct)
+    const floors = exact.map(Math.floor)
+    const fracs  = exact.map((e, i) => e - floors[i])
+    let leftover = total - floors.reduce((a, b) => a + b, 0)
+    const order  = fracs.map((f, i) => ({ f, i })).sort((a, b) => b.f - a.f || a.i - b.i)
+    const result = [...floors]
+    for (let k = 0; k < leftover; k++) result[order[k].i]++
+    return result
+  }
+
+  const distributorResult = computed(() => {
+    const d       = distributor.value
+    const members = d.members
+    if (!members || members.length < 2) return null
+    const totalPct = members.reduce((s, m) => s + (Number(m.pct) || 0), 0)
+    if (Math.abs(totalPct - 100) > 0.01) return { invalid: true, totalPct }
+
+    const activeAtks = DIST_ATKS.filter(atk => (d.hearts[atk] || 0) > 0)
+    if (activeAtks.length === 0) return { invalid: false, totalPct, empty: true }
+
+    // allocation[i][atk] = 分配顆數
+    const allocation = members.map(() => Object.fromEntries(DIST_ATKS.map(a => [a, 0])))
+    const idealVal   = new Array(members.length).fill(0)   // 萬楓幣
+    const actualVal  = new Array(members.length).fill(0)
+
+    for (const atk of activeAtks) {
+      const qty   = d.hearts[atk] || 0
+      const price = d.prices[atk] || 0
+      const dist  = largestRemainder(qty, members.map(m => m.pct), totalPct)
+      for (let i = 0; i < members.length; i++) {
+        allocation[i][atk] = dist[i]
+        idealVal[i]  += (Number(members[i].pct) / totalPct) * price * qty
+        actualVal[i] += dist[i] * price
+      }
+    }
+
+    // 餘額：正數＝多拿了（要補錢給別人），負數＝少拿了（別人要補給他）
+    const balances = members.map((_, i) => actualVal[i] - idealVal[i])
+
+    // 最簡清算轉帳
+    const debtors   = members.map((m, i) => ({ name: m.name, amt:  balances[i] })).filter(x => x.amt >  0.01).sort((a, b) => b.amt - a.amt)
+    const creditors = members.map((m, i) => ({ name: m.name, amt: -balances[i] })).filter(x => x.amt >  0.01).sort((a, b) => b.amt - a.amt)
+    const transfers = []
+    const ds = debtors.map(x => ({ ...x }))
+    const cs = creditors.map(x => ({ ...x }))
+    let di = 0, ci = 0
+    while (di < ds.length && ci < cs.length) {
+      const pay = Math.min(ds[di].amt, cs[ci].amt)
+      if (pay > 0.01) transfers.push({ from: ds[di].name, to: cs[ci].name, amt: pay })
+      ds[di].amt -= pay; cs[ci].amt -= pay
+      if (ds[di].amt < 0.01) di++
+      if (cs[ci].amt < 0.01) ci++
+    }
+
+    return { invalid: false, empty: false, totalPct, activeAtks, allocation, idealVal, actualVal, balances, transfers }
+  })
+
   const adaptiveScroll = ref({
     gate:     'p10_str',   // 10% 關卡卷
     main:     'p60_atk',   // 60% 主卷（slot2，以及 slot3 在主卷有過時）
@@ -131,6 +210,7 @@ function useHeartFactory() {
       condStrategy:       { ...condStrategy.value },
       conditionalHammer:  JSON.parse(JSON.stringify(conditionalHammer.value)),
       adaptiveScroll:     { ...adaptiveScroll.value },
+      distributor:        JSON.parse(JSON.stringify(distributor.value)),
     }
   }
 
@@ -151,6 +231,11 @@ function useHeartFactory() {
     if (s.condStrategy)      Object.assign(condStrategy.value,      s.condStrategy)
     if (s.conditionalHammer) Object.assign(conditionalHammer.value, JSON.parse(JSON.stringify(s.conditionalHammer)))
     if (s.adaptiveScroll)    Object.assign(adaptiveScroll.value,    s.adaptiveScroll)
+    if (s.distributor) {
+      if (s.distributor.members) distributor.value.members = s.distributor.members
+      if (s.distributor.hearts)  Object.assign(distributor.value.hearts, s.distributor.hearts)
+      if (s.distributor.prices)  Object.assign(distributor.value.prices, s.distributor.prices)
+    }
   }
 
   // ── 材料成本 ───────────────────────────────────────────────
@@ -962,6 +1047,7 @@ function useHeartFactory() {
     conditionalHammer, conditionalHammerAnalysis,
     adaptiveScroll, adaptiveScrollAnalysis,
     allOutcomes, batchOutcomes, batchAnalysis, strategyRanking,
+    DIST_ATKS, distributor, addMember, removeMember, distributorResult,
     getState, setState,
   }
 }

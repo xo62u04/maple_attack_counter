@@ -3166,3 +3166,61 @@ body {
 .gacha-na   { color: #334; font-size: 12px; }
 
 .gacha-hint { font-size: 12px; color: #556; margin-top: 10px; padding: 0 4px; }
+
+/* ══════════════════════════════════════════ 金之心分配器 ══ */
+.dist-block { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 16px; align-items: flex-start; }
+
+/* 成員設定 */
+.dist-members-table { min-width: 280px; }
+.dist-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.dist-header { font-size: 12px; color: #7ec8e3; border-bottom: 1px solid #3a5a7a; padding-bottom: 6px; margin-bottom: 4px; }
+.dist-header span:first-child { min-width: 120px; }
+.dist-name-input { width: 120px; background: #0f1a24; border: 1px solid #3a5a7a; color: #e0e8f0; border-radius: 4px; padding: 4px 7px; font-size: 13px; }
+.dist-pct-wrap { display: flex; align-items: center; gap: 3px; }
+.dist-pct-input { width: 60px; background: #0f1a24; border: 1px solid #3a5a7a; color: #e0e8f0; border-radius: 4px; padding: 4px 7px; font-size: 13px; text-align: right; }
+.dist-pct-suffix { font-size: 13px; color: #8aa; }
+.dist-btn-remove { background: #3a1a1a; color: #e38a8a; border: 1px solid #6a2a2a; font-size: 12px; padding: 3px 8px; }
+.dist-btn-remove:hover:not(:disabled) { background: #4a2a2a; }
+.dist-btn-remove:disabled { opacity: 0.3; cursor: not-allowed; }
+.dist-footer { margin-top: 8px; gap: 12px; }
+.dist-btn-add { background: #1a3a2a; color: #7af09e; border: 1px solid #3a6a4a; font-size: 12px; padding: 4px 12px; }
+.dist-btn-add:hover { background: #2a4a3a; }
+.dist-pct-ok   { font-size: 12px; color: #7af07a; }
+.dist-pct-warn { font-size: 12px; color: #f0b060; }
+
+/* 庫存表 */
+.dist-inventory { }
+.dist-inv-table { border-collapse: collapse; font-size: 13px; }
+.dist-inv-table th { background: #1a2a3a; color: #7ec8e3; padding: 6px 10px; text-align: center; border-bottom: 1px solid #3a5a7a; }
+.dist-inv-table td { padding: 4px 8px; border-bottom: 1px solid #1e2a36; text-align: center; vertical-align: middle; }
+.dist-atk-label { color: #f0d060; font-weight: bold; text-align: center !important; }
+.dist-inv-input { width: 90px; background: #0f1a24; border: 1px solid #3a5a7a; color: #e0e8f0; border-radius: 4px; padding: 3px 6px; font-size: 12px; text-align: right; }
+
+/* 警告 */
+.dist-warn { color: #f0b060; font-size: 13px; background: #2a1e10; border: 1px solid #6a4a20; border-radius: 6px; padding: 8px 14px; margin-bottom: 12px; }
+
+/* 分配結果表 */
+.dist-result-wrap { overflow-x: auto; margin-bottom: 12px; }
+.dist-result-table { border-collapse: collapse; font-size: 13px; min-width: 400px; }
+.dist-result-table th { background: #1a2a3a; color: #7ec8e3; padding: 7px 12px; text-align: center; border-bottom: 2px solid #3a5a7a; white-space: nowrap; }
+.dist-th-pct { font-size: 11px; color: #8aa; font-weight: normal; }
+.dist-result-table td { padding: 5px 12px; border-bottom: 1px solid #1e2a36; text-align: center; color: #c0d0e0; }
+.dist-total { color: #7ec8e3; font-weight: bold; }
+.dist-has  { color: #9ef09e; font-weight: bold; }
+.dist-zero { color: #334; }
+.dist-value-row td { font-size: 12px; color: #8aa; background: #111e2a; }
+.dist-val { color: #b0c8e0; }
+.dist-balance-row td { font-size: 13px; font-weight: bold; background: #0e1a28; }
+.dist-owes { color: #f07a7a; }   /* 多拿了，要補錢 */
+.dist-owed { color: #7af07a; }   /* 少拿了，要收錢 */
+.dist-even { color: #8aa; }
+
+/* 清算 */
+.dist-settlement { background: #1a2430; border: 1px solid #3a5a7a; border-radius: 8px; padding: 12px 16px; margin-top: 8px; }
+.dist-settlement-title { font-size: 13px; font-weight: bold; color: #f0d060; margin-bottom: 8px; }
+.dist-transfer { display: flex; align-items: center; gap: 10px; font-size: 13px; padding: 4px 0; border-bottom: 1px solid #2a3a4a; }
+.dist-from  { color: #f07a7a; font-weight: bold; min-width: 60px; }
+.dist-arrow { color: #556; }
+.dist-to    { color: #7af07a; font-weight: bold; min-width: 60px; }
+.dist-amt   { color: #f0d060; margin-left: auto; }
+.dist-perfect { color: #7af07a; font-size: 13px; }
