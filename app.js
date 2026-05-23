@@ -861,6 +861,10 @@ createApp({
         schedule.rollForwardWeeks()
         _saveScheduleCache(schedule.getState())
       }
+      if (data.gacha) {
+        localStorage.setItem(GACHA_SETTINGS_KEY, JSON.stringify(data.gacha))
+        loadGachaSettings()
+      }
     }
 
     function currentSyncData() {
@@ -871,6 +875,7 @@ createApp({
         equip: equip.getState(),
         heart: heartFactory.getState(),
         schedule: schedule.getState(),
+        gacha: gacha.getState(),
       }
     }
 
@@ -882,6 +887,7 @@ createApp({
         equip: data?.equip || equip.getState(),
         heart: data?.heart || heartFactory.getState(),
         schedule: data?.schedule || schedule.getState(),
+        gacha: data?.gacha || gacha.getState(),
       }
     }
 
