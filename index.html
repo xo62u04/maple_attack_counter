@@ -1630,6 +1630,127 @@
     <!-- ══════════════════════════════════════════ Tab 5：金之心工廠 ══ -->
     <main v-else-if="activeTab === 'heart'" class="heart-tab">
 
+      <!-- ── 金之心分配器 ── -->
+      <section class="heart-section">
+        <h2 class="heart-section-title">⑨ 金之心分配器</h2>
+
+        <!-- 成員設定 -->
+        <div class="dist-block">
+          <div class="dist-members-table">
+            <div class="dist-row dist-header">
+              <span>成員名稱</span><span>分配比例</span><span></span>
+            </div>
+            <div v-for="(m, i) in heartFactory.distributor.members" :key="i" class="dist-row">
+              <input v-model="m.name" class="dist-name-input" placeholder="玩家名稱" />
+              <div class="dist-pct-wrap">
+                <input v-model.number="m.pct" type="number" class="dist-pct-input" min="0" max="100" step="1" />
+                <span class="dist-pct-suffix">%</span>
+              </div>
+              <button @click="heartFactory.removeMember(i)" class="btn dist-btn-remove" :disabled="heartFactory.distributor.members.length <= 2">✕</button>
+            </div>
+            <div class="dist-row dist-footer">
+              <button @click="heartFactory.addMember()" class="btn dist-btn-add">＋ 新增成員</button>
+              <span :class="heartFactory.distributor.members.reduce((s,m)=>s+(+m.pct||0),0) === 100 ? 'dist-pct-ok' : 'dist-pct-warn'">
+                合計：{{ heartFactory.distributor.members.reduce((s,m)=>s+(+m.pct||0),0) }}%
+                {{ heartFactory.distributor.members.reduce((s,m)=>s+(+m.pct||0),0) === 100 ? '✓' : '⚠ 需等於100%' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- 心臟庫存 -->
+          <div class="dist-inventory">
+            <table class="dist-inv-table">
+              <thead>
+                <tr><th>攻擊力</th><th>數量（顆）</th><th>參考單價（③節最低價）</th></tr>
+              </thead>
+              <tbody>
+                <tr v-for="atk in heartFactory.DIST_ATKS" :key="atk">
+                  <td class="dist-atk-label">{{ atk }}攻</td>
+                  <td><input type="number" v-model.number="heartFactory.distributor.hearts[atk]" min="0" step="1" class="dist-inv-input" placeholder="0" /></td>
+                  <td class="dist-ref-price">
+                    <span v-if="heartFactory.distPriceForAtk(atk) > 0">{{ heartFactory.distPriceForAtk(atk).toFixed(0) }} 萬</span>
+                    <span v-else class="dist-no-price">—（請先填③節市價）</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 分配結果 -->
+        <template v-if="heartFactory.distributorResult">
+          <div v-if="heartFactory.distributorResult.invalid" class="dist-warn">
+            ⚠ 比例合計須等於 100%（目前 {{ heartFactory.distributorResult.totalPct }}%）
+          </div>
+          <div v-else-if="heartFactory.distributorResult.empty" class="dist-warn">
+            請輸入至少一種心臟的數量
+          </div>
+          <template v-else>
+            <!-- 分配表 -->
+            <div class="dist-result-wrap">
+              <table class="dist-result-table">
+                <thead>
+                  <tr>
+                    <th>攻擊力</th>
+                    <th>總計</th>
+                    <th v-for="m in heartFactory.distributor.members" :key="m.name">
+                      {{ m.name }}<br/><span class="dist-th-pct">{{ m.pct }}%</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="atk in heartFactory.distributorResult.activeAtks" :key="atk">
+                    <td class="dist-atk-label">{{ atk }}攻</td>
+                    <td class="dist-total">{{ heartFactory.distributor.hearts[atk] }}</td>
+                    <td v-for="(m, i) in heartFactory.distributor.members" :key="i"
+                        :class="heartFactory.distributorResult.allocation[i][atk] > 0 ? 'dist-has' : 'dist-zero'">
+                      {{ heartFactory.distributorResult.allocation[i][atk] }}
+                    </td>
+                  </tr>
+                  <!-- 金額小計 -->
+                  <tr class="dist-value-row">
+                    <td colspan="2" class="dist-atk-label">實際金額</td>
+                    <td v-for="(m, i) in heartFactory.distributor.members" :key="i" class="dist-val">
+                      {{ heartFactory.distributorResult.actualVal[i] > 0 ? heartFactory.distributorResult.actualVal[i].toFixed(0) + ' 萬' : '—' }}
+                    </td>
+                  </tr>
+                  <tr class="dist-value-row">
+                    <td colspan="2" class="dist-atk-label">理想金額</td>
+                    <td v-for="(m, i) in heartFactory.distributor.members" :key="i" class="dist-val">
+                      {{ heartFactory.distributorResult.idealVal[i] > 0 ? heartFactory.distributorResult.idealVal[i].toFixed(0) + ' 萬' : '—' }}
+                    </td>
+                  </tr>
+                  <tr class="dist-balance-row">
+                    <td colspan="2" class="dist-atk-label">餘額</td>
+                    <td v-for="(b, i) in heartFactory.distributorResult.balances" :key="i"
+                        :class="b > 0.01 ? 'dist-owes' : b < -0.01 ? 'dist-owed' : 'dist-even'">
+                      <template v-if="Math.abs(b) > 0.01">
+                        {{ b > 0 ? '多拿' : '少拿' }} {{ Math.abs(b).toFixed(0) }} 萬
+                      </template>
+                      <template v-else>✓ 剛好</template>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 清算方式 -->
+            <div v-if="heartFactory.distributorResult.transfers.length > 0" class="dist-settlement">
+              <div class="dist-settlement-title">💸 清算方式</div>
+              <div v-for="(t, i) in heartFactory.distributorResult.transfers" :key="i" class="dist-transfer">
+                <span class="dist-from">{{ t.from }}</span>
+                <span class="dist-arrow">→</span>
+                <span class="dist-to">{{ t.to }}</span>
+                <span class="dist-amt">補償 {{ t.amt.toFixed(0) }} 萬楓幣</span>
+              </div>
+            </div>
+            <div v-else class="dist-settlement dist-perfect">
+              ✅ 分配完全整除，無需補償
+            </div>
+          </template>
+        </template>
+      </section>
+
       <!-- ① 材料成本 -->
       <section class="heart-section">
         <h2 class="heart-section-title">① 材料成本</h2>
@@ -2479,126 +2600,6 @@
         <div v-else class="heart-note" style="color:#888">請先設定關卡卷與主卷</div>
       </section>
 
-      <!-- ── ⑨ 金之心分配器 ── -->
-      <section class="heart-section">
-        <h2 class="heart-section-title">⑨ 金之心分配器</h2>
-
-        <!-- 成員設定 -->
-        <div class="dist-block">
-          <div class="dist-members-table">
-            <div class="dist-row dist-header">
-              <span>成員名稱</span><span>分配比例</span><span></span>
-            </div>
-            <div v-for="(m, i) in heartFactory.distributor.members" :key="i" class="dist-row">
-              <input v-model="m.name" class="dist-name-input" placeholder="玩家名稱" />
-              <div class="dist-pct-wrap">
-                <input v-model.number="m.pct" type="number" class="dist-pct-input" min="0" max="100" step="1" />
-                <span class="dist-pct-suffix">%</span>
-              </div>
-              <button @click="heartFactory.removeMember(i)" class="btn dist-btn-remove" :disabled="heartFactory.distributor.members.length <= 2">✕</button>
-            </div>
-            <div class="dist-row dist-footer">
-              <button @click="heartFactory.addMember()" class="btn dist-btn-add">＋ 新增成員</button>
-              <span :class="heartFactory.distributor.members.reduce((s,m)=>s+(+m.pct||0),0) === 100 ? 'dist-pct-ok' : 'dist-pct-warn'">
-                合計：{{ heartFactory.distributor.members.reduce((s,m)=>s+(+m.pct||0),0) }}%
-                {{ heartFactory.distributor.members.reduce((s,m)=>s+(+m.pct||0),0) === 100 ? '✓' : '⚠ 需等於100%' }}
-              </span>
-            </div>
-          </div>
-
-          <!-- 心臟庫存 -->
-          <div class="dist-inventory">
-            <table class="dist-inv-table">
-              <thead>
-                <tr><th>攻擊力</th><th>數量（顆）</th><th>參考單價（③節均價）</th></tr>
-              </thead>
-              <tbody>
-                <tr v-for="atk in heartFactory.DIST_ATKS" :key="atk">
-                  <td class="dist-atk-label">{{ atk }}攻</td>
-                  <td><input type="number" v-model.number="heartFactory.distributor.hearts[atk]" min="0" step="1" class="dist-inv-input" placeholder="0" /></td>
-                  <td class="dist-ref-price">
-                    <span v-if="heartFactory.distPriceForAtk(atk) > 0">{{ heartFactory.distPriceForAtk(atk).toFixed(0) }} 萬</span>
-                    <span v-else class="dist-no-price">—（請先填③節市價）</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- 分配結果 -->
-        <template v-if="heartFactory.distributorResult">
-          <div v-if="heartFactory.distributorResult.invalid" class="dist-warn">
-            ⚠ 比例合計須等於 100%（目前 {{ heartFactory.distributorResult.totalPct }}%）
-          </div>
-          <div v-else-if="heartFactory.distributorResult.empty" class="dist-warn">
-            請輸入至少一種心臟的數量
-          </div>
-          <template v-else>
-            <!-- 分配表 -->
-            <div class="dist-result-wrap">
-              <table class="dist-result-table">
-                <thead>
-                  <tr>
-                    <th>攻擊力</th>
-                    <th>總計</th>
-                    <th v-for="m in heartFactory.distributor.members" :key="m.name">
-                      {{ m.name }}<br/><span class="dist-th-pct">{{ m.pct }}%</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="atk in heartFactory.distributorResult.activeAtks" :key="atk">
-                    <td class="dist-atk-label">{{ atk }}攻</td>
-                    <td class="dist-total">{{ heartFactory.distributor.hearts[atk] }}</td>
-                    <td v-for="(m, i) in heartFactory.distributor.members" :key="i"
-                        :class="heartFactory.distributorResult.allocation[i][atk] > 0 ? 'dist-has' : 'dist-zero'">
-                      {{ heartFactory.distributorResult.allocation[i][atk] }}
-                    </td>
-                  </tr>
-                  <!-- 金額小計 -->
-                  <tr class="dist-value-row">
-                    <td colspan="2" class="dist-atk-label">實際金額</td>
-                    <td v-for="(m, i) in heartFactory.distributor.members" :key="i" class="dist-val">
-                      {{ heartFactory.distributorResult.actualVal[i] > 0 ? heartFactory.distributorResult.actualVal[i].toFixed(0) + ' 萬' : '—' }}
-                    </td>
-                  </tr>
-                  <tr class="dist-value-row">
-                    <td colspan="2" class="dist-atk-label">理想金額</td>
-                    <td v-for="(m, i) in heartFactory.distributor.members" :key="i" class="dist-val">
-                      {{ heartFactory.distributorResult.idealVal[i] > 0 ? heartFactory.distributorResult.idealVal[i].toFixed(0) + ' 萬' : '—' }}
-                    </td>
-                  </tr>
-                  <tr class="dist-balance-row">
-                    <td colspan="2" class="dist-atk-label">餘額</td>
-                    <td v-for="(b, i) in heartFactory.distributorResult.balances" :key="i"
-                        :class="b > 0.01 ? 'dist-owes' : b < -0.01 ? 'dist-owed' : 'dist-even'">
-                      <template v-if="Math.abs(b) > 0.01">
-                        {{ b > 0 ? '多拿' : '少拿' }} {{ Math.abs(b).toFixed(0) }} 萬
-                      </template>
-                      <template v-else>✓ 剛好</template>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- 清算方式 -->
-            <div v-if="heartFactory.distributorResult.transfers.length > 0" class="dist-settlement">
-              <div class="dist-settlement-title">💸 清算方式</div>
-              <div v-for="(t, i) in heartFactory.distributorResult.transfers" :key="i" class="dist-transfer">
-                <span class="dist-from">{{ t.from }}</span>
-                <span class="dist-arrow">→</span>
-                <span class="dist-to">{{ t.to }}</span>
-                <span class="dist-amt">補償 {{ t.amt.toFixed(0) }} 萬楓幣</span>
-              </div>
-            </div>
-            <div v-else class="dist-settlement dist-perfect">
-              ✅ 分配完全整除，無需補償
-            </div>
-          </template>
-        </template>
-      </section>
 
     </main><!-- end heart tab -->
 

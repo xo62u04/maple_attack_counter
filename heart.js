@@ -116,12 +116,12 @@ function useHeartFactory() {
     hearts: Object.fromEntries(DIST_ATKS.map(a => [a, 0])),
   })
 
-  // 從 ③ 節 marketPrices 計算各攻擊力的代表價格（所有副屬無潛均價）
+  // 從 ③ 節 marketPrices 計算各攻擊力的代表價格（所有副屬無潛的最低價）
   function distPriceForAtk(atk) {
     const noKeys = Object.keys(marketPrices.value).filter(k => k.startsWith(`${atk}_`) && k.endsWith('_no'))
     const filled = noKeys.map(k => Number(marketPrices.value[k]) || 0).filter(v => v > 0)
     if (filled.length === 0) return 0
-    return filled.reduce((a, b) => a + b, 0) / filled.length
+    return Math.min(...filled)
   }
 
   function addMember() {
