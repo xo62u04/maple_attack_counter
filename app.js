@@ -9,9 +9,12 @@ createApp({
     const sync = useSync()
     let _pulling = false
     let _bootstrapping = true
-    const SYNC_LAST_PUSH_KEY = 'maple_sync_last_push'
-    const SYNC_BACKUP_KEY    = 'maple_sync_backup'
-    const syncBackup = ref(null)
+    const SYNC_LAST_PUSH_KEY  = 'maple_sync_last_push'
+    const SYNC_BACKUP_KEY     = 'maple_sync_backup'
+    const BACKUP_TODAY_KEY    = 'maple_backup_today'
+    const syncBackup    = ref(null)
+    const cloudBackups  = ref([])
+    const backupPanelOpen = ref(false)
 
     // ── 裝備模擬器字體縮放 ──
     const equipZoom = ref(1)
@@ -48,6 +51,7 @@ createApp({
       equip.initPartyBuffs()
       loadLootSettings()
       loadAlchemySettings()
+      loadGachaSettings()
       loadHeartSettings()
       loadScheduleCache()
       const urlSyncCode = new URLSearchParams(window.location.search).get('sync')
@@ -351,6 +355,9 @@ createApp({
 
     // ── 裝備模擬器 Composable ──
     const equip = useEquip(jobs, partyBuffs, selectedJobId)
+    // ── 轉蛋試算機 ──
+    const gacha = Vue.reactive(useGacha())
+
     // ── 分錢系統 ──
     const loot = Vue.reactive(useLoot())
     const alchemy = Vue.reactive(useAlchemy())
@@ -924,7 +931,26 @@ createApp({
       await sync.push(sync.syncCode.value, currentSyncData())
       if (sync.syncStatus.value !== 'error') {
         localStorage.setItem(SYNC_LAST_PUSH_KEY, new Date().toISOString())
+        const today = new Date().toISOString().slice(0, 10)
+        if (localStorage.getItem(BACKUP_TODAY_KEY) !== today) {
+          localStorage.setItem(BACKUP_TODAY_KEY, today)
+          sync.pushBackup(sync.syncCode.value, currentSyncData())
+        }
       }
+    }
+
+    async function toggleBackupPanel() {
+      backupPanelOpen.value = !backupPanelOpen.value
+      if (backupPanelOpen.value && sync.syncCode.value) {
+        cloudBackups.value = await sync.listBackups(sync.syncCode.value)
+      }
+    }
+
+    async function restoreCloudBackup(backupData) {
+      saveBackup(currentSyncData(), 'local')
+      await _applyWithGuard(backupData)
+      await pushAll()
+      backupPanelOpen.value = false
     }
 
     function _updateSyncUrl(code) {
@@ -1010,6 +1036,22 @@ createApp({
 
     Vue.watch(() => JSON.stringify(alchemy.getState()), saveAlchemySettings)
 
+    // ── 轉蛋試算設定存檔 ──
+    const GACHA_SETTINGS_KEY = 'maple_gacha_settings'
+
+    function saveGachaSettings() {
+      try {
+        localStorage.setItem(GACHA_SETTINGS_KEY, JSON.stringify(gacha.getState()))
+      } catch {}
+    }
+    function loadGachaSettings() {
+      try {
+        const raw = localStorage.getItem(GACHA_SETTINGS_KEY)
+        if (raw) gacha.setState(JSON.parse(raw))
+      } catch {}
+    }
+    Vue.watch(() => JSON.stringify(gacha.getState()), saveGachaSettings)
+
     const HEART_SETTINGS_KEY = 'maple_heart_factory_settings'
 
     function saveHeartSettings() {
@@ -1070,6 +1112,7 @@ createApp({
       exportToTab1,
       addCustomSkill,
       removeSkill,
+      gacha,
       loot, saveLootSettings,
       alchemy, saveAlchemySettings,
       heartFactory,
@@ -1077,6 +1120,7 @@ createApp({
       sync, onSetSyncCode, copySyncLink, clearSyncCodeAndUrl,
       conflictDialog, resolveConflict, formatSyncTime,
       syncBackup, restoreBackup, clearBackup,
+      cloudBackups, backupPanelOpen, toggleBackupPanel, restoreCloudBackup,
       schedLoginName, schedLoginPin, schedRecurringMode, schedNewMemberName,
       schedEditingMember, schedTargetMember, schedTargetMemberObj,
       fmtDate: isoDate => parseInt(isoDate.slice(5, 7)) + '/' + parseInt(isoDate.slice(8, 10)),

@@ -79,5 +79,39 @@ function useSync() {
     error:   '❌ 同步失敗'
   }[syncStatus.value]))
 
-  return { syncCode, syncCodeDraft, syncStatus, statusText, pull, push, applySyncCode, clearSyncCode }
+  async function pushBackup(code, data) {
+    _initFirebase()
+    const today = new Date().toISOString().slice(0, 10)
+    const backupsRef = db.collection('syncs').doc(code).collection('backups')
+    try {
+      await backupsRef.doc(today).set({
+        savedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        data: JSON.parse(JSON.stringify(data))
+      })
+      const allSnaps = await backupsRef.orderBy('savedAt', 'desc').get()
+      if (allSnaps.size > 10) {
+        await Promise.all(allSnaps.docs.slice(10).map(d => d.ref.delete()))
+      }
+    } catch (e) {
+      console.error('[sync] pushBackup failed:', e)
+    }
+  }
+
+  async function listBackups(code) {
+    _initFirebase()
+    try {
+      const snap = await db.collection('syncs').doc(code).collection('backups')
+        .orderBy('savedAt', 'desc').limit(10).get()
+      return snap.docs.map(d => ({
+        date: d.id,
+        savedAt: d.data().savedAt?.toDate?.() || null,
+        data: d.data().data
+      }))
+    } catch (e) {
+      console.error('[sync] listBackups failed:', e)
+      return []
+    }
+  }
+
+  return { syncCode, syncCodeDraft, syncStatus, statusText, pull, push, applySyncCode, clearSyncCode, pushBackup, listBackups }
 }

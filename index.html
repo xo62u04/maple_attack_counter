@@ -33,19 +33,48 @@
         <button class="tab-btn" :class="{ active: activeTab === 'schedule' }" @click="activeTab = 'schedule'">
           📅 排程
         </button>
+        <button class="tab-btn" :class="{ active: activeTab === 'gacha' }" @click="activeTab = 'gacha'">
+          🎰 轉蛋試算
+        </button>
       </div>
       <div class="header-actions">
         <div class="sync-bar">
+          <span class="sync-label">同步碼：</span>
           <input
             v-model="sync.syncCodeDraft.value"
             class="sync-input"
-            placeholder="同步碼"
+            placeholder="輸入同步碼"
             @keyup.enter="onSetSyncCode"
           />
           <button class="btn btn-sync" @click="onSetSyncCode" :disabled="!sync.syncCodeDraft.value.trim()">確認</button>
           <button class="btn btn-sync-share" v-if="sync.syncCode.value" @click="copySyncLink" title="複製含同步碼的連結">🔗</button>
           <button class="btn btn-sync-clear" v-if="sync.syncCode.value" @click="clearSyncCodeAndUrl()">清除</button>
           <span class="sync-status-text">{{ sync.statusText.value }}</span>
+          <button class="btn btn-backup-panel" v-if="sync.syncCode.value" @click="toggleBackupPanel" title="查看備份與登入歷史">📋 備份</button>
+        </div>
+        <!-- 備份 & 登入歷史展開面板 -->
+        <div v-if="backupPanelOpen && sync.syncCode.value" class="backup-panel">
+          <div class="backup-panel-cols">
+            <div class="backup-panel-section">
+              <div class="backup-panel-title">📋 登入歷史（最近10筆）</div>
+              <div v-if="schedule.loginHistory.length === 0" class="backup-empty">尚無登入紀錄</div>
+              <div v-for="entry in schedule.loginHistory.slice().reverse().slice(0, 10)" :key="entry.loginAt" class="backup-history-item">
+                <span class="backup-item-name">{{ entry.name }}</span>
+                <span class="backup-item-time">{{ formatSyncTime(entry.loginAt) }}</span>
+              </div>
+            </div>
+            <div class="backup-panel-section">
+              <div class="backup-panel-title">☁️ 雲端備份（每天自動存，最多10份）</div>
+              <div v-if="cloudBackups.length === 0" class="backup-empty">尚無雲端備份</div>
+              <div v-for="b in cloudBackups" :key="b.date" class="backup-cloud-item">
+                <span class="backup-item-time">{{ b.date }}（{{ formatSyncTime(b.savedAt) }}）</span>
+                <button class="btn btn-backup-restore" @click="restoreCloudBackup(b.data)">復原</button>
+              </div>
+            </div>
+          </div>
+          <div class="backup-panel-footer">
+            <button class="btn btn-backup-dismiss" @click="backupPanelOpen = false">關閉</button>
+          </div>
         </div>
         <button v-if="activeTab === 'calc'" @click="saveCharacter" class="btn btn-save" :disabled="!saveName.trim()">💾 存檔</button>
         <button v-if="activeTab === 'calc'" @click="shareUrl" class="btn btn-share">🔗 分享</button>
@@ -2764,6 +2793,134 @@
       </div>
     </div>
 
+    <!-- ══════════════════════════════════════════ Tab：轉蛋試算機 ══ -->
+    <main v-else-if="activeTab === 'gacha'" class="gacha-main">
+
+      <!-- 設定區 -->
+      <section class="gacha-settings">
+        <div class="gacha-settings-row">
+          <label class="gacha-setting-label">💱 里程匯率</label>
+          <span class="gacha-setting-desc">每 1,000萬楓幣 =</span>
+          <input type="number" v-model.number="gacha.mpPer10M" class="gacha-mp-input" min="1" step="10" />
+          <span class="gacha-setting-desc">里程點</span>
+        </div>
+        <div class="gacha-settings-row gacha-settings-calc">
+          <span class="gacha-calc-chip">188,100 里程 = 200抽</span>
+          <span class="gacha-calc-chip">每抽 940.5 里程</span>
+          <span class="gacha-calc-chip" :class="gacha.costPerPull > 0 ? 'chip-cost' : ''">
+            每抽約 {{ fmt(gacha.costPerPull) }} 楓幣
+          </span>
+          <span class="gacha-calc-chip chip-cost">
+            200抽約 {{ fmt(gacha.costPerPull * 200) }} 楓幣
+          </span>
+        </div>
+      </section>
+
+      <!-- 整體分析 -->
+      <section class="gacha-summary" v-if="gacha.costPerPull > 0">
+        <div class="gacha-summary-item">
+          <div class="gs-label">每抽期望值</div>
+          <div class="gs-value">{{ fmt(gacha.totalEvPerPull) }} 楓幣</div>
+          <div class="gs-sub">（已填市價物品加總）</div>
+        </div>
+        <div class="gacha-summary-item">
+          <div class="gs-label">每抽成本</div>
+          <div class="gs-value cost">{{ fmt(gacha.costPerPull) }} 楓幣</div>
+        </div>
+        <div class="gacha-summary-item">
+          <div class="gs-label">每抽盈虧</div>
+          <div class="gs-value" :class="gacha.evVsCost >= 0 ? 'profit' : 'loss'">
+            {{ gacha.evVsCost >= 0 ? '+' : '' }}{{ fmt(gacha.evVsCost) }} 楓幣
+          </div>
+          <div class="gs-sub">{{ gacha.evVsCost >= 0 ? '🟢 賺' : '🔴 虧' }}</div>
+        </div>
+        <div class="gacha-summary-item">
+          <div class="gs-label">200抽期望總值</div>
+          <div class="gs-value">{{ fmt(gacha.totalEv200) }} 楓幣</div>
+        </div>
+        <div class="gacha-summary-item">
+          <div class="gs-label">200抽總成本</div>
+          <div class="gs-value cost">{{ fmt(gacha.cost200) }} 楓幣</div>
+        </div>
+      </section>
+
+      <!-- 物品機率表 -->
+      <section class="gacha-table-section">
+        <table class="gacha-table">
+          <thead>
+            <tr>
+              <th class="col-name">物品名稱</th>
+              <th class="col-rate">機率</th>
+              <th class="col-price">市價（楓幣）</th>
+              <th class="col-avg-pulls">平均抽到次數</th>
+              <th class="col-avg-cost">平均花費</th>
+              <th class="col-ev">每抽期望值</th>
+              <th class="col-profit">盈虧</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template v-for="group in gacha.groupedItems" :key="group.cat">
+              <!-- 分類標題列 -->
+              <tr class="gacha-cat-row" @click="gacha.toggleCat(group.cat)">
+                <td colspan="7">
+                  <span class="gacha-cat-toggle">{{ gacha.collapsedCats.has(group.cat) ? '▶' : '▼' }}</span>
+                  {{ group.cat }}
+                  <span class="gacha-cat-total-rate">
+                    總機率 {{ group.items.reduce((s,i) => s + i.rate, 0).toFixed(3) }}%
+                  </span>
+                </td>
+              </tr>
+              <!-- 物品列 -->
+              <template v-if="!gacha.collapsedCats.has(group.cat)">
+                <tr v-for="item in group.items" :key="item.id"
+                    class="gacha-item-row"
+                    :class="{ 'row-profitable': item.isProfitable, 'row-loss': item.price > 0 && !item.isProfitable }">
+                  <td class="col-name">{{ item.name }}</td>
+                  <td class="col-rate">{{ item.rate }}%</td>
+                  <td class="col-price">
+                    <input
+                      type="number"
+                      :value="gacha.prices[item.id] || ''"
+                      @input="gacha.prices[item.id] = $event.target.value ? Number($event.target.value) : undefined"
+                      class="gacha-price-input"
+                      placeholder="未填"
+                      min="0"
+                      step="1000000"
+                    />
+                  </td>
+                  <td class="col-avg-pulls">
+                    <span v-if="gacha.costPerPull > 0">
+                      {{ item.avgPulls >= 10000
+                          ? (item.avgPulls/10000).toFixed(1) + '萬'
+                          : Math.round(item.avgPulls).toLocaleString() }} 抽
+                    </span>
+                    <span v-else class="gacha-na">—</span>
+                  </td>
+                  <td class="col-avg-cost">
+                    <span v-if="gacha.costPerPull > 0">{{ fmt(item.avgCost) }}</span>
+                    <span v-else class="gacha-na">—</span>
+                  </td>
+                  <td class="col-ev">
+                    <span v-if="item.price > 0">{{ fmt(item.evPerPull) }}</span>
+                    <span v-else class="gacha-na">—</span>
+                  </td>
+                  <td class="col-profit">
+                    <span v-if="item.profit !== null"
+                          :class="item.isProfitable ? 'tag-profit' : 'tag-loss'">
+                      {{ item.isProfitable ? '🟢 ' : '🔴 ' }}
+                      {{ item.profitPct >= 0 ? '+' : '' }}{{ item.profitPct.toFixed(1) }}%
+                    </span>
+                    <span v-else class="gacha-na">—</span>
+                  </td>
+                </tr>
+              </template>
+            </template>
+          </tbody>
+        </table>
+        <p class="gacha-hint">💡 在「市價」欄位填入楓幣市值，即可計算期望值與盈虧。消耗品/硬幣若無交易價值可不填。</p>
+      </section>
+    </main>
+
   </div><!-- end #app -->
 
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
@@ -2775,6 +2932,7 @@
   <script src="alchemy.js?v=20260509-1"></script>
   <script src="sync.js?v=20260512a"></script>
   <script src="schedule.js"></script>
+  <script src="gacha.js?v=20260523a"></script>
   <script src="app.js?v=20260516a"></script>
 </body>
 </html>

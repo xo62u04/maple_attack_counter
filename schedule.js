@@ -13,6 +13,7 @@ function useSchedule() {
   const currentUser   = ref(null)   // { name, pinHash } | null
   const loginError    = ref('')
   const loginLoading  = ref(false)
+  const loginHistory  = ref([])     // [{ name, loginAt: ISO string }]，最多50筆
 
   // ── 週選擇（UI 用）──
   const scheduleWeekIdx = ref(0)    // 0=本週, 1=下週, 2=下下週
@@ -95,6 +96,8 @@ function useSchedule() {
       if (member.pinHash !== h) { loginError.value = 'PIN 錯誤'; return false }
       currentUser.value = { name }
       sessionStorage.setItem(SCHEDULE_IDENTITY_KEY, JSON.stringify({ name, pinHash: h }))
+      loginHistory.value.push({ name, loginAt: new Date().toISOString() })
+      if (loginHistory.value.length > 50) loginHistory.value.shift()
       return true
     } finally {
       loginLoading.value = false
@@ -384,6 +387,7 @@ function useSchedule() {
       scheduleMembers:  JSON.parse(JSON.stringify(scheduleMembers.value)),
       scheduleBosses:   JSON.parse(JSON.stringify(scheduleBosses.value)),
       weeklySchedules:  JSON.parse(JSON.stringify(weeklySchedules.value)),
+      loginHistory:     JSON.parse(JSON.stringify(loginHistory.value)),
     }
   }
   function setState(s) {
@@ -402,6 +406,7 @@ function useSchedule() {
             { r.slot = r.hour * 2; delete r.hour }
       }
     }
+    if (s.loginHistory)     loginHistory.value     = s.loginHistory
     if (s.scheduleMembers)  scheduleMembers.value  = s.scheduleMembers
     if (s.scheduleBosses) {
       for (const boss of s.scheduleBosses) {
@@ -427,7 +432,7 @@ function useSchedule() {
 
   return {
     scheduleMembers, scheduleBosses, weeklySchedules,
-    currentUser, loginError, loginLoading,
+    currentUser, loginError, loginLoading, loginHistory,
     scheduleWeekIdx, currentWeekSchedule,
     addScheduleMember, removeScheduleMember, setMemberAdmin,
     addCharacter, removeCharacter,
