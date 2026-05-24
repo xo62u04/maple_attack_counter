@@ -142,16 +142,30 @@ function useHeartFactory() {
   }
 
   // 最大剩餘法分配整數顆數
-  // surpluses（可選）：跨行累積餘額（萬楓幣），同分時優先補給虧最多的人
-  function largestRemainder(total, pcts, totalPct, surpluses) {
+  // surpluses（萬楓幣）＋ price（萬楓幣）：
+  //   按跨行累積餘額直接調整各人的分配量，
+  //   adjusted[i] = qty×pct%/100 − surplus[i]/price
+  //   虧欠多 → 調高分配；多拿 → 調低分配（可降至0）
+  function largestRemainder(total, pcts, totalPct, surpluses, price) {
     if (total <= 0 || totalPct <= 0) return pcts.map(() => 0)
-    const exact  = pcts.map(p => total * (Number(p) || 0) / totalPct)
+
+    let exact
+    if (surpluses && price > 0) {
+      // 依累積餘額調整每人期望分配量，再 clamp + 正規化
+      const raw = pcts.map((p, i) => total * (Number(p)||0)/totalPct - (surpluses[i]||0)/price)
+      const pos = raw.map(v => Math.max(0, v))
+      const posSum = pos.reduce((a, b) => a + b, 0)
+      exact = posSum > 0
+        ? pos.map(v => v * total / posSum)     // renormalize 使總和 = total
+        : pcts.map(p => total * (Number(p)||0)/totalPct)  // 全部0時退回原始比例
+    } else {
+      exact = pcts.map(p => total * (Number(p)||0)/totalPct)
+    }
+
     const floors = exact.map(Math.floor)
     const fracs  = exact.map((e, i) => e - floors[i])
     let leftover = total - floors.reduce((a, b) => a + b, 0)
-    const order  = fracs
-      .map((f, i) => ({ f, i, s: surpluses ? (surpluses[i] || 0) : 0 }))
-      .sort((a, b) => b.f - a.f || a.s - b.s || a.i - b.i)  // 同分時：虧最多的人（surplus最小）優先
+    const order  = fracs.map((f, i) => ({ f, i })).sort((a, b) => b.f - a.f || a.i - b.i)
     const result = [...floors]
     for (let k = 0; k < leftover; k++) result[order[k].i]++
     return result
@@ -190,7 +204,7 @@ function useHeartFactory() {
     const surplus   = new Array(members.length).fill(0)
 
     for (const row of rows) {
-      const dist = largestRemainder(row.qty, members.map(m => m.pct), totalPct, surplus)
+      const dist = largestRemainder(row.qty, members.map(m => m.pct), totalPct, surplus, row.price)
       row.dist = dist
       for (let i = 0; i < members.length; i++) {
         const rowIdeal  = (Number(members[i].pct) / totalPct) * row.qty * row.price
