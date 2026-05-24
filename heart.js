@@ -142,13 +142,16 @@ function useHeartFactory() {
   }
 
   // 最大剩餘法分配整數顆數
-  function largestRemainder(total, pcts, totalPct) {
+  // surpluses（可選）：跨行累積餘額（萬楓幣），同分時優先補給虧最多的人
+  function largestRemainder(total, pcts, totalPct, surpluses) {
     if (total <= 0 || totalPct <= 0) return pcts.map(() => 0)
     const exact  = pcts.map(p => total * (Number(p) || 0) / totalPct)
     const floors = exact.map(Math.floor)
     const fracs  = exact.map((e, i) => e - floors[i])
     let leftover = total - floors.reduce((a, b) => a + b, 0)
-    const order  = fracs.map((f, i) => ({ f, i })).sort((a, b) => b.f - a.f || a.i - b.i)
+    const order  = fracs
+      .map((f, i) => ({ f, i, s: surpluses ? (surpluses[i] || 0) : 0 }))
+      .sort((a, b) => b.f - a.f || a.s - b.s || a.i - b.i)  // 同分時：虧最多的人（surplus最小）優先
     const result = [...floors]
     for (let k = 0; k < leftover; k++) result[order[k].i]++
     return result
@@ -183,13 +186,17 @@ function useHeartFactory() {
 
     const idealVal  = new Array(members.length).fill(0)  // 萬楓幣
     const actualVal = new Array(members.length).fill(0)
+    // 跨行累積餘額（萬楓幣）：正=多拿、負=虧欠，用於跨行 LRM tie-break
+    const surplus   = new Array(members.length).fill(0)
 
     for (const row of rows) {
-      const dist = largestRemainder(row.qty, members.map(m => m.pct), totalPct)
+      const dist = largestRemainder(row.qty, members.map(m => m.pct), totalPct, surplus)
       row.dist = dist
       for (let i = 0; i < members.length; i++) {
-        idealVal[i]  += (Number(members[i].pct) / totalPct) * row.qty * row.price
+        const rowIdeal  = (Number(members[i].pct) / totalPct) * row.qty * row.price
+        idealVal[i]  += rowIdeal
         actualVal[i] += dist[i] * row.price
+        surplus[i]   += dist[i] * row.price - rowIdeal  // 更新跨行餘額
       }
     }
 
