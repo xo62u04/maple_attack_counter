@@ -1657,6 +1657,23 @@
             </div>
           </div>
 
+          <!-- 雪花設定 -->
+          <div class="dist-snowflakes">
+            <div class="dist-sf-header">❄️ 雪花（均分費用，開的人多收錢）</div>
+            <div v-if="heartFactory.distributor.snowflakes.length === 0" class="dist-sf-empty">尚無雪花，點下方新增</div>
+            <div v-for="(sf, si) in heartFactory.distributor.snowflakes" :key="si" class="dist-sf-row">
+              <span class="dist-sf-label">雪花 {{ si + 1 }}</span>
+              <input type="number" v-model.number="sf.value" min="0" step="1" class="dist-sf-input" placeholder="10" />
+              <span class="dist-pct-suffix">萬</span>
+              <span class="dist-sf-by">開者：</span>
+              <select v-model.number="sf.opener" class="dist-sf-select">
+                <option v-for="(m, mi) in heartFactory.distributor.members" :key="mi" :value="mi">{{ m.name }}</option>
+              </select>
+              <button @click="heartFactory.removeSnowflake(si)" class="btn dist-btn-remove">✕</button>
+            </div>
+            <button @click="heartFactory.addSnowflake()" class="btn dist-btn-add">❄️ 新增雪花</button>
+          </div>
+
           <!-- 心臟庫存 -->
           <div class="dist-inventory">
             <table class="dist-inv-table">
@@ -1736,6 +1753,17 @@
                     <td colspan="4" class="dist-atk-label">理想金額</td>
                     <td v-for="(m, i) in heartFactory.distributor.members" :key="i" class="dist-val">
                       {{ heartFactory.distributorResult.idealVal[i] > 0 ? heartFactory.distributorResult.idealVal[i].toFixed(0) + ' 萬' : '—' }}
+                    </td>
+                  </tr>
+                  <tr v-if="heartFactory.distributorResult.snowflakeAdjs && heartFactory.distributorResult.snowflakeAdjs.some(a => Math.abs(a) > 0.01)"
+                      class="dist-value-row dist-sf-adj-row">
+                    <td colspan="4" class="dist-atk-label">❄️ 雪花調整</td>
+                    <td v-for="(adj, i) in heartFactory.distributorResult.snowflakeAdjs" :key="i"
+                        :class="adj < -0.01 ? 'dist-owed' : adj > 0.01 ? 'dist-owes' : 'dist-even'">
+                      <template v-if="Math.abs(adj) > 0.01">
+                        {{ adj < 0 ? '' : '+' }}{{ adj.toFixed(0) }} 萬
+                      </template>
+                      <template v-else>—</template>
                     </td>
                   </tr>
                   <tr class="dist-balance-row">

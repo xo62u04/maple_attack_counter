@@ -3188,6 +3188,17 @@ body {
 .dist-pct-ok   { font-size: 12px; color: #7af07a; }
 .dist-pct-warn { font-size: 12px; color: #f0b060; }
 
+/* 雪花區 */
+.dist-snowflakes { margin-bottom: 14px; padding: 10px 12px; background: rgba(100,180,255,0.04); border: 1px solid #2a4a6a; border-radius: 6px; }
+.dist-sf-header { font-size: 13px; color: #7ec8e3; font-weight: 600; margin-bottom: 8px; }
+.dist-sf-empty { font-size: 12px; color: #556; margin-bottom: 8px; }
+.dist-sf-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+.dist-sf-label { font-size: 12px; color: #aaa; min-width: 44px; }
+.dist-sf-input { width: 72px; }
+.dist-sf-by { font-size: 12px; color: #8aa; }
+.dist-sf-select { background: #0e1a2a; color: #c8ddf0; border: 1px solid #2a4a6a; border-radius: 4px; padding: 3px 6px; font-size: 12px; }
+.dist-sf-adj-row td { background: rgba(100,180,255,0.07); font-size: 12px; }
+
 /* 庫存表 */
 .dist-inventory { }
 .dist-inv-table { border-collapse: collapse; font-size: 13px; }
