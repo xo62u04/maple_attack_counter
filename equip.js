@@ -711,7 +711,8 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     let flatMain = 0, flatSub = 0, flatAtk = 0
     let pctMain = 0, pctSub = 0, pctAtk = 0
     let critRate = 0, critDmg = 0
-    let bossDmg = 0, totalDmg = 0
+    let bossDmg  = Number(equipSettings.value.baseBossDmg)  || 0
+    let totalDmg = Number(equipSettings.value.baseTotalDmg) || 0
     const ignoreDefFactors = []
 
     for (const slot of Object.values(slots.value)) {
@@ -778,9 +779,10 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
   function _computeDmgFromTotals(t) {
     const s = equipSettings.value
     const coeff = Number(s.weaponCoeff) || 1
-    const finalMain   = (Number(baseStats.value.mainStat) || 0) + t.flatMain
+    const pot = potionTotals.value
+    const finalMain   = (Number(baseStats.value.mainStat) || 0) + t.flatMain + pot.mainBypass
     const finalSub    = (Number(baseStats.value.subStat)  || 0) + t.flatSub
-    const finalAtk    = (Number(baseStats.value.atk)      || 0) + t.flatAtk
+    const finalAtk    = (Number(baseStats.value.atk)      || 0) + t.flatAtk + pot.atkBypass
     const finalAtkPct = t.pctAtk
     const realFinalMain = Math.floor(finalMain * (1 + t.pctMain / 100))
     const realFinalSub  = Math.floor(finalSub  * (1 + t.pctSub  / 100))
