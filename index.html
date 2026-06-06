@@ -958,14 +958,14 @@
         <div class="pot-compare-section">
           <div class="panel-title">
             ⚖️ 潛能比較器
-            <span class="pot-subtitle">（選中裝備槽的潛能 → 想換成的潛能，自動算損益）</span>
+            <span class="pot-subtitle">（選中裝備槽的潛能（含附加，共 6 行） → 想換成的潛能，自動算損益）</span>
           </div>
           <div class="pot-compare-grid">
 
             <!-- 左：目前選中裝備的現有潛能（唯讀顯示） -->
             <div class="pot-option">
               <div class="pot-option-label">目前（{{ equip.potCompareResult.value.slotName }}）</div>
-              <div v-for="(line, i) in (equip.selectedSlot.value?.potential || [])" :key="'c'+i" class="pot-line-display">
+              <div v-for="(line, i) in (equip.selectedSlot.value ? (equip.selectedSlot.value.potential || []).concat(equip.selectedSlot.value.additionalPotential || []) : [])" :key="'c'+i" class="pot-line-display">
                 <span class="pot-cur-type">
                   {{ equip.POTENTIAL_TYPES.find(pt => pt.value === line.type)?.label || '—' }}
                 </span>

@@ -446,8 +446,11 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     { value: 'ignoreDef',    label: '無視防禦%' },
   ]
 
-  // 使用者輸入的「想換成的潛能」（最多 3 行）
+  // 使用者輸入的「想換成的潛能」（最多 6 行，含附加潛能）
   const potCompareNew = Vue.ref([
+    { type: 'none', value: 0 },
+    { type: 'none', value: 0 },
+    { type: 'none', value: 0 },
     { type: 'none', value: 0 },
     { type: 'none', value: 0 },
     { type: 'none', value: 0 },
@@ -601,7 +604,11 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
   const potCompareResult = Vue.computed(() => {
     const t   = totals.value
     const s   = equipSettings.value
-    const currentPot = selectedSlot.value?.potential || []
+    // include both base 潛能 and 附加潛能 (總共最多 6 行)
+    const currentPot = [
+      ...(selectedSlot.value?.potential || []),
+      ...(selectedSlot.value?.additionalPotential || []),
+    ]
     const t_base = _subtractPotLines(t, currentPot)
     const r_base = _derivedR(t_base)
     const currentGain = _calcPotGain(currentPot,           r_base, t_base, s)
