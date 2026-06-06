@@ -1037,18 +1037,63 @@
           <div class="panel-title">🧭 裝備比較器
             <span class="pot-subtitle">（把目前選中槽換成另一槽的裝備，計算換裝後增益）</span>
           </div>
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px">
+            <label><input type="radio" v-model="equip.compareMode.value" value="slot" /> 比對現有槽</label>
+            <label><input type="radio" v-model="equip.compareMode.value" value="custom" /> 比對自訂裝備</label>
+          </div>
+
+          <div v-if="equip.compareMode.value === 'slot'" style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
             <div>選擇比較槽：</div>
             <select v-model="equip.compareWithSlotId.value">
               <option value="">（選擇一個槽位）</option>
               <option v-for="sd in equip.SLOT_DEFS" :value="sd.id">{{ sd.name }}</option>
             </select>
           </div>
-          <div class="pot-result-table" v-if="equip.equipSwapCompareResult.value && equip.compareWithSlotId.value">
+
+          <div v-if="equip.compareMode.value === 'custom'" style="margin-bottom:12px;padding:8px;border-radius:6px;background:rgba(255,255,255,0.02)">
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+              <div>
+                <div>主屬 (base)</div>
+                <input type="number" v-model.number="equip.candidateCustomSlot.value.base.mainStat" style="width:80px" />
+              </div>
+              <div>
+                <div>副屬 (base)</div>
+                <input type="number" v-model.number="equip.candidateCustomSlot.value.base.subStat" style="width:80px" />
+              </div>
+              <div>
+                <div>攻擊 (base)</div>
+                <input type="number" v-model.number="equip.candidateCustomSlot.value.base.atk" style="width:80px" />
+              </div>
+              <div>
+                <div>卷軸數/每卷</div>
+                <input type="number" v-model.number="equip.candidateCustomSlot.value.scroll.count" style="width:60px" /> ×
+                <input type="number" v-model.number="equip.candidateCustomSlot.value.scroll.perScroll" style="width:60px" />
+              </div>
+              <div>
+                <div>卷軸屬性</div>
+                <select v-model="equip.candidateCustomSlot.value.scroll.stat">
+                  <option value="mainStat">主屬</option>
+                  <option value="atk">攻擊</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-top:8px">潛能（最多 6 行）：</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+              <div v-for="(line, i) in equip.candidateCustomSlot.value.potential.concat(equip.candidateCustomSlot.value.additionalPotential)" :key="'cand'+i" style="display:flex;gap:6px;align-items:center">
+                <select v-model="line.type" style="min-width:90px">
+                  <option v-for="pt in equip.POTENTIAL_TYPES" :key="pt.value" :value="pt.value">{{ pt.label }}</option>
+                </select>
+                <input type="number" v-model.number="line.value" style="width:70px" :disabled="line.type==='none'" />
+              </div>
+            </div>
+          </div>
+
+          <div class="pot-result-table" v-if="equip.equipSwapCompareResult.value && (equip.compareMode.value==='custom' || equip.compareWithSlotId.value)">
             <div class="pot-result-header">
               <div></div>
               <div>目前</div>
-              <div>換成 {{ equip.equipSwapCompareResult.value.slotName }}</div>
+              <div v-if="equip.compareMode.value==='slot'">換成 {{ equip.equipSwapCompareResult.value.slotName }}</div>
+              <div v-else>換成 自訂裝備</div>
               <div>淨損益</div>
             </div>
             <div class="pot-result-row">

@@ -706,6 +706,8 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
 
   // ── 裝備替換比較器（把選中槽換成另一個槽的裝備，計算換裝後的傷害差）
   const compareWithSlotId = Vue.ref('')
+  const compareMode = Vue.ref('slot') // 'slot' or 'custom'
+  const candidateCustomSlot = Vue.ref(makeSlot({ id: 'candidate', name: '候選', group: 'armor' }))
 
   function _computeTotalsWithReplacement(replaceId, newSlot) {
     let flatMain = 0, flatSub = 0, flatAtk = 0
@@ -817,9 +819,16 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
   const equipSwapCompareResult = Vue.computed(() => {
     const curSlot = selectedSlot.value
     const compareId = compareWithSlotId.value
-    if (!curSlot || !compareId) return { slotName: '', current: null, candidate: null, net: null }
-    const candidate = slots.value[compareId]
-    if (!candidate) return { slotName: '', current: null, candidate: null, net: null }
+    const mode = compareMode.value
+    if (!curSlot) return { slotName: '', current: null, candidate: null, net: null }
+    let candidate = null
+    if (mode === 'slot') {
+      if (!compareId) return { slotName: '', current: null, candidate: null, net: null }
+      candidate = slots.value[compareId]
+      if (!candidate) return { slotName: '', current: null, candidate: null, net: null }
+    } else {
+      candidate = candidateCustomSlot.value
+    }
     const t_current = totals.value
     const current = { avgBoss: dmgResult.value.avgBoss, avgMob: dmgResult.value.avgMob, mdpsBoss: dmgResult.value.mdpsBoss, mdpsMob: dmgResult.value.mdpsMob }
     const t_new = _computeTotalsWithReplacement(curSlot.id, candidate)
@@ -866,7 +875,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     POT_COMPARE_TYPES, potCompareNew, potCompareResult,
     abilityCompareLines, abilityCompareResult,
     addAbilityCompareLine, removeAbilityCompareLine,
-    compareWithSlotId, equipSwapCompareResult,
+    compareWithSlotId, compareMode, candidateCustomSlot, equipSwapCompareResult,
     getState, setState,
     initJobSkills, initPartyBuffs, importFromTab1,
   }
