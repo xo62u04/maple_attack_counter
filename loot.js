@@ -39,6 +39,19 @@ function useLoot() {
   let _nextId = 1
   function nextId() { return _nextId++ }
 
+  function normalizeSession(sess) {
+    const src = sess && typeof sess === 'object' ? sess : {}
+    return {
+      id: Number(src.id) || nextId(),
+      name: src.name || '新分錢',
+      date: src.date || '',
+      members: Array.isArray(src.members) ? src.members.filter(Boolean) : [],
+      soldItems: Array.isArray(src.soldItems) ? src.soldItems.filter(i => i && i.id != null) : [],
+      memberItems: Array.isArray(src.memberItems) ? src.memberItems.filter(i => i && i.id != null) : [],
+      snowflakesUsed: Number(src.snowflakesUsed) || 0,
+    }
+  }
+
   // ── Session 管理 ──
   function addSession() {
     const s = { id: nextId(), name: '新分錢', date: '', members: [], soldItems: [], memberItems: [], snowflakesUsed: 0 }
@@ -113,7 +126,7 @@ function useLoot() {
   }
   function removeSessionItem(id) {
     if (!currentSession.value) return
-    currentSession.value.soldItems = currentSession.value.soldItems.filter(i => i.id !== id)
+    currentSession.value.soldItems = currentSession.value.soldItems.filter(i => i && i.id !== id)
   }
 
   // ── 成員自取物品 ──
@@ -166,7 +179,7 @@ function useLoot() {
     return s.id
   }
   function dropCount(itemName) {
-    return currentSession.value?.soldItems.filter(i => i.itemName === itemName).length ?? 0
+    return currentSession.value?.soldItems.filter(i => i && i.itemName === itemName).length ?? 0
   }
 
   // ── 最小轉帳算法 ──
@@ -218,7 +231,7 @@ function useLoot() {
     if (members.length === 0) return null
 
     const validItems = (currentSession.value?.soldItems ?? []).filter(
-      i => i.status === 'sold' || i.status === 'selfuse'
+      i => i && (i.status === 'sold' || i.status === 'selfuse')
     )
 
     const itemNet = (i) => {
@@ -226,7 +239,7 @@ function useLoot() {
       const feeRate = i.status === 'sold' ? (Number(i.fee) || 0) : 0
       return gross * (1 - feeRate / 100)
     }
-    const memberItems = (currentSession.value?.memberItems ?? []).filter(i => i.memberName && (Number(i.price) || 0) > 0)
+    const memberItems = (currentSession.value?.memberItems ?? []).filter(i => i && i.memberName && (Number(i.price) || 0) > 0)
     const totalMemberItemValue = memberItems.reduce((sum, i) => sum + (Number(i.price) || 0), 0)
     const totalCashRevenue  = validItems.filter(i => i.status === 'sold').reduce((sum, i) => sum + itemNet(i), 0)
     const totalSelfuseValue = validItems.filter(i => i.status === 'selfuse').reduce((sum, i) => sum + itemNet(i), 0)
@@ -335,31 +348,45 @@ function useLoot() {
     if (s.mileageRate != null) mileageRate.value = s.mileageRate
     if (s.cubePrice   != null) cubePrice.value   = s.cubePrice
     if (s.auctionFee  != null) auctionFee.value  = s.auctionFee
-    if (s.memberPresets)  memberPresets.value  = s.memberPresets
-    if (s.bossDropTables) bossDropTables.value = s.bossDropTables
+    if (s.memberPresets) {
+      memberPresets.value = Array.isArray(s.memberPresets) ? s.memberPresets.filter(m => m && m.id != null) : []
+    }
+    if (s.bossDropTables) {
+      bossDropTables.value = Array.isArray(s.bossDropTables)
+        ? s.bossDropTables
+            .filter(b => b && b.id != null)
+            .map(b => ({ ...b, drops: Array.isArray(b.drops) ? b.drops.filter(d => d && d.id != null) : [] }))
+        : []
+    }
 
     // 舊格式相容：有 session 無 sessions
     if (s.session && !s.sessions) {
       sessions.value = [{ id: 1, name: '舊紀錄', ...s.session }]
       currentSessionId.value = 1
     } else if (s.sessions && s.sessions.length > 0) {
-      sessions.value = s.sessions
-      currentSessionId.value = s.currentSessionId ?? s.sessions[0].id
+      sessions.value = s.sessions.map(normalizeSession).filter(Boolean)
+      currentSessionId.value = sessions.value.some(sess => sess.id === s.currentSessionId)
+        ? s.currentSessionId
+        : sessions.value[0]?.id
     }
+    sessions.value = sessions.value.map(normalizeSession).filter(Boolean)
 
     // 全新安裝：sessions 仍為空則建立預設
     if (sessions.value.length === 0) addSession()
 
     // 重建 _nextId（避免 id 衝突）
     let maxId = 0
-    for (const m of memberPresets.value) if (m.id > maxId) maxId = m.id
+    for (const m of memberPresets.value) if (m && m.id > maxId) maxId = m.id
     for (const b of bossDropTables.value) {
+      if (!b) continue
       if (b.id > maxId) maxId = b.id
-      for (const d of b.drops) if (d.id > maxId) maxId = d.id
+      for (const d of (b.drops || [])) if (d && d.id > maxId) maxId = d.id
     }
     for (const sess of sessions.value) {
+      if (!sess) continue
       if (sess.id > maxId) maxId = sess.id
-      for (const i of sess.soldItems) if (i.id > maxId) maxId = i.id
+      for (const i of (sess.soldItems || [])) if (i && i.id > maxId) maxId = i.id
+      for (const i of (sess.memberItems || [])) if (i && i.id > maxId) maxId = i.id
     }
     _nextId = maxId + 1
   }

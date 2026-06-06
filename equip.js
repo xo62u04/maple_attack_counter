@@ -704,16 +704,8 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
       .sort((a, b) => b.bossPct - a.bossPct)
   })
 
-  // ── 裝備替換比較器（把選中槽換成另一個槽的裝備，計算換裝後的傷害差）
-  const compareWithSlotId = Vue.ref('')
-  const compareMode = Vue.ref('slot') // 'slot' or 'custom'
-  const candidateCustomSlot = Vue.ref(makeSlot({ id: 'candidate', name: '候選', group: 'armor' }))
-
-  const compatibleSlots = Vue.computed(() => {
-    const sel = selectedSlot.value
-    if (!sel) return []
-    return SLOT_DEFS.filter(sd => sd.group === sel.group && sd.id !== sel.id)
-  })
+  // ── 裝備替換比較器（把選中槽換成候選裝備，計算換裝後的傷害差）
+  const candidateCustomSlot = Vue.ref(makeSlot({ id: 'candidate', name: '候選裝備', group: 'armor' }))
 
   function _computeTotalsWithReplacement(replaceId, newSlot) {
     let flatMain = 0, flatSub = 0, flatAtk = 0
@@ -824,18 +816,8 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
 
   const equipSwapCompareResult = Vue.computed(() => {
     const curSlot = selectedSlot.value
-    const compareId = compareWithSlotId.value
-    const mode = compareMode.value
     if (!curSlot) return { slotName: '', current: null, candidate: null, net: null }
-    let candidate = null
-    if (mode === 'slot') {
-      if (!compareId) return { slotName: '', current: null, candidate: null, net: null }
-      candidate = slots.value[compareId]
-      if (!candidate) return { slotName: '', current: null, candidate: null, net: null }
-    } else {
-      candidate = candidateCustomSlot.value
-    }
-    const t_current = totals.value
+    const candidate = candidateCustomSlot.value
     const current = { avgBoss: dmgResult.value.avgBoss, avgMob: dmgResult.value.avgMob, mdpsBoss: dmgResult.value.mdpsBoss, mdpsMob: dmgResult.value.mdpsMob }
     const t_new = _computeTotalsWithReplacement(curSlot.id, candidate)
     const newDmg = _computeDmgFromTotals(t_new)
@@ -881,7 +863,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     POT_COMPARE_TYPES, potCompareNew, potCompareResult,
     abilityCompareLines, abilityCompareResult,
     addAbilityCompareLine, removeAbilityCompareLine,
-    compareWithSlotId, compareMode, candidateCustomSlot, compatibleSlots, equipSwapCompareResult,
+    candidateCustomSlot, equipSwapCompareResult,
     getState, setState,
     initJobSkills, initPartyBuffs, importFromTab1,
   }

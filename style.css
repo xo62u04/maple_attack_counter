@@ -1061,6 +1061,103 @@ body {
 .pot-winner { color: var(--accent); font-weight: 700; font-size: 13px; }
 .pot-diff   { color: var(--text-dim); font-weight: 400; font-size: 12px; }
 
+/* ── 裝備比較器 ── */
+.equip-compare-section {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-top: 14px;
+}
+
+.equip-compare-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.equip-compare-group + .equip-compare-group {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.equip-compare-group-title {
+  color: var(--accent-dim);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.equip-compare-base-grid,
+.equip-compare-scroll-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.equip-compare-base-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.equip-compare-scroll-grid {
+  grid-template-columns: 130px 130px minmax(180px, 1fr);
+}
+
+.equip-compare-section .field-group {
+  margin-bottom: 0;
+}
+
+.equip-compare-pot-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 10px;
+}
+
+.equip-compare-pot-line {
+  display: grid;
+  grid-template-columns: 54px minmax(120px, 1fr) 78px;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+
+.equip-compare-line-label {
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.equip-compare-result {
+  margin-top: 10px;
+}
+
+.equip-compare-result .pot-result-header,
+.equip-compare-result .pot-result-row {
+  grid-template-columns: minmax(130px, 0.9fr) 1fr 1fr 90px;
+}
+
+@media (max-width: 900px) {
+  .equip-compare-base-grid,
+  .equip-compare-pot-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .equip-compare-scroll-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .equip-compare-scroll-grid .field-group:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .equip-compare-result .pot-result-header,
+  .equip-compare-result .pot-result-row {
+    grid-template-columns: minmax(96px, 0.8fr) 1fr 1fr 78px;
+  }
+}
+
 /* ── 詞條比較器 ── */
 .ability-compare-section {
   background: var(--bg-panel);
