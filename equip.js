@@ -704,6 +704,133 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
       .sort((a, b) => b.bossPct - a.bossPct)
   })
 
+  // ── 裝備替換比較器（把選中槽換成另一個槽的裝備，計算換裝後的傷害差）
+  const compareWithSlotId = Vue.ref('')
+
+  function _computeTotalsWithReplacement(replaceId, newSlot) {
+    let flatMain = 0, flatSub = 0, flatAtk = 0
+    let pctMain = 0, pctSub = 0, pctAtk = 0
+    let critRate = 0, critDmg = 0
+    let bossDmg = 0, totalDmg = 0
+    const ignoreDefFactors = []
+
+    for (const slot of Object.values(slots.value)) {
+      const s = (slot.id === replaceId && newSlot) ? newSlot : slot
+      flatMain += Number(s.base.mainStat) || 0
+      flatSub  += Number(s.base.subStat)  || 0
+      flatAtk  += Number(s.base.atk)      || 0
+      const allStatBase = Number(s.base.allStat) || 0
+      flatMain += allStatBase
+      flatSub  += allStatBase
+      const scrollVal = (Number(s.scroll.count) || 0) * (Number(s.scroll.perScroll) || 0)
+      if (s.scroll.stat === 'atk') flatAtk += scrollVal
+      else flatMain += scrollVal
+      for (const pot of [...(s.potential || []), ...(s.additionalPotential || []), ...(s.setEffect || [])]) {
+        const v = Number(pot.value) || 0
+        if (v === 0 || pot.type === 'none') continue
+        switch (pot.type) {
+          case 'mainStatPct':  pctMain  += v; break
+          case 'subStatPct':   pctSub   += v; break
+          case 'allStatPct':   pctMain  += v; pctSub += v; break
+          case 'mainStatFlat': flatMain += v; break
+          case 'subStatFlat':  flatSub  += v; break
+          case 'allStatFlat':  flatMain += v; flatSub += v; break
+          case 'atkFlat':      flatAtk  += v; break
+          case 'atkPct':       pctAtk   += v; break
+          case 'critRate':     critRate += v; break
+          case 'critDmg':      critDmg  += v; break
+          case 'bossDmg':      bossDmg  += v; break
+          case 'totalDmg':     totalDmg += v; break
+          case 'ignoreDef':    ignoreDefFactors.push(v); break
+        }
+      }
+    }
+
+    const acc = { flatMain, flatSub, flatAtk, pctMain, pctSub, pctAtk, critRate, critDmg, bossDmg, totalDmg }
+    for (const sk of jobSkills.value) {
+      if (!sk.enabled) continue
+      applySkillEffect(sk.type, Number(sk.value) || 0, acc)
+    }
+    ;({ flatMain, flatSub, flatAtk, pctMain, pctSub, pctAtk, critRate, critDmg, bossDmg, totalDmg } = acc)
+
+    // include active buffs
+    for (const buf of activeBuffs.value) {
+      if (!buf.enabled) continue
+      for (const eff of buf.effects) {
+        const v = Number(eff.value) || 0
+        if      (eff.type === 'atkFlat')      flatAtk  += v
+        else if (eff.type === 'atkPct')       pctAtk   += v
+        else if (eff.type === 'critRate')     critRate += v
+        else if (eff.type === 'critDmg')      critDmg  += v
+        else if (eff.type === 'allStatPct')   { pctMain += v; pctSub += v }
+        else if (eff.type === 'bossDmg')      bossDmg  += v
+        else if (eff.type === 'totalDmg')     totalDmg += v
+      }
+    }
+
+    const ignoreDefTotal = ignoreDefFactors.length > 0
+      ? (1 - ignoreDefFactors.reduce((a, v) => a * (1 - v / 100), 1)) * 100
+      : (Number(equipSettings.value.ignoreDefPct) || 0)
+
+    return { flatMain, flatSub, flatAtk, pctMain, pctSub, pctAtk, critRate, critDmg, bossDmg, totalDmg, ignoreDefTotal }
+  }
+
+  function _computeDmgFromTotals(t) {
+    const s = equipSettings.value
+    const coeff = Number(s.weaponCoeff) || 1
+    const finalMain   = (Number(baseStats.value.mainStat) || 0) + t.flatMain
+    const finalSub    = (Number(baseStats.value.subStat)  || 0) + t.flatSub
+    const finalAtk    = (Number(baseStats.value.atk)      || 0) + t.flatAtk
+    const finalAtkPct = t.pctAtk
+    const realFinalMain = Math.floor(finalMain * (1 + t.pctMain / 100))
+    const realFinalSub  = Math.floor(finalSub  * (1 + t.pctSub  / 100))
+    if (finalMain <= 0 || finalAtk <= 0) return { avgBoss:0, avgMob:0, mdpsBoss:0, mdpsMob:0 }
+    const step1 = 4 * realFinalMain + realFinalSub
+    const realFinalAtk = Math.floor(finalAtk * (1 + finalAtkPct / 100))
+    const step4 = step1 * coeff * realFinalAtk * 0.01 * (Number(s.skillPct) || 100) / 100
+    const step5Boss = 1 + (t.totalDmg + t.bossDmg) / 100
+    const step5Mob  = 1 + t.totalDmg / 100
+    const ignEff    = t.ignoreDefTotal / 100
+    const step6Boss = 1 - (Number(s.bossDefPct)    || 0) / 100 * (1 - ignEff)
+    const step6Mob  = 1 - (Number(s.monsterDefPct) || 0) / 100 * (1 - ignEff)
+    const maxBoss = step4 * step5Boss * step6Boss
+    const maxMob  = step4 * step5Mob  * step6Mob
+    const mastery = (Number(s.mastery) || 0) / 100
+    const minBoss = maxBoss * mastery
+    const minMob  = maxMob  * mastery
+    const totalCritRate   = Math.min(100, (Number(s.critRate) || 0) + t.critRate)
+    const totalCritDmgMax = (Number(s.maxCritBonus) || 0) + t.critDmg
+    const critMult = 1 + totalCritRate / 100 * ((Number(s.minCritBonus) || 0) + totalCritDmgMax) / 200
+    const avgBoss = (maxBoss + minBoss) / 2 * critMult
+    const avgMob  = (maxMob  + minMob)  / 2 * critMult
+    let hitsBonus = 0
+    for (const buf of activeBuffs.value) {
+      if (!buf.enabled) continue
+      for (const eff of buf.effects) {
+        if (eff.type === 'hitsPerSecBonus') hitsBonus += Number(eff.value) || 0
+      }
+    }
+    const hps = (Number(s.hitsPerSec) || 0) + hitsBonus
+    return { avgBoss, avgMob, mdpsBoss: avgBoss * hps * 60, mdpsMob: avgMob * hps * 60 }
+  }
+
+  const equipSwapCompareResult = Vue.computed(() => {
+    const curSlot = selectedSlot.value
+    const compareId = compareWithSlotId.value
+    if (!curSlot || !compareId) return { slotName: '', current: null, candidate: null, net: null }
+    const candidate = slots.value[compareId]
+    if (!candidate) return { slotName: '', current: null, candidate: null, net: null }
+    const t_current = totals.value
+    const current = { avgBoss: dmgResult.value.avgBoss, avgMob: dmgResult.value.avgMob, mdpsBoss: dmgResult.value.mdpsBoss, mdpsMob: dmgResult.value.mdpsMob }
+    const t_new = _computeTotalsWithReplacement(curSlot.id, candidate)
+    const newDmg = _computeDmgFromTotals(t_new)
+    const net = {
+      bossPct: newDmg.avgBoss && current.avgBoss ? (newDmg.avgBoss / current.avgBoss - 1) * 100 : 0,
+      mobPct:  newDmg.avgMob  && current.avgMob  ? (newDmg.avgMob  / current.avgMob  - 1) * 100 : 0,
+    }
+    return { slotName: candidate.name, current, candidate: newDmg, net }
+  })
+
   function initPartyBuffs() {
     activeBuffs.value = (partyBuffsRef.value || []).map(b => Object.assign({}, b, {
       enabled: false,

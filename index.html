@@ -1032,6 +1032,44 @@
           </div>
         </div><!-- end pot-compare-section -->
 
+        <!-- 🧭 裝備比較器 -->
+        <div class="equip-compare-section">
+          <div class="panel-title">🧭 裝備比較器
+            <span class="pot-subtitle">（把目前選中槽換成另一槽的裝備，計算換裝後增益）</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+            <div>選擇比較槽：</div>
+            <select v-model="equip.compareWithSlotId.value">
+              <option value="">（選擇一個槽位）</option>
+              <option v-for="sd in equip.SLOT_DEFS" :value="sd.id">{{ sd.name }}</option>
+            </select>
+          </div>
+          <div class="pot-result-table" v-if="equip.equipSwapCompareResult.value && equip.compareWithSlotId.value">
+            <div class="pot-result-header">
+              <div></div>
+              <div>目前</div>
+              <div>換成 {{ equip.equipSwapCompareResult.value.slotName }}</div>
+              <div>淨損益</div>
+            </div>
+            <div class="pot-result-row">
+              <div class="pot-result-scene">⚔️ 打王 MDPS（/分）</div>
+              <div>{{ fmtDps(equip.equipSwapCompareResult.value.current.mdpsBoss) }}</div>
+              <div>{{ fmtDps(equip.equipSwapCompareResult.value.candidate.mdpsBoss) }}</div>
+              <div :class="equip.equipSwapCompareResult.value.net.bossPct > 0 ? 'pot-win' : equip.equipSwapCompareResult.value.net.bossPct < 0 ? 'pot-lose' : ''">
+                {{ equip.equipSwapCompareResult.value.net.bossPct >= 0 ? '+' : '' }}{{ equip.equipSwapCompareResult.value.net.bossPct.toFixed(2) }}%
+              </div>
+            </div>
+            <div class="pot-result-row">
+              <div class="pot-result-scene">🐾 小怪 MDPS（/分）</div>
+              <div>{{ fmtDps(equip.equipSwapCompareResult.value.current.mdpsMob) }}</div>
+              <div>{{ fmtDps(equip.equipSwapCompareResult.value.candidate.mdpsMob) }}</div>
+              <div :class="equip.equipSwapCompareResult.value.net.mobPct > 0 ? 'pot-win' : equip.equipSwapCompareResult.value.net.mobPct < 0 ? 'pot-lose' : ''">
+                {{ equip.equipSwapCompareResult.value.net.mobPct >= 0 ? '+' : '' }}{{ equip.equipSwapCompareResult.value.net.mobPct.toFixed(2) }}%
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 📊 詞條比較器 -->
         <div class="ability-compare-section">
           <div class="panel-title">
