@@ -1045,8 +1045,8 @@
           <div v-if="equip.compareMode.value === 'slot'" style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
             <div>選擇比較槽：</div>
             <select v-model="equip.compareWithSlotId.value">
-              <option value="">（選擇一個槽位）</option>
-              <option v-for="sd in equip.SLOT_DEFS" :value="sd.id">{{ sd.name }}</option>
+              <option value="">（選擇一個同類槽位）</option>
+              <option v-for="sd in equip.compatibleSlots" :value="sd.id">{{ sd.name }}</option>
             </select>
           </div>
 

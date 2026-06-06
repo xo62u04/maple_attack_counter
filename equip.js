@@ -709,6 +709,12 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
   const compareMode = Vue.ref('slot') // 'slot' or 'custom'
   const candidateCustomSlot = Vue.ref(makeSlot({ id: 'candidate', name: '候選', group: 'armor' }))
 
+  const compatibleSlots = Vue.computed(() => {
+    const sel = selectedSlot.value
+    if (!sel) return []
+    return SLOT_DEFS.filter(sd => sd.group === sel.group && sd.id !== sel.id)
+  })
+
   function _computeTotalsWithReplacement(replaceId, newSlot) {
     let flatMain = 0, flatSub = 0, flatAtk = 0
     let pctMain = 0, pctSub = 0, pctAtk = 0
@@ -875,7 +881,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     POT_COMPARE_TYPES, potCompareNew, potCompareResult,
     abilityCompareLines, abilityCompareResult,
     addAbilityCompareLine, removeAbilityCompareLine,
-    compareWithSlotId, compareMode, candidateCustomSlot, equipSwapCompareResult,
+    compareWithSlotId, compareMode, candidateCustomSlot, compatibleSlots, equipSwapCompareResult,
     getState, setState,
     initJobSkills, initPartyBuffs, importFromTab1,
   }
