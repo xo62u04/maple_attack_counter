@@ -866,6 +866,7 @@ function useEquip(jobsRef, partyBuffsRef, selectedJobIdRef) {
     POT_COMPARE_TYPES, potCompareNew, potCompareResult,
     abilityCompareLines, abilityCompareResult,
     addAbilityCompareLine, removeAbilityCompareLine,
+    compareWithSlotId, equipSwapCompareResult,
     getState, setState,
     initJobSkills, initPartyBuffs, importFromTab1,
   }
