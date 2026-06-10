@@ -1757,23 +1757,6 @@
             </div>
           </div>
 
-          <!-- 雪花設定 -->
-          <div class="dist-snowflakes">
-            <div class="dist-sf-header">❄️ 雪花（均分費用，開的人多收錢）</div>
-            <div v-if="heartFactory.distributor.snowflakes.length === 0" class="dist-sf-empty">尚無雪花，點下方新增</div>
-            <div v-for="(sf, si) in heartFactory.distributor.snowflakes" :key="si" class="dist-sf-row">
-              <span class="dist-sf-label">雪花 {{ si + 1 }}</span>
-              <input type="number" v-model.number="sf.value" min="0" step="1" class="dist-sf-input" placeholder="10" />
-              <span class="dist-pct-suffix">萬</span>
-              <span class="dist-sf-by">開者：</span>
-              <select v-model.number="sf.opener" class="dist-sf-select">
-                <option v-for="(m, mi) in heartFactory.distributor.members" :key="mi" :value="mi">{{ m.name }}</option>
-              </select>
-              <button @click="heartFactory.removeSnowflake(si)" class="btn dist-btn-remove">✕</button>
-            </div>
-            <button @click="heartFactory.addSnowflake()" class="btn dist-btn-add">❄️ 新增雪花</button>
-          </div>
-
           <!-- 心臟庫存 -->
           <div class="dist-inventory">
             <table class="dist-inv-table">
@@ -1853,17 +1836,6 @@
                     <td colspan="4" class="dist-atk-label">理想金額</td>
                     <td v-for="(m, i) in heartFactory.distributor.members" :key="i" class="dist-val">
                       {{ heartFactory.distributorResult.idealVal[i] > 0 ? heartFactory.distributorResult.idealVal[i].toFixed(0) + ' 萬' : '—' }}
-                    </td>
-                  </tr>
-                  <tr v-if="heartFactory.distributorResult.snowflakeAdjs && heartFactory.distributorResult.snowflakeAdjs.some(a => Math.abs(a) > 0.01)"
-                      class="dist-value-row dist-sf-adj-row">
-                    <td colspan="4" class="dist-atk-label">❄️ 雪花調整</td>
-                    <td v-for="(adj, i) in heartFactory.distributorResult.snowflakeAdjs" :key="i"
-                        :class="adj < -0.01 ? 'dist-owed' : adj > 0.01 ? 'dist-owes' : 'dist-even'">
-                      <template v-if="Math.abs(adj) > 0.01">
-                        {{ adj < 0 ? '' : '+' }}{{ adj.toFixed(0) }} 萬
-                      </template>
-                      <template v-else>—</template>
                     </td>
                   </tr>
                   <tr class="dist-balance-row">
@@ -2103,17 +2075,24 @@
               <span>鐵鎚期望成本</span><span>{{ heartFactory.batchAnalysis.hammerExpCost }} 萬</span>
             </div>
             <div class="heart-ev-row heart-ev-total">
-              <span>每顆總成本</span><span>{{ heartFactory.batchAnalysis.costPerHeart }} 萬</span>
+              <span>單次衝製成本</span><span>{{ heartFactory.batchAnalysis.costPerHeart }} 萬</span>
+            </div>
+            <div class="heart-ev-row" v-if="heartFactory.batchAnalysis.totalSynthesized > 0.001">
+              <span>回收合成重衝</span>
+              <span>{{ heartFactory.batchAnalysis.totalSynthesized.toFixed(2) }} 顆</span>
+            </div>
+            <div class="heart-ev-row heart-ev-total" v-if="heartFactory.batchAnalysis.totalSynthesized > 0.001">
+              <span>含回收成本/顆</span><span>{{ heartFactory.batchAnalysis.avgCostPerHeart.toFixed(1) }} 萬</span>
             </div>
             <div class="heart-ev-row">
               <span>{{ heartFactory.batch.qty }} 顆總預算</span>
-              <span>{{ heartFactory.batchAnalysis.totalBudget }} 萬</span>
+              <span>{{ heartFactory.batchAnalysis.totalBudget.toFixed(1) }} 萬</span>
             </div>
 
             <div class="heart-divider"></div>
 
             <div class="heart-outcome-head">
-              <span>結果</span><span>機率</span><span>無潛售價</span><span>有潛售價</span><span>期望市值</span><span>利潤/顆</span>
+              <span>結果</span><span>機率</span><span>無潛售價</span><span>有潛售價</span><span>期望市值</span><span>期望利潤</span>
             </div>
             <div v-for="r in heartFactory.batchAnalysis.table" :key="r.atk" class="heart-outcome-row">
               <span>{{ r.atk }}攻</span>
@@ -2126,11 +2105,11 @@
               </span>
             </div>
             <div class="heart-outcome-row heart-waste" v-if="heartFactory.batchAnalysis.wasteProb > 0.0001">
-              <span>廢品</span>
+              <span>回收品</span>
               <span>{{ (heartFactory.batchAnalysis.wasteProb*100).toFixed(2) }}%</span>
               <span>—</span><span>—</span>
               <span>0 萬</span>
-              <span class="heart-loss">{{ (-heartFactory.batchAnalysis.costPerHeart).toFixed(0) }} 萬</span>
+              <span class="heart-loss">{{ heartFactory.batchAnalysis.wasteProfit.toFixed(0) }} 萬</span>
             </div>
 
             <div class="heart-divider"></div>
@@ -2148,7 +2127,7 @@
             <div class="heart-divider"></div>
 
             <!-- 期望出幾顆 -->
-            <div class="heart-expect-title">製作 {{ heartFactory.batch.qty }} 顆，期望出現：</div>
+            <div class="heart-expect-title">製作 {{ heartFactory.batch.qty }} 顆，含回收預計衝 {{ heartFactory.batchAnalysis.totalScrolled.toFixed(2) }} 顆，期望出現：</div>
             <div v-for="r in heartFactory.batchAnalysis.table" :key="'e'+r.atk" class="heart-expect-row">
               <span class="heart-expect-atk">{{ r.atk }}攻</span>
               <span class="heart-expect-count">

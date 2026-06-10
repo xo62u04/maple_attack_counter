@@ -115,8 +115,6 @@ function useHeartFactory() {
     ],
     // n=一般無框, f=有框, h=有鎚（無框）
     hearts: Object.fromEntries(DIST_ATKS.map(a => [a, { n: 0, f: 0, h: 0 }])),
-    // 雪花：均分費用，開的人收錢
-    snowflakes: [],
   })
 
   // 從 ③ 節 marketPrices 計算各攻擊力的代表價格（所有副屬無潛的最低價）
@@ -142,13 +140,6 @@ function useHeartFactory() {
     if (distributor.value.members.length <= 2) return
     distributor.value.members.splice(i, 1)
   }
-  function addSnowflake() {
-    distributor.value.snowflakes.push({ value: 10, opener: 0 })
-  }
-  function removeSnowflake(i) {
-    distributor.value.snowflakes.splice(i, 1)
-  }
-
   // 最大剩餘法分配整數顆數
   // surpluses（萬楓幣）＋ price（萬楓幣）：
   //   按跨行累積餘額直接調整各人的分配量，
@@ -204,8 +195,7 @@ function useHeartFactory() {
       }
     }
 
-    const hasSnowflakes = (d.snowflakes || []).some(sf => sf && sf.value > 0)
-    if (rows.length === 0 && !hasSnowflakes) return { invalid: false, totalPct, empty: true }
+    if (rows.length === 0) return { invalid: false, totalPct, empty: true }
 
     const idealVal  = new Array(members.length).fill(0)  // 萬楓幣
     const actualVal = new Array(members.length).fill(0)
@@ -226,25 +216,6 @@ function useHeartFactory() {
     // 餘額（心臟部分）：正數＝多拿了（要補錢給別人），負數＝少拿了（別人要補給他）
     const balances  = members.map((_, i) => actualVal[i] - idealVal[i])
 
-    // 雪花調整：費用均分，開的人收全額，其他人各付 1/n
-    // opener: balance -= (n-1)*share（少拿了 → 別人要補給他）
-    // 其他人: balance += share（多拿了 → 要補給 opener）
-    const snowflakeAdjs = new Array(members.length).fill(0)
-    for (const sf of (d.snowflakes || [])) {
-      if (!sf || !(sf.value > 0)) continue
-      const openerIdx = (typeof sf.opener === 'number' && sf.opener >= 0 && sf.opener < members.length) ? sf.opener : 0
-      const n = members.length
-      const share = sf.value / n
-      for (let i = 0; i < n; i++) {
-        if (i === openerIdx) {
-          snowflakeAdjs[i] -= (n - 1) * share
-        } else {
-          snowflakeAdjs[i] += share
-        }
-      }
-    }
-    for (let i = 0; i < members.length; i++) balances[i] += snowflakeAdjs[i]
-
     // 最簡清算轉帳
     const debtors   = members.map((m, i) => ({ name: m.name, amt:  balances[i] })).filter(x => x.amt >  0.01).sort((a, b) => b.amt - a.amt)
     const creditors = members.map((m, i) => ({ name: m.name, amt: -balances[i] })).filter(x => x.amt >  0.01).sort((a, b) => b.amt - a.amt)
@@ -260,7 +231,7 @@ function useHeartFactory() {
       if (cs[ci].amt < 0.01) ci++
     }
 
-    return { invalid: false, empty: false, totalPct, rows, idealVal, actualVal, balances, snowflakeAdjs, transfers }
+    return { invalid: false, empty: false, totalPct, rows, idealVal, actualVal, balances, transfers }
   })
 
   const adaptiveScroll = ref({
@@ -295,7 +266,6 @@ function useHeartFactory() {
             [k, typeof v === 'number' ? { n: v, f: 0, h: 0 } : { n: v.n||0, f: v.f||0, h: v.h||0 }]
           )
         ),
-        snowflakes: JSON.parse(JSON.stringify(distributor.value.snowflakes || [])),
       },
     }
   }
@@ -327,7 +297,6 @@ function useHeartFactory() {
             : { n: val.n || 0, f: val.f || 0, h: val.h || 0 }
         }
       }
-      distributor.value.snowflakes = s.distributor.snowflakes || []
     }
   }
 
@@ -643,6 +612,9 @@ function useHeartFactory() {
       (hammer !== 'none' && s4 ? (scrollCosts.value[s4.id] || 0) : 0)
 
     const costPerHeart = materialCost.value + scrollCostTotal + hammerExpCost
+    const qty       = batch.value.qty || 1
+    const synthCost = condStrategy.value.synthCost ?? 0
+    const frameRate = (condStrategy.value.synthFrameRate ?? 0) / 100
 
     // 枚舉 3 槽，追蹤副屬性
     const raw3 = []
@@ -673,33 +645,69 @@ function useHeartFactory() {
       grouped.get(k).prob += prob
     }
 
-    const table = [...grouped.values()]
+    const allRows = [...grouped.values()]
       .map(({ atk, subs, prob }) => {
         const netNo  = getNetPrice(atk, subs, false)
         const netYes = getNetPrice(atk, subs, true)
         const expVal = VALID_ATK.has(atk) ? (0.9 * netNo + 0.1 * netYes) : 0
+        const valid = VALID_ATK.has(atk)
+        const isScrap = !valid || expVal <= 0
         return {
           atk, subs,
           label:          subsLabel(subs),
           prob,
           netNo, netYes, expVal,
-          profit:         expVal - costPerHeart,
-          expectedInBatch: prob * (batch.value.qty || 1),
+          profit:         0,
+          outcomeProfit:  expVal - costPerHeart,
+          expectedInBatch: prob * qty,
           heartsPerOne:   prob > 0 ? 1 / prob : Infinity,
-          valid:          VALID_ATK.has(atk),
+          valid,
+          isScrap,
         }
       })
       .sort((a, b) => a.atk - b.atk || a.label.localeCompare(b.label))
 
-    const validTable      = table.filter(r => r.valid)
-    const wasteProb       = table.filter(r => !r.valid).reduce((s, r) => s + r.prob, 0)
-    const totalExpRevenue = table.reduce((s, r) => s + r.prob * r.expVal, 0)
+    const sellableRows = allRows.filter(r => !r.isScrap)
+    const wasteProb = allRows.filter(r => r.isScrap).reduce((s, r) => s + r.prob, 0)
+    const expRevPerScroll = sellableRows.reduce((s, r) => s + r.prob * r.expVal, 0)
+
+    const totalScrolled    = qty * 2 / (2 - wasteProb)
+    const totalSynthesized = totalScrolled - qty
+    const synthHeartCost   = synthCost + scrollCostTotal + hammerExpCost
+    const totalCost        = qty * costPerHeart + totalSynthesized * synthHeartCost
+
+    const pSell = sellableRows.reduce((s, r) => s + r.prob, 0)
+    const totalFrameBonus = frameRate > 0
+      ? sellableRows.reduce((sum, r) =>
+          sum + totalSynthesized * r.prob * frameRate * Math.max(0, r.netYes - r.netNo), 0)
+      : 0
+    const totalRevenue     = totalScrolled * expRevPerScroll + totalFrameBonus
+    const totalProfit      = totalRevenue - totalCost
+    const avgCostPerHeart  = totalCost / qty
+    const avgCostPerScroll = totalScrolled > 0 ? totalCost / totalScrolled : 0
+    const scrollFactor     = totalScrolled / qty
+    const synthFactor      = totalSynthesized / qty
+
+    const table = sellableRows.map(r => {
+      const frameBonus = synthFactor * r.prob * frameRate * Math.max(0, r.netYes - r.netNo)
+      return {
+        ...r,
+        profit: scrollFactor * r.prob * (r.expVal - avgCostPerScroll) + frameBonus,
+        outcomeProfit: r.expVal - avgCostPerScroll,
+        expectedInBatch: r.prob * totalScrolled,
+      }
+    })
+    const wasteProfit = wasteProb > 0
+      ? scrollFactor * wasteProb * (0 - avgCostPerScroll)
+      : 0
 
     return {
       costPerHeart, hammerExpCost, scrollCostTotal,
-      table: validTable, wasteProb, totalExpRevenue,
-      expProfit:   totalExpRevenue - costPerHeart,
-      totalBudget: costPerHeart * (batch.value.qty || 1),
+      avgCostPerHeart, totalScrolled, totalSynthesized,
+      table, wasteProb, wasteProfit,
+      totalExpRevenue: totalRevenue / qty,
+      expProfit: totalProfit / qty,
+      totalBudget: totalCost,
     }
   })
 
@@ -1140,7 +1148,7 @@ function useHeartFactory() {
     conditionalHammer, conditionalHammerAnalysis,
     adaptiveScroll, adaptiveScrollAnalysis,
     allOutcomes, batchOutcomes, batchAnalysis, strategyRanking,
-    DIST_ATKS, distributor, addMember, removeMember, addSnowflake, removeSnowflake, distPriceForAtk, distPriceForAtkFramed, distributorResult,
+    DIST_ATKS, distributor, addMember, removeMember, distPriceForAtk, distPriceForAtkFramed, distributorResult,
     getState, setState,
   }
 }
