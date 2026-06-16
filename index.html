@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>楓星攻擊力計算機</title>
-  <link rel="stylesheet" href="style.css?v=20260606a" />
+  <link rel="stylesheet" href="style.css?v=20260616a" />
 </head>
 <body>
   <div id="app">
@@ -1211,7 +1211,75 @@
         </div>
       </section>
 
-      <!-- ② 本次結算 -->
+      <!-- ② 總計清算 -->
+      <section class="loot-section loot-total-settlement">
+        <div class="loot-total-header">
+          <div>
+            <h2 class="loot-section-title">🧾 總計清算</h2>
+            <div class="loot-total-meta">
+              {{ loot.totalSettlementResult.activeSessions.length }} 筆有差額紀錄 ·
+              已扣帳 {{ loot.totalSettlementResult.paidTotal.toFixed(1) }} 萬
+            </div>
+          </div>
+          <button
+            class="btn loot-settle-all-btn"
+            :disabled="loot.totalSettlementResult.transfers.length === 0"
+            @click="loot.settleTotalTransfers(); saveLootSettings()"
+          >已統一給錢，扣掉這批</button>
+        </div>
+
+        <div v-if="loot.totalSettlementResult.transfers.length > 0" class="loot-total-list">
+          <div
+            v-for="(t, i) in loot.totalSettlementResult.transfers"
+            :key="'total-transfer-' + i"
+            class="loot-total-transfer-row"
+          >
+            <div class="loot-total-transfer-main">
+              <span class="text-danger">{{ t.from }}</span>
+              <span class="loot-total-arrow">給</span>
+              <span class="text-success">{{ t.to }}</span>
+            </div>
+            <div class="loot-total-transfer-amount">
+              <strong>{{ t.amount }} {{ t.unit }}</strong>
+              <span v-if="t.cashRemainder">+ {{ t.cashRemainder }} 萬</span>
+              <small>約 {{ t.rawAmount.toFixed(1) }} 萬</small>
+            </div>
+          </div>
+          <div class="loot-total-sum">目前累積需清算 {{ loot.totalSettlementResult.totalOwed.toFixed(1) }} 萬</div>
+        </div>
+        <div v-else class="loot-total-empty">
+          目前沒有需要清算的累積欠款。
+        </div>
+
+        <div v-if="loot.totalSettlementResult.members.length > 0" class="loot-total-net-list">
+          <div
+            v-for="m in loot.totalSettlementResult.members"
+            :key="'net-' + m.name"
+            class="loot-total-net-row"
+            :class="{ owes: m.diff > 0.01, owed: m.diff < -0.01 }"
+          >
+            <span>{{ m.name }}</span>
+            <span>{{ m.diff > 0.01 ? '應付' : '應收' }}</span>
+            <strong>{{ Math.abs(m.diff).toFixed(1) }} 萬</strong>
+          </div>
+        </div>
+
+        <div v-if="loot.recentSettlementPayments.length > 0" class="loot-paid-history">
+          <div class="loot-paid-history-title">扣帳紀錄</div>
+          <div
+            v-for="p in loot.recentSettlementPayments"
+            :key="'paid-' + p.id"
+            class="loot-paid-row"
+          >
+            <span>{{ loot.formatPaidAt(p.paidAt) }}</span>
+            <span><b class="text-danger">{{ p.from }}</b> 給 <b class="text-success">{{ p.to }}</b></span>
+            <strong>{{ p.amount.toFixed(1) }} 萬</strong>
+            <button class="btn btn-delete loot-btn-sm" @click="loot.removeSettlementPayment(p.id); saveLootSettings()">取消</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ③ 本次結算 -->
       <section class="loot-section loot-session" v-if="loot.currentSession">
         <h2 class="loot-section-title">🎯 本次結算</h2>
 
@@ -1462,7 +1530,7 @@
         <button class="btn loot-clear-btn" @click="loot.clearSession()">🗑️ 清空本次結算</button>
       </section>
 
-      <!-- ③ 設定區（摺疊）-->
+      <!-- ④ 設定區（摺疊）-->
       <section class="loot-section loot-settings">
         <div class="loot-settings-header" @click="loot.settingsOpen = !loot.settingsOpen">
           <h2 class="loot-section-title">🛠️ 設定</h2>
@@ -3175,7 +3243,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="heart.js?v=20260522c"></script>
   <script src="equip.js?v=20260606a"></script>
-  <script src="loot.js?v=20260606a"></script>
+  <script src="loot.js?v=20260616a"></script>
   <script src="alchemy.js?v=20260509-1"></script>
   <script src="sync.js?v=20260512a"></script>
   <script src="schedule.js"></script>

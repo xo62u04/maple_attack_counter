@@ -35,6 +35,9 @@ function useLoot() {
   // ── 設定區折疊狀態 ──
   const settingsOpen = ref(false)
 
+  // ── 總計清算扣帳紀錄 ──
+  const settlementPayments = ref([])  // [{ id, from, to, amount, paidAt }]
+
   // ── ID 產生器 ──
   let _nextId = 1
   function nextId() { return _nextId++ }
@@ -49,6 +52,17 @@ function useLoot() {
       soldItems: Array.isArray(src.soldItems) ? src.soldItems.filter(i => i && i.id != null) : [],
       memberItems: Array.isArray(src.memberItems) ? src.memberItems.filter(i => i && i.id != null) : [],
       snowflakesUsed: Number(src.snowflakesUsed) || 0,
+    }
+  }
+
+  function normalizeSettlementPayment(payment) {
+    const src = payment && typeof payment === 'object' ? payment : {}
+    return {
+      id: Number(src.id) || nextId(),
+      from: String(src.from || ''),
+      to: String(src.to || ''),
+      amount: Math.max(0, Number(src.amount) || 0),
+      paidAt: src.paidAt || '',
     }
   }
 
@@ -212,6 +226,7 @@ function useLoot() {
         result.push({
           from: debtors[di].name,
           to:   creditors[ci].name,
+          rawAmount: Math.round(pay * 10) / 10,
           amount: displayAmount,
           unit,
           cashRemainder,
@@ -225,12 +240,11 @@ function useLoot() {
     return result
   }
 
-  // ── 結算計算 ──
-  const settlementResult = computed(() => {
-    const members = currentSession.value?.members ?? []
+  function computeSettlementForSession(session) {
+    const members = session?.members ?? []
     if (members.length === 0) return null
 
-    const validItems = (currentSession.value?.soldItems ?? []).filter(
+    const validItems = (session?.soldItems ?? []).filter(
       i => i && (i.status === 'sold' || i.status === 'selfuse')
     )
 
@@ -239,7 +253,7 @@ function useLoot() {
       const feeRate = i.status === 'sold' ? (Number(i.fee) || 0) : 0
       return gross * (1 - feeRate / 100)
     }
-    const memberItems = (currentSession.value?.memberItems ?? []).filter(i => i && i.memberName && (Number(i.price) || 0) > 0)
+    const memberItems = (session?.memberItems ?? []).filter(i => i && i.memberName && (Number(i.price) || 0) > 0)
     const totalMemberItemValue = memberItems.reduce((sum, i) => sum + (Number(i.price) || 0), 0)
     const totalCashRevenue  = validItems.filter(i => i.status === 'sold').reduce((sum, i) => sum + itemNet(i), 0)
     const totalSelfuseValue = validItems.filter(i => i.status === 'selfuse').reduce((sum, i) => sum + itemNet(i), 0)
@@ -251,7 +265,7 @@ function useLoot() {
       return sum + (Number(i.qty) || 1) * (i.scissorType / mileageRate.value * 1000)
     }, 0)
 
-    const snowflakesUsed = Number(currentSession.value?.snowflakesUsed) || 0
+    const snowflakesUsed = Number(session?.snowflakesUsed) || 0
     const totalSnowflakeCost = snowflakesUsed * snowflakeCostPer.value
 
     const netRevenue = totalRevenue - totalScissorCost - totalSnowflakeCost
@@ -317,6 +331,9 @@ function useLoot() {
     const transfers = calcTransfers(Object.values(memberMap), cubePrice.value)
 
     return {
+      sessionId: session?.id,
+      sessionName: session?.name || '未命名',
+      sessionDate: session?.date || '',
       totalCashRevenue,
       totalSelfuseValue,
       totalMemberItemValue,
@@ -328,7 +345,105 @@ function useLoot() {
       members: Object.values(memberMap),
       transfers,
     }
+  }
+
+  // ── 結算計算 ──
+  const settlementResult = computed(() => computeSettlementForSession(currentSession.value))
+
+  function addBalance(map, name, amount) {
+    if (!name || Math.abs(amount) <= 0.01) return
+    map.set(name, (map.get(name) || 0) + amount)
+  }
+
+  const totalSettlementResult = computed(() => {
+    const balances = new Map()
+    const activeSessions = []
+
+    for (const session of sessions.value) {
+      const result = computeSettlementForSession(session)
+      if (!result) continue
+
+      let sessionOwed = 0
+      let hasBalance = false
+      for (const member of result.members) {
+        addBalance(balances, member.name, member.diff)
+        if (Math.abs(member.diff) > 0.01) hasBalance = true
+        if (member.diff > 0.01) sessionOwed += member.diff
+      }
+      if (hasBalance) {
+        activeSessions.push({
+          id: result.sessionId,
+          name: result.sessionName,
+          date: result.sessionDate,
+          amount: Math.round(sessionOwed * 10) / 10,
+        })
+      }
+    }
+
+    for (const payment of settlementPayments.value) {
+      const amount = Number(payment.amount) || 0
+      if (amount <= 0.01) continue
+      addBalance(balances, payment.from, -amount)
+      addBalance(balances, payment.to, amount)
+    }
+
+    const members = Array.from(balances.entries())
+      .map(([name, diff]) => ({ name, diff: Math.round(diff * 10) / 10 }))
+      .filter(m => Math.abs(m.diff) > 0.01)
+      .sort((a, b) => b.diff - a.diff || a.name.localeCompare(b.name, 'zh-Hant'))
+
+    const transfers = calcTransfers(members, cubePrice.value)
+    const totalOwed = transfers.reduce((sum, t) => sum + (Number(t.rawAmount) || 0), 0)
+    const paidTotal = settlementPayments.value.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
+
+    return {
+      members,
+      transfers,
+      activeSessions,
+      totalOwed: Math.round(totalOwed * 10) / 10,
+      paidTotal: Math.round(paidTotal * 10) / 10,
+    }
   })
+
+  const recentSettlementPayments = computed(() =>
+    settlementPayments.value
+      .slice()
+      .sort((a, b) => String(b.paidAt).localeCompare(String(a.paidAt)))
+      .slice(0, 8)
+  )
+
+  function settleTotalTransfers() {
+    const transfers = totalSettlementResult.value?.transfers ?? []
+    if (transfers.length === 0) return
+    const paidAt = new Date().toISOString()
+    for (const transfer of transfers) {
+      const amount = Math.round((Number(transfer.rawAmount) || 0) * 10) / 10
+      if (amount <= 0.01) continue
+      settlementPayments.value.push({
+        id: nextId(),
+        from: transfer.from,
+        to: transfer.to,
+        amount,
+        paidAt,
+      })
+    }
+  }
+
+  function removeSettlementPayment(id) {
+    settlementPayments.value = settlementPayments.value.filter(p => p.id !== id)
+  }
+
+  function formatPaidAt(value) {
+    if (!value) return ''
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return ''
+    return date.toLocaleString('zh-TW', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
 
   // ── 存檔整合 ──
   function getState() {
@@ -340,6 +455,7 @@ function useLoot() {
       bossDropTables: JSON.parse(JSON.stringify(bossDropTables.value)),
       sessions:        JSON.parse(JSON.stringify(sessions.value)),
       currentSessionId: currentSessionId.value,
+      settlementPayments: JSON.parse(JSON.stringify(settlementPayments.value)),
     }
   }
 
@@ -358,6 +474,9 @@ function useLoot() {
             .map(b => ({ ...b, drops: Array.isArray(b.drops) ? b.drops.filter(d => d && d.id != null) : [] }))
         : []
     }
+    settlementPayments.value = Array.isArray(s.settlementPayments)
+      ? s.settlementPayments.map(normalizeSettlementPayment).filter(p => p.from && p.to && p.amount > 0)
+      : []
 
     // 舊格式相容：有 session 無 sessions
     if (s.session && !s.sessions) {
@@ -388,6 +507,7 @@ function useLoot() {
       for (const i of (sess.soldItems || [])) if (i && i.id > maxId) maxId = i.id
       for (const i of (sess.memberItems || [])) if (i && i.id > maxId) maxId = i.id
     }
+    for (const p of settlementPayments.value) if (p && p.id > maxId) maxId = p.id
     _nextId = maxId + 1
   }
 
@@ -396,7 +516,7 @@ function useLoot() {
     scissorCost3900, scissorCost7100, snowflakeCostPer,
     memberPresets, bossDropTables,
     sessions, currentSessionId, currentSession,
-    settingsOpen,
+    settingsOpen, settlementPayments, recentSettlementPayments,
     nextId,
     addMemberPreset, removeMemberPreset,
     addSessionMemberFromPreset, addSessionMemberManual, removeSessionMember,
@@ -404,7 +524,8 @@ function useLoot() {
     addDropToSession, removeSessionItem, clearSession, createSessionFromRun, dropCount,
     addMemberItem, removeMemberItem,
     addSession, deleteSession, switchSession,
-    settlementResult,
+    settlementResult, totalSettlementResult,
+    settleTotalTransfers, removeSettlementPayment, formatPaidAt,
     getState, setState,
   }
 }

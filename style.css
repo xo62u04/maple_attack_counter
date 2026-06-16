@@ -1430,6 +1430,159 @@ body {
   margin-left: 6px;
 }
 
+/* 總計清算 */
+.loot-total-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.loot-total-meta {
+  color: var(--text-dim);
+  font-size: 14px;
+  margin-top: -6px;
+}
+.loot-settle-all-btn {
+  background: #2a4a2a;
+  border: 1px solid #4c8a4c;
+  color: #d8ffd8;
+  white-space: nowrap;
+}
+.loot-settle-all-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.loot-total-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.loot-total-transfer-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.loot-total-transfer-main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 24px;
+  font-weight: 700;
+  min-width: 0;
+}
+.loot-total-arrow {
+  color: var(--text-dim);
+  font-size: 16px;
+  font-weight: 500;
+}
+.loot-total-transfer-amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--accent);
+  text-align: right;
+}
+.loot-total-transfer-amount strong {
+  background: var(--accent);
+  color: #000;
+  border-radius: 5px;
+  padding: 3px 10px;
+  font-size: 20px;
+}
+.loot-total-transfer-amount small {
+  color: var(--text-dim);
+  font-size: 13px;
+}
+.loot-total-sum {
+  color: var(--text-dim);
+  font-size: 15px;
+  text-align: right;
+}
+.loot-total-empty {
+  background: var(--bg-input);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  font-size: 18px;
+  padding: 14px;
+}
+.loot-total-net-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 6px;
+  margin-top: 12px;
+}
+.loot-total-net-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 40px auto;
+  gap: 8px;
+  align-items: center;
+  background: rgba(255,255,255,0.03);
+  border-left: 3px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 9px;
+  font-size: 15px;
+}
+.loot-total-net-row.owes { border-left-color: var(--danger); }
+.loot-total-net-row.owed { border-left-color: var(--success); }
+.loot-paid-history {
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+  padding-top: 10px;
+}
+.loot-paid-history-title {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.loot-paid-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 90px 52px;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 14px;
+  padding: 3px 0;
+}
+.loot-paid-row strong {
+  color: var(--accent);
+  text-align: right;
+}
+
+@media (max-width: 680px) {
+  .loot-total-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .loot-settle-all-btn {
+    width: 100%;
+  }
+  .loot-total-transfer-row {
+    grid-template-columns: 1fr;
+  }
+  .loot-total-transfer-amount {
+    justify-content: flex-start;
+    text-align: left;
+  }
+  .loot-paid-row {
+    grid-template-columns: 1fr auto;
+  }
+  .loot-paid-row span:nth-child(2),
+  .loot-paid-row strong {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+}
+
 /* 預設隊員按鈕 */
 .loot-preset-list {
   display: flex;
