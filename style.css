@@ -1460,7 +1460,7 @@ body {
 }
 .loot-total-transfer-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px;
   background: var(--bg-input);
@@ -1502,6 +1502,36 @@ body {
   color: var(--text-dim);
   font-size: 13px;
 }
+.loot-total-transfer-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.loot-transfer-pay-input {
+  width: 86px;
+  background: var(--bg-panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 4px 8px;
+  font-size: 16px;
+  text-align: right;
+}
+.loot-transfer-pay-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.loot-settle-one-btn {
+  background: #24422a;
+  border: 1px solid #3f7448;
+  color: #d8ffd8;
+}
+.loot-settle-one-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 .loot-total-sum {
   color: var(--text-dim);
   font-size: 15px;
@@ -1534,6 +1564,22 @@ body {
 }
 .loot-total-net-row.owes { border-left-color: var(--danger); }
 .loot-total-net-row.owed { border-left-color: var(--success); }
+.loot-manual-payment {
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+  padding-top: 10px;
+}
+.loot-manual-payment-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.loot-manual-payment-hint {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin-top: 6px;
+}
 .loot-paid-history {
   border-top: 1px solid var(--border);
   margin-top: 12px;
@@ -1572,6 +1618,17 @@ body {
   .loot-total-transfer-amount {
     justify-content: flex-start;
     text-align: left;
+  }
+  .loot-total-transfer-actions {
+    justify-content: flex-start;
+  }
+  .loot-transfer-pay-input {
+    width: 100%;
+  }
+  .loot-manual-payment-row .loot-select-sm,
+  .loot-manual-payment-row .loot-input-price,
+  .loot-manual-payment-row .loot-settle-one-btn {
+    width: 100%;
   }
   .loot-paid-row {
     grid-template-columns: 1fr auto;

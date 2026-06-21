@@ -37,6 +37,8 @@ function useLoot() {
 
   // ── 總計清算扣帳紀錄 ──
   const settlementPayments = ref([])  // [{ id, from, to, amount, paidAt }]
+  const manualSettlementPayment = ref({ from: '', to: '', amount: 0 })
+  const transferSettlementAmounts = ref({})
 
   // ── ID 產生器 ──
   let _nextId = 1
@@ -412,20 +414,97 @@ function useLoot() {
       .slice(0, 8)
   )
 
+  const totalSettlementPeople = computed(() => {
+    const names = new Set()
+    for (const session of sessions.value) {
+      for (const member of (session?.members || [])) {
+        if (member?.name) names.add(member.name)
+      }
+    }
+    for (const payment of settlementPayments.value) {
+      if (payment.from) names.add(payment.from)
+      if (payment.to) names.add(payment.to)
+    }
+    for (const member of totalSettlementResult.value.members) {
+      if (member.name) names.add(member.name)
+    }
+    return Array.from(names).sort((a, b) => a.localeCompare(b, 'zh-Hant'))
+  })
+
+  function addSettlementPayment(from, to, amount, paidAt = new Date().toISOString()) {
+    const cleanFrom = String(from || '').trim()
+    const cleanTo = String(to || '').trim()
+    const cleanAmount = Math.round((Number(amount) || 0) * 10) / 10
+    if (!cleanFrom || !cleanTo || cleanFrom === cleanTo || cleanAmount <= 0.01) return false
+    settlementPayments.value.push({
+      id: nextId(),
+      from: cleanFrom,
+      to: cleanTo,
+      amount: cleanAmount,
+      paidAt,
+    })
+    return true
+  }
+
+  function fillManualSettlementPayment(transfer) {
+    if (!transfer) return
+    manualSettlementPayment.value.from = transfer.from || ''
+    manualSettlementPayment.value.to = transfer.to || ''
+    manualSettlementPayment.value.amount = Math.round((Number(transfer.rawAmount) || 0) * 10) / 10
+  }
+
+  function addManualSettlementPayment() {
+    const p = manualSettlementPayment.value
+    if (addSettlementPayment(p.from, p.to, p.amount)) {
+      p.amount = 0
+    }
+  }
+
+  function transferPaymentKey(transfer) {
+    if (!transfer) return ''
+    return `${transfer.from || ''}__${transfer.to || ''}`
+  }
+
+  function getTransferPaymentAmount(transfer) {
+    return transferSettlementAmounts.value[transferPaymentKey(transfer)] ?? ''
+  }
+
+  function setTransferPaymentAmount(transfer, value) {
+    const key = transferPaymentKey(transfer)
+    if (!key) return
+    if (value === '' || value == null) {
+      delete transferSettlementAmounts.value[key]
+      return
+    }
+    transferSettlementAmounts.value[key] = value
+  }
+
+  function isTransferPaymentAmountValid(transfer) {
+    const amount = Number(getTransferPaymentAmount(transfer)) || 0
+    const maxAmount = Number(transfer?.rawAmount) || 0
+    return amount > 0.01 && amount <= maxAmount + 0.01
+  }
+
+  function settleTransferAmount(transfer) {
+    if (!transfer || !isTransferPaymentAmountValid(transfer)) return
+    const key = transferPaymentKey(transfer)
+    const amount = Math.min(Number(getTransferPaymentAmount(transfer)) || 0, Number(transfer.rawAmount) || 0)
+    if (addSettlementPayment(transfer.from, transfer.to, amount)) {
+      delete transferSettlementAmounts.value[key]
+    }
+  }
+
+  function settleOneTransfer(transfer) {
+    if (!transfer) return
+    addSettlementPayment(transfer.from, transfer.to, transfer.rawAmount)
+  }
+
   function settleTotalTransfers() {
     const transfers = totalSettlementResult.value?.transfers ?? []
     if (transfers.length === 0) return
     const paidAt = new Date().toISOString()
     for (const transfer of transfers) {
-      const amount = Math.round((Number(transfer.rawAmount) || 0) * 10) / 10
-      if (amount <= 0.01) continue
-      settlementPayments.value.push({
-        id: nextId(),
-        from: transfer.from,
-        to: transfer.to,
-        amount,
-        paidAt,
-      })
+      addSettlementPayment(transfer.from, transfer.to, transfer.rawAmount, paidAt)
     }
   }
 
@@ -516,7 +595,10 @@ function useLoot() {
     scissorCost3900, scissorCost7100, snowflakeCostPer,
     memberPresets, bossDropTables,
     sessions, currentSessionId, currentSession,
-    settingsOpen, settlementPayments, recentSettlementPayments,
+    settingsOpen, settlementPayments, manualSettlementPayment, transferSettlementAmounts,
+    recentSettlementPayments, totalSettlementPeople,
+    transferPaymentKey, getTransferPaymentAmount, setTransferPaymentAmount,
+    isTransferPaymentAmountValid, settleTransferAmount,
     nextId,
     addMemberPreset, removeMemberPreset,
     addSessionMemberFromPreset, addSessionMemberManual, removeSessionMember,
@@ -525,7 +607,8 @@ function useLoot() {
     addMemberItem, removeMemberItem,
     addSession, deleteSession, switchSession,
     settlementResult, totalSettlementResult,
-    settleTotalTransfers, removeSettlementPayment, formatPaidAt,
+    fillManualSettlementPayment, addManualSettlementPayment,
+    settleOneTransfer, settleTotalTransfers, removeSettlementPayment, formatPaidAt,
     getState, setState,
   }
 }

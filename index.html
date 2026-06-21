@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>楓星攻擊力計算機</title>
-  <link rel="stylesheet" href="style.css?v=20260616a" />
+  <link rel="stylesheet" href="style.css?v=20260621a" />
 </head>
 <body>
   <div id="app">
@@ -1244,6 +1244,25 @@
               <span v-if="t.cashRemainder">+ {{ t.cashRemainder }} 萬</span>
               <small>約 {{ t.rawAmount.toFixed(1) }} 萬</small>
             </div>
+            <div class="loot-total-transfer-actions">
+              <button class="btn loot-btn-sm" @click="loot.fillManualSettlementPayment(t)">帶入</button>
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                class="loot-transfer-pay-input"
+                placeholder="萬"
+                :value="loot.getTransferPaymentAmount(t)"
+                @input="loot.setTransferPaymentAmount(t, $event.target.value)"
+                @keyup.enter="loot.settleTransferAmount(t); saveLootSettings()"
+              />
+              <button
+                class="btn loot-btn-sm loot-settle-one-btn"
+                :disabled="!loot.isTransferPaymentAmountValid(t)"
+                @click="loot.settleTransferAmount(t); saveLootSettings()"
+              >扣這筆</button>
+              <button class="btn loot-btn-sm loot-settle-one-btn" @click="loot.settleOneTransfer(t); saveLootSettings()">全額扣掉</button>
+            </div>
           </div>
           <div class="loot-total-sum">目前累積需清算 {{ loot.totalSettlementResult.totalOwed.toFixed(1) }} 萬</div>
         </div>
@@ -1261,6 +1280,38 @@
             <span>{{ m.name }}</span>
             <span>{{ m.diff > 0.01 ? '應付' : '應收' }}</span>
             <strong>{{ Math.abs(m.diff).toFixed(1) }} 萬</strong>
+          </div>
+        </div>
+
+        <div class="loot-manual-payment">
+          <div class="loot-paid-history-title">彈性登記付款 / 賒帳</div>
+          <div class="loot-manual-payment-row">
+            <select v-model="loot.manualSettlementPayment.from" class="loot-select-sm">
+              <option value="">誰給</option>
+              <option v-for="name in loot.totalSettlementPeople" :key="'from-' + name" :value="name">{{ name }}</option>
+            </select>
+            <span>給</span>
+            <select v-model="loot.manualSettlementPayment.to" class="loot-select-sm">
+              <option value="">誰收</option>
+              <option v-for="name in loot.totalSettlementPeople" :key="'to-' + name" :value="name">{{ name }}</option>
+            </select>
+            <input
+              type="number"
+              v-model.number="loot.manualSettlementPayment.amount"
+              min="0"
+              step="0.1"
+              class="loot-input-price"
+              placeholder="萬"
+            />
+            <span>萬</span>
+            <button
+              class="btn loot-settle-one-btn"
+              :disabled="!loot.manualSettlementPayment.from || !loot.manualSettlementPayment.to || loot.manualSettlementPayment.from === loot.manualSettlementPayment.to || !(loot.manualSettlementPayment.amount > 0)"
+              @click="loot.addManualSettlementPayment(); saveLootSettings()"
+            >登記扣帳</button>
+          </div>
+          <div class="loot-manual-payment-hint">
+            只扣你輸入的金額；部分付款或先賒帳時，剩下差額會繼續留在總計清算。
           </div>
         </div>
 
@@ -3243,7 +3294,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="heart.js?v=20260522c"></script>
   <script src="equip.js?v=20260606a"></script>
-  <script src="loot.js?v=20260616a"></script>
+  <script src="loot.js?v=20260621a"></script>
   <script src="alchemy.js?v=20260509-1"></script>
   <script src="sync.js?v=20260512a"></script>
   <script src="schedule.js"></script>
