@@ -59,6 +59,7 @@ function useLoot() {
       soldItems: Array.isArray(src.soldItems) ? src.soldItems.filter(i => i && i.id != null) : [],
       memberItems,
       snowflakesUsed: Number(src.snowflakesUsed) || 0,
+      extraScissors: Array.isArray(src.extraScissors) ? src.extraScissors.filter(e => e && e.id != null) : [],
     }
   }
 
@@ -75,7 +76,7 @@ function useLoot() {
 
   // ── Session 管理 ──
   function addSession() {
-    const s = { id: nextId(), name: '新分錢', date: '', members: [], soldItems: [], memberItems: [], snowflakesUsed: 0 }
+    const s = { id: nextId(), name: '新分錢', date: '', members: [], soldItems: [], memberItems: [], snowflakesUsed: 0, extraScissors: [] }
     sessions.value.push(s)
     currentSessionId.value = s.id
   }
@@ -161,6 +162,26 @@ function useLoot() {
     currentSession.value.memberItems = (currentSession.value.memberItems || []).filter(i => i.id !== id)
   }
 
+  function extraScissorCash(entry) {
+    const rate = Number(entry?.rateSnapshot) || 0
+    return rate > 0 ? (Number(entry?.scissorType) || 0) / rate * 1000 : 0
+  }
+  function addExtraScissor() {
+    if (!currentSession.value) return
+    if (!currentSession.value.extraScissors) currentSession.value.extraScissors = []
+    currentSession.value.extraScissors.push({
+      id: nextId(),
+      memberName: currentSession.value.members[0]?.name || '',
+      scissorType: 3900,
+      rateSnapshot: mileageRate.value,
+      note: '',
+    })
+  }
+  function removeExtraScissor(id) {
+    if (!currentSession.value) return
+    currentSession.value.extraScissors = (currentSession.value.extraScissors || []).filter(e => e.id !== id)
+  }
+
   function memberItemScissorCost(item) {
     const mileage = Math.max(0, Number(item?.scissorMileage) || 0)
     return mileageRate.value > 0 ? mileage / mileageRate.value * 1000 : 0
@@ -174,6 +195,7 @@ function useLoot() {
     cs.soldItems = []
     cs.memberItems = []
     cs.snowflakesUsed = 0
+    cs.extraScissors = []
   }
   function createSessionFromRun({ bossName, members, date }) {
     const sessionName = `${bossName} ${date}`
@@ -199,6 +221,7 @@ function useLoot() {
       soldItems:      drops,
       memberItems:    [],
       snowflakesUsed: 0,
+      extraScissors:  [],
     }
     sessions.value.push(s)
     currentSessionId.value = s.id
@@ -283,7 +306,10 @@ function useLoot() {
     const snowflakesUsed = Number(session?.snowflakesUsed) || 0
     const totalSnowflakeCost = snowflakesUsed * snowflakeCostPer.value
 
-    const netRevenue = totalRevenue - totalScissorCost - totalSnowflakeCost
+    const totalExtraScissorCost = (session?.extraScissors ?? []).reduce((sum, e) =>
+      sum + extraScissorCash(e), 0)
+
+    const netRevenue = totalRevenue - totalScissorCost - totalSnowflakeCost - totalExtraScissorCost
 
     const totalShares = members.reduce((s, m) => s + (Number(m.share) || 0), 0)
     if (totalShares === 0) return null
@@ -349,6 +375,11 @@ function useLoot() {
       }
     }
 
+    for (const e of (session?.extraScissors ?? [])) {
+      const mm = memberMap[e.memberName]
+      if (mm) mm.scissorPaid += extraScissorCash(e)
+    }
+
     for (const m of Object.values(memberMap)) {
       m.snowflakeShare = totalSnowflakeCost * m.pct
       m.grossEarned    = Number(m.soldEarned) + Number(m.selfuseCost) + Number(m.receiptTotal) - Number(m.givenTotal)
@@ -370,6 +401,7 @@ function useLoot() {
       totalItemValue,
       totalRevenue,
       totalScissorCost,
+      totalExtraScissorCost,
       totalSnowflakeCost,
       netRevenue,
       members: Object.values(memberMap),
@@ -613,6 +645,7 @@ function useLoot() {
       if (sess.id > maxId) maxId = sess.id
       for (const i of (sess.soldItems || [])) if (i && i.id > maxId) maxId = i.id
       for (const i of (sess.memberItems || [])) if (i && i.id > maxId) maxId = i.id
+      for (const e of (sess.extraScissors || [])) if (e && e.id > maxId) maxId = e.id
     }
     for (const p of settlementPayments.value) if (p && p.id > maxId) maxId = p.id
     _nextId = maxId + 1
@@ -633,6 +666,7 @@ function useLoot() {
     addBoss, removeBoss, addDrop, removeDrop,
     addDropToSession, removeSessionItem, clearSession, createSessionFromRun, dropCount,
     addMemberItem, removeMemberItem, memberItemScissorCost,
+    extraScissorCash, addExtraScissor, removeExtraScissor,
     addSession, deleteSession, switchSession,
     settlementResult, totalSettlementResult,
     fillManualSettlementPayment, addManualSettlementPayment,
