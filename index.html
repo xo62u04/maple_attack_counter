@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>楓星攻擊力計算機</title>
-  <link rel="stylesheet" href="style.css?v=20260621a" />
+  <link rel="stylesheet" href="style.css?v=20260621b" />
 </head>
 <body>
   <div id="app">
@@ -1470,7 +1470,7 @@
           <h3>🎁 成員自取物品</h3>
           <div class="loot-item-table" v-if="(loot.currentSession.memberItems || []).length > 0">
             <div class="loot-receipt-header">
-              <span>給予方</span><span>物品名稱</span><span>歸屬成員</span><span>市價(萬)</span><span></span>
+              <span>給予方</span><span>物品名稱</span><span>歸屬成員</span><span>市價(萬)</span><span>代剪刀里程</span><span>折算(萬)</span><span></span>
             </div>
             <div v-for="mi in loot.currentSession.memberItems" :key="mi.id" class="loot-receipt-row">
               <select v-model="mi.fromMember" class="loot-select-sm">
@@ -1483,6 +1483,8 @@
                 <option v-for="m in loot.currentSession.members" :key="m.name" :value="m.name">{{ m.name }}</option>
               </select>
               <input type="number" v-model.number="mi.price" min="0" class="loot-input-price" placeholder="0" />
+              <input type="number" v-model.number="mi.scissorMileage" min="0" class="loot-input-price" placeholder="0" />
+              <span class="loot-receipt-cost">{{ loot.memberItemScissorCost(mi).toFixed(1) }}</span>
               <button class="btn btn-delete loot-btn-sm" @click="loot.removeMemberItem(mi.id)">✕</button>
             </div>
           </div>
@@ -1509,6 +1511,9 @@
             </div>
             <div class="loot-summary-row dim" v-if="(loot.settlementResult.totalMemberItemValue ?? 0) > 0.01">
               <span>成員自取物品市值（從各人份額扣除）</span><span>{{ (loot.settlementResult.totalMemberItemValue ?? 0).toFixed(1) }} 萬</span>
+            </div>
+            <div class="loot-summary-row dim" v-if="(loot.settlementResult.totalMemberScissorCost ?? 0) > 0.01">
+              <span>代剪刀成本（以目前里程折算，補給代剪者）</span><span>{{ (loot.settlementResult.totalMemberScissorCost ?? 0).toFixed(1) }} 萬</span>
             </div>
             <div class="loot-summary-row danger">
               <span>剪刀成本</span><span>-{{ (loot.settlementResult.totalScissorCost ?? 0).toFixed(1) }} 萬</span>
@@ -1554,7 +1559,7 @@
             <template v-for="m in loot.settlementResult.members" :key="'ri-' + m.name">
               <div v-if="m.receivedItems && m.receivedItems.length > 0" class="loot-receipt-detail-row">
                 <span v-for="(ri, i) in m.receivedItems" :key="i" class="loot-receipt-detail-item">
-                  <span class="loot-receipt-detail-name">{{ ri.fromMember ? ri.fromMember + ' 給 ' + m.name : m.name + ' 已取' }}：</span>{{ ri.itemName }} {{ ri.price.toFixed(1) }}萬
+                  <span class="loot-receipt-detail-name">{{ ri.fromMember ? ri.fromMember + ' 給 ' + m.name : m.name + ' 已取' }}：</span>{{ ri.itemName }} {{ ri.price.toFixed(1) }}萬<span v-if="ri.scissorCost > 0">＋代剪 {{ ri.scissorCost.toFixed(1) }}萬</span>
                 </span>
               </div>
             </template>
@@ -3294,7 +3299,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="heart.js?v=20260522c"></script>
   <script src="equip.js?v=20260606a"></script>
-  <script src="loot.js?v=20260621a"></script>
+  <script src="loot.js?v=20260621b"></script>
   <script src="alchemy.js?v=20260509-1"></script>
   <script src="sync.js?v=20260512a"></script>
   <script src="schedule.js"></script>

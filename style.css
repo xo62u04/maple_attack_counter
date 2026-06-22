@@ -1859,7 +1859,7 @@ body {
 .loot-member-summary-row.owed { background: rgba(74,222,128,0.05); }
 .loot-receipt-header {
   display: grid;
-  grid-template-columns: 95px 1fr 90px 68px 36px;
+  grid-template-columns: 95px 1fr 90px 78px 105px 72px 36px;
   font-size: 13px;
   color: var(--text-dim);
   padding: 2px 0;
@@ -1867,11 +1867,18 @@ body {
 }
 .loot-receipt-row {
   display: grid;
-  grid-template-columns: 95px 1fr 90px 68px 36px;
+  grid-template-columns: 95px 1fr 90px 78px 105px 72px 36px;
   gap: 6px;
   align-items: center;
   padding: 3px 0;
   border-bottom: 1px solid var(--border);
+}
+.loot-receipt-row .loot-input-price {
+  width: 100%;
+}
+.loot-receipt-cost {
+  color: var(--text-dim);
+  font-size: 15px;
 }
 .loot-receipt-add-row {
   display: flex;

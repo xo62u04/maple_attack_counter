@@ -46,13 +46,18 @@ function useLoot() {
 
   function normalizeSession(sess) {
     const src = sess && typeof sess === 'object' ? sess : {}
+    const memberItems = Array.isArray(src.memberItems)
+      ? src.memberItems
+          .filter(i => i && i.id != null)
+          .map(i => ({ ...i, scissorMileage: Math.max(0, Number(i.scissorMileage) || 0) }))
+      : []
     return {
       id: Number(src.id) || nextId(),
       name: src.name || '新分錢',
       date: src.date || '',
       members: Array.isArray(src.members) ? src.members.filter(Boolean) : [],
       soldItems: Array.isArray(src.soldItems) ? src.soldItems.filter(i => i && i.id != null) : [],
-      memberItems: Array.isArray(src.memberItems) ? src.memberItems.filter(i => i && i.id != null) : [],
+      memberItems,
       snowflakesUsed: Number(src.snowflakesUsed) || 0,
     }
   }
@@ -149,11 +154,16 @@ function useLoot() {
   function addMemberItem(memberName) {
     if (!currentSession.value) return
     if (!currentSession.value.memberItems) currentSession.value.memberItems = []
-    currentSession.value.memberItems.push({ id: nextId(), fromMember: '', memberName: memberName || '', itemName: '', price: 0 })
+    currentSession.value.memberItems.push({ id: nextId(), fromMember: '', memberName: memberName || '', itemName: '', price: 0, scissorMileage: 0 })
   }
   function removeMemberItem(id) {
     if (!currentSession.value) return
     currentSession.value.memberItems = (currentSession.value.memberItems || []).filter(i => i.id !== id)
+  }
+
+  function memberItemScissorCost(item) {
+    const mileage = Math.max(0, Number(item?.scissorMileage) || 0)
+    return mileageRate.value > 0 ? mileage / mileageRate.value * 1000 : 0
   }
 
   function clearSession() {
@@ -255,8 +265,11 @@ function useLoot() {
       const feeRate = i.status === 'sold' ? (Number(i.fee) || 0) : 0
       return gross * (1 - feeRate / 100)
     }
-    const memberItems = (session?.memberItems ?? []).filter(i => i && i.memberName && (Number(i.price) || 0) > 0)
+    const memberItems = (session?.memberItems ?? []).filter(i =>
+      i && i.memberName && ((Number(i.price) || 0) > 0 || memberItemScissorCost(i) > 0)
+    )
     const totalMemberItemValue = memberItems.reduce((sum, i) => sum + (Number(i.price) || 0), 0)
+    const totalMemberScissorCost = memberItems.reduce((sum, i) => sum + memberItemScissorCost(i), 0)
     const totalCashRevenue  = validItems.filter(i => i.status === 'sold').reduce((sum, i) => sum + itemNet(i), 0)
     const totalSelfuseValue = validItems.filter(i => i.status === 'selfuse').reduce((sum, i) => sum + itemNet(i), 0)
     const totalItemValue    = totalSelfuseValue   // 成員自取物品不計入可分配收入
@@ -313,12 +326,26 @@ function useLoot() {
       const receiver = memberMap[mi.memberName]
       if (!receiver) continue
       const price = Number(mi.price) || 0
-      receiver.receiptTotal += price
-      receiver.receivedItems.push({ itemName: mi.itemName || '（未命名）', price, fromMember: mi.fromMember || '' })
+      const scissorCost = memberItemScissorCost(mi)
+      const receiptTotal = price + scissorCost
+      receiver.receiptTotal += receiptTotal
+      receiver.receivedItems.push({
+        itemName: mi.itemName || '（未命名）',
+        price,
+        scissorCost,
+        total: receiptTotal,
+        fromMember: mi.fromMember || '',
+      })
 
       if (mi.fromMember) {
         const giver = memberMap[mi.fromMember]
         if (giver) giver.givenTotal += price
+      }
+
+      const scissorPayer = mi.fromMember || mi.memberName
+      if (scissorCost > 0 && scissorPayer) {
+        const payer = memberMap[scissorPayer]
+        if (payer) payer.scissorPaid += scissorCost
       }
     }
 
@@ -339,6 +366,7 @@ function useLoot() {
       totalCashRevenue,
       totalSelfuseValue,
       totalMemberItemValue,
+      totalMemberScissorCost,
       totalItemValue,
       totalRevenue,
       totalScissorCost,
@@ -604,7 +632,7 @@ function useLoot() {
     addSessionMemberFromPreset, addSessionMemberManual, removeSessionMember,
     addBoss, removeBoss, addDrop, removeDrop,
     addDropToSession, removeSessionItem, clearSession, createSessionFromRun, dropCount,
-    addMemberItem, removeMemberItem,
+    addMemberItem, removeMemberItem, memberItemScissorCost,
     addSession, deleteSession, switchSession,
     settlementResult, totalSettlementResult,
     fillManualSettlementPayment, addManualSettlementPayment,
