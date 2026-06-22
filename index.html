@@ -1499,6 +1499,32 @@
           </div>
         </div>
 
+        <!-- 額外剪刀支出 -->
+        <div class="loot-subsection">
+          <h3>✂ 額外剪刀支出</h3>
+          <div class="loot-item-table" v-if="(loot.currentSession.extraScissors || []).length > 0">
+            <div class="loot-receipt-header">
+              <span>付剪刀的人</span><span>剪刀類型</span><span>折算(萬)</span><span>備註</span><span></span>
+            </div>
+            <div v-for="e in loot.currentSession.extraScissors" :key="e.id" class="loot-receipt-row">
+              <select v-model="e.memberName" class="loot-select-sm">
+                <option value="">-</option>
+                <option v-for="m in loot.currentSession.members" :key="m.name" :value="m.name">{{ m.name }}</option>
+              </select>
+              <select v-model.number="e.scissorType" class="loot-select-sm">
+                <option :value="3900">3900里程</option>
+                <option :value="7100">7100里程</option>
+              </select>
+              <span class="loot-receipt-cost">{{ loot.extraScissorCash(e).toFixed(1) }}</span>
+              <input type="text" v-model="e.note" class="loot-input-name" placeholder="備註" />
+              <button class="btn btn-delete loot-btn-sm" @click="loot.removeExtraScissor(e.id)">✕</button>
+            </div>
+          </div>
+          <div class="loot-receipt-add-row">
+            <button class="btn loot-add-btn" @click="loot.addExtraScissor()">＋ 新增</button>
+          </div>
+        </div>
+
         <!-- 結算結果 -->
         <div class="loot-subsection" v-if="loot.settlementResult">
           <h3>💰 結算結果 <span v-if="loot.currentSession.date" class="loot-date-label">{{ loot.currentSession.date }}</span></h3>
@@ -1517,6 +1543,9 @@
             </div>
             <div class="loot-summary-row danger">
               <span>剪刀成本</span><span>-{{ (loot.settlementResult.totalScissorCost ?? 0).toFixed(1) }} 萬</span>
+            </div>
+            <div class="loot-summary-row danger" v-if="(loot.settlementResult.totalExtraScissorCost ?? 0) > 0.01">
+              <span>額外剪刀成本（均攤）</span><span>-{{ (loot.settlementResult.totalExtraScissorCost ?? 0).toFixed(1) }} 萬</span>
             </div>
             <div class="loot-summary-row danger" v-if="(loot.settlementResult.totalSnowflakeCost ?? 0) > 0.001">
               <span>雪花成本（打王，均攤）</span><span>-{{ (loot.settlementResult.totalSnowflakeCost ?? 0).toFixed(1) }} 萬</span>
