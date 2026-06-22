@@ -59,7 +59,17 @@ function useLoot() {
       soldItems: Array.isArray(src.soldItems) ? src.soldItems.filter(i => i && i.id != null) : [],
       memberItems,
       snowflakesUsed: Number(src.snowflakesUsed) || 0,
-      extraScissors: Array.isArray(src.extraScissors) ? src.extraScissors.filter(e => e && e.id != null) : [],
+      extraScissors: Array.isArray(src.extraScissors)
+        ? src.extraScissors
+            .filter(e => e && e.id != null)
+            .map(e => ({
+              id:           Number(e.id),
+              memberName:   String(e.memberName || ''),
+              scissorType:  [3900, 7100].includes(Number(e.scissorType)) ? Number(e.scissorType) : 3900,
+              rateSnapshot: Math.max(0, Number(e.rateSnapshot) || 0),
+              note:         String(e.note || ''),
+            }))
+        : [],
     }
   }
 
@@ -168,10 +178,11 @@ function useLoot() {
   }
   function addExtraScissor() {
     if (!currentSession.value) return
+    if ((currentSession.value.members || []).length === 0) return
     if (!currentSession.value.extraScissors) currentSession.value.extraScissors = []
     currentSession.value.extraScissors.push({
       id: nextId(),
-      memberName: currentSession.value.members[0]?.name || '',
+      memberName: currentSession.value.members[0].name,
       scissorType: 3900,
       rateSnapshot: mileageRate.value,
       note: '',
