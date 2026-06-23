@@ -18,6 +18,25 @@ function useLoot() {
     mileageRate.value > 0 ? (3500 / 11 / mileageRate.value * 1000) : 0
   )
 
+  function cashFromMileage(mileage, rate) {
+    const cleanRate = Number(rate) || 0
+    return cleanRate > 0 ? (Number(mileage) || 0) / cleanRate * 1000 : 0
+  }
+
+  function sessionMileageRate(session = currentSession.value) {
+    const lockedRate = Number(session?.rateSnapshot) || 0
+    if (session?.rateLocked && lockedRate > 0) return lockedRate
+    return Number(mileageRate.value) || 0
+  }
+
+  function sessionScissorCost(mileage, session = currentSession.value) {
+    return cashFromMileage(mileage, sessionMileageRate(session))
+  }
+
+  function sessionSnowflakeCostPer(session = currentSession.value) {
+    return cashFromMileage(3500 / 11, sessionMileageRate(session))
+  }
+
   // ── 常用隊員預設 ──
   const memberPresets = ref([])   // [{ id, name, defaultShare }]
 
@@ -51,14 +70,18 @@ function useLoot() {
           .filter(i => i && i.id != null)
           .map(i => ({ ...i, scissorMileage: Math.max(0, Number(i.scissorMileage) || 0) }))
       : []
+    const rateSnapshot = Math.max(0, Number(src.rateSnapshot) || 0)
     return {
       id: Number(src.id) || nextId(),
       name: src.name || '新分錢',
       date: src.date || '',
+      rateLocked: Boolean(src.rateLocked && rateSnapshot > 0),
+      rateSnapshot,
       members: Array.isArray(src.members) ? src.members.filter(Boolean) : [],
       soldItems: Array.isArray(src.soldItems) ? src.soldItems.filter(i => i && i.id != null) : [],
       memberItems,
       snowflakesUsed: Number(src.snowflakesUsed) || 0,
+      snowflakeOwner: String(src.snowflakeOwner || ''),
       extraScissors: Array.isArray(src.extraScissors)
         ? src.extraScissors
             .filter(e => e && e.id != null)
@@ -86,7 +109,19 @@ function useLoot() {
 
   // ── Session 管理 ──
   function addSession() {
-    const s = { id: nextId(), name: '新分錢', date: '', members: [], soldItems: [], memberItems: [], snowflakesUsed: 0, extraScissors: [] }
+    const s = {
+      id: nextId(),
+      name: '新分錢',
+      date: '',
+      rateLocked: false,
+      rateSnapshot: Math.max(0, Number(mileageRate.value) || 0),
+      members: [],
+      soldItems: [],
+      memberItems: [],
+      snowflakesUsed: 0,
+      snowflakeOwner: '',
+      extraScissors: [],
+    }
     sessions.value.push(s)
     currentSessionId.value = s.id
   }
@@ -99,6 +134,15 @@ function useLoot() {
   function switchSession(id) {
     if (!sessions.value.find(s => s.id === id)) return
     currentSessionId.value = id
+  }
+  function lockSessionMileageRate(session = currentSession.value) {
+    if (!session) return
+    session.rateSnapshot = Math.max(0, Number(mileageRate.value) || 0)
+    session.rateLocked = session.rateSnapshot > 0
+  }
+  function unlockSessionMileageRate(session = currentSession.value) {
+    if (!session) return
+    session.rateLocked = false
   }
 
   // ── 常用隊員管理 ──
@@ -172,8 +216,10 @@ function useLoot() {
     currentSession.value.memberItems = (currentSession.value.memberItems || []).filter(i => i.id !== id)
   }
 
-  function extraScissorCash(entry) {
-    const rate = Number(entry?.rateSnapshot) || 0
+  function extraScissorCash(entry, session = currentSession.value) {
+    const rate = session?.rateLocked
+      ? sessionMileageRate(session)
+      : (Number(entry?.rateSnapshot) || sessionMileageRate(session))
     return rate > 0 ? (Number(entry?.scissorType) || 0) / rate * 1000 : 0
   }
   function addExtraScissor() {
@@ -184,7 +230,7 @@ function useLoot() {
       id: nextId(),
       memberName: currentSession.value.members[0].name,
       scissorType: 3900,
-      rateSnapshot: mileageRate.value,
+      rateSnapshot: sessionMileageRate(currentSession.value),
       note: '',
     })
   }
@@ -193,9 +239,9 @@ function useLoot() {
     currentSession.value.extraScissors = (currentSession.value.extraScissors || []).filter(e => e.id !== id)
   }
 
-  function memberItemScissorCost(item) {
+  function memberItemScissorCost(item, session = currentSession.value) {
     const mileage = Math.max(0, Number(item?.scissorMileage) || 0)
-    return mileageRate.value > 0 ? mileage / mileageRate.value * 1000 : 0
+    return cashFromMileage(mileage, sessionMileageRate(session))
   }
 
   function clearSession() {
@@ -206,7 +252,10 @@ function useLoot() {
     cs.soldItems = []
     cs.memberItems = []
     cs.snowflakesUsed = 0
+    cs.snowflakeOwner = ''
     cs.extraScissors = []
+    cs.rateLocked = false
+    cs.rateSnapshot = Math.max(0, Number(mileageRate.value) || 0)
   }
   function createSessionFromRun({ bossName, members, date }) {
     const sessionName = `${bossName} ${date}`
@@ -225,6 +274,8 @@ function useLoot() {
       id:             nextId(),
       name:           sessionName,
       date,
+      rateLocked:     false,
+      rateSnapshot:   Math.max(0, Number(mileageRate.value) || 0),
       members: members.map(name => {
         const preset = memberPresets.value.find(p => p.name === name)
         return { name, share: preset?.defaultShare ?? 1 }
@@ -232,6 +283,7 @@ function useLoot() {
       soldItems:      drops,
       memberItems:    [],
       snowflakesUsed: 0,
+      snowflakeOwner: '',
       extraScissors:  [],
     }
     sessions.value.push(s)
@@ -289,6 +341,7 @@ function useLoot() {
   function computeSettlementForSession(session) {
     const members = session?.members ?? []
     if (members.length === 0) return null
+    const effectiveMileageRate = sessionMileageRate(session)
 
     const validItems = (session?.soldItems ?? []).filter(
       i => i && (i.status === 'sold' || i.status === 'selfuse')
@@ -300,10 +353,10 @@ function useLoot() {
       return gross * (1 - feeRate / 100)
     }
     const memberItems = (session?.memberItems ?? []).filter(i =>
-      i && i.memberName && ((Number(i.price) || 0) > 0 || memberItemScissorCost(i) > 0)
+      i && i.memberName && ((Number(i.price) || 0) > 0 || memberItemScissorCost(i, session) > 0)
     )
     const totalMemberItemValue = memberItems.reduce((sum, i) => sum + (Number(i.price) || 0), 0)
-    const totalMemberScissorCost = memberItems.reduce((sum, i) => sum + memberItemScissorCost(i), 0)
+    const totalMemberScissorCost = memberItems.reduce((sum, i) => sum + memberItemScissorCost(i, session), 0)
     const totalCashRevenue  = validItems.filter(i => i.status === 'sold').reduce((sum, i) => sum + itemNet(i), 0)
     const totalSelfuseValue = validItems.filter(i => i.status === 'selfuse').reduce((sum, i) => sum + itemNet(i), 0)
     const totalItemValue    = totalSelfuseValue   // 成員自取物品不計入可分配收入
@@ -311,14 +364,15 @@ function useLoot() {
 
     const totalScissorCost = validItems.reduce((sum, i) => {
       if (!i.scissorType || i.status !== 'sold') return sum
-      return sum + (Number(i.qty) || 1) * (i.scissorType / mileageRate.value * 1000)
+      return sum + (Number(i.qty) || 1) * cashFromMileage(i.scissorType, effectiveMileageRate)
     }, 0)
 
     const snowflakesUsed = Number(session?.snowflakesUsed) || 0
-    const totalSnowflakeCost = snowflakesUsed * snowflakeCostPer.value
+    const totalSnowflakeCost = snowflakesUsed * sessionSnowflakeCostPer(session)
+    const snowflakeOwner = String(session?.snowflakeOwner || '')
 
     const totalExtraScissorCost = (session?.extraScissors ?? []).reduce((sum, e) =>
-      sum + extraScissorCash(e), 0)
+      sum + extraScissorCash(e, session), 0)
 
     const netRevenue = totalRevenue - totalScissorCost - totalSnowflakeCost - totalExtraScissorCost
 
@@ -336,7 +390,7 @@ function useLoot() {
         receiptTotal:  0,   // 成員自取物品市值合計
         givenTotal:    0,   // 給出物品市值合計（抵銷應付現金）
         scissorPaid:   0,   // 自付剪刀成本
-        snowflakeShare: 0,  // 雪花均攤成本
+        snowflakeShare: 0,  // 雪花實付成本；未指定開的人時沿用舊均攤
         grossEarned:   0,   // soldEarned + selfuseCost + receiptTotal - givenTotal
         earned: 0,          // grossEarned - scissorPaid - snowflakeShare
         due: 0,
@@ -355,7 +409,7 @@ function useLoot() {
         mm.selfuseItems.push({ itemName: item.itemName || '（未命名）', price: itemNet(item) })
       }
       if (item.scissorType && item.status === 'sold') {
-        mm.scissorPaid += (Number(item.qty) || 1) * (item.scissorType / mileageRate.value * 1000)
+        mm.scissorPaid += (Number(item.qty) || 1) * cashFromMileage(item.scissorType, effectiveMileageRate)
       }
     }
 
@@ -363,7 +417,7 @@ function useLoot() {
       const receiver = memberMap[mi.memberName]
       if (!receiver) continue
       const price = Number(mi.price) || 0
-      const scissorCost = memberItemScissorCost(mi)
+      const scissorCost = memberItemScissorCost(mi, session)
       const receiptTotal = price + scissorCost
       receiver.receiptTotal += receiptTotal
       receiver.receivedItems.push({
@@ -388,11 +442,21 @@ function useLoot() {
 
     for (const e of (session?.extraScissors ?? [])) {
       const mm = memberMap[e.memberName]
-      if (mm) mm.scissorPaid += extraScissorCash(e)
+      if (mm) mm.scissorPaid += extraScissorCash(e, session)
+    }
+
+    if (totalSnowflakeCost > 0.01) {
+      const owner = memberMap[snowflakeOwner]
+      if (owner) {
+        owner.snowflakeShare += totalSnowflakeCost
+      } else {
+        for (const m of Object.values(memberMap)) {
+          m.snowflakeShare += totalSnowflakeCost * m.pct
+        }
+      }
     }
 
     for (const m of Object.values(memberMap)) {
-      m.snowflakeShare = totalSnowflakeCost * m.pct
       m.grossEarned    = Number(m.soldEarned) + Number(m.selfuseCost) + Number(m.receiptTotal) - Number(m.givenTotal)
       m.earned         = Number(m.grossEarned) - Number(m.scissorPaid) - Number(m.snowflakeShare)
       m.due            = Number(netRevenue)    * Number(m.pct)
@@ -665,6 +729,7 @@ function useLoot() {
   return {
     mileageRate, cubePrice, auctionFee,
     scissorCost3900, scissorCost7100, snowflakeCostPer,
+    sessionMileageRate, sessionScissorCost, sessionSnowflakeCostPer,
     memberPresets, bossDropTables,
     sessions, currentSessionId, currentSession,
     settingsOpen, settlementPayments, manualSettlementPayment, transferSettlementAmounts,
@@ -674,6 +739,7 @@ function useLoot() {
     nextId,
     addMemberPreset, removeMemberPreset,
     addSessionMemberFromPreset, addSessionMemberManual, removeSessionMember,
+    lockSessionMileageRate, unlockSessionMileageRate,
     addBoss, removeBoss, addDrop, removeDrop,
     addDropToSession, removeSessionItem, clearSession, createSessionFromRun, dropCount,
     addMemberItem, removeMemberItem, memberItemScissorCost,

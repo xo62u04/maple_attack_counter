@@ -1676,6 +1676,25 @@ body {
   gap: 12px;
   margin-bottom: 14px;
   font-size: 20px;
+  flex-wrap: wrap;
+}
+.loot-session-rate-row {
+  gap: 8px;
+}
+.loot-session-rate-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 4px 10px;
+  background: var(--bg-input);
+  color: var(--text-dim);
+  font-size: 16px;
+}
+.loot-session-rate-chip.locked {
+  border-color: var(--success);
+  color: var(--success);
 }
 .loot-input-date {
   background: var(--bg-input);

@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>楓星攻擊力計算機</title>
-  <link rel="stylesheet" href="style.css?v=20260621b" />
+  <link rel="stylesheet" href="style.css?v=20260623a" />
 </head>
 <body>
   <div id="app">
@@ -1357,11 +1357,32 @@
           <label>打王日期</label>
           <input type="date" v-model="loot.currentSession.date" class="loot-input-date" />
         </div>
+        <div class="loot-date-row loot-session-rate-row">
+          <label>本場里程</label>
+          <span class="loot-session-rate-chip" :class="{ locked: loot.currentSession.rateLocked }">
+            {{ loot.currentSession.rateLocked ? '已鎖定' : '未鎖定' }}
+            1000萬 = {{ loot.sessionMileageRate(loot.currentSession).toFixed(0) }} 里程
+          </span>
+          <button class="btn loot-btn-sm" @click="loot.lockSessionMileageRate(); saveLootSettings()">鎖定里程</button>
+          <button
+            v-if="loot.currentSession.rateLocked"
+            class="btn loot-btn-sm"
+            @click="loot.unlockSessionMileageRate(); saveLootSettings()"
+          >跟隨目前</button>
+          <span class="loot-rate-info-inline">
+            3900≈{{ loot.sessionScissorCost(3900, loot.currentSession).toFixed(1) }}萬 ·
+            7100≈{{ loot.sessionScissorCost(7100, loot.currentSession).toFixed(1) }}萬
+          </span>
+        </div>
         <div class="loot-date-row">
           <label>本場雪花數</label>
           <input type="number" v-model.number="loot.currentSession.snowflakesUsed" min="0" class="loot-input-qty" placeholder="0" />
+          <select v-model="loot.currentSession.snowflakeOwner" class="loot-select-sm">
+            <option value="">未指定（均攤）</option>
+            <option v-for="m in loot.currentSession.members" :key="'snow-' + m.name" :value="m.name">{{ m.name }} 開</option>
+          </select>
           <span class="loot-rate-info-inline" v-if="loot.currentSession.snowflakesUsed > 0">
-            ≈ {{ (loot.snowflakeCostPer * (loot.currentSession.snowflakesUsed || 0)).toFixed(1) }} 萬（均分）
+            ≈ {{ (loot.sessionSnowflakeCostPer(loot.currentSession) * (loot.currentSession.snowflakesUsed || 0)).toFixed(1) }} 萬
           </span>
         </div>
 
@@ -1539,7 +1560,7 @@
               <span>成員自取物品市值（從各人份額扣除）</span><span>{{ (loot.settlementResult.totalMemberItemValue ?? 0).toFixed(1) }} 萬</span>
             </div>
             <div class="loot-summary-row dim" v-if="(loot.settlementResult.totalMemberScissorCost ?? 0) > 0.01">
-              <span>代剪刀成本（以目前里程折算，補給代剪者）</span><span>{{ (loot.settlementResult.totalMemberScissorCost ?? 0).toFixed(1) }} 萬</span>
+              <span>代剪刀成本（以本場里程折算，補給代剪者）</span><span>{{ (loot.settlementResult.totalMemberScissorCost ?? 0).toFixed(1) }} 萬</span>
             </div>
             <div class="loot-summary-row danger">
               <span>剪刀成本</span><span>-{{ (loot.settlementResult.totalScissorCost ?? 0).toFixed(1) }} 萬</span>
@@ -1548,7 +1569,7 @@
               <span>額外剪刀成本（均攤）</span><span>-{{ (loot.settlementResult.totalExtraScissorCost ?? 0).toFixed(1) }} 萬</span>
             </div>
             <div class="loot-summary-row danger" v-if="(loot.settlementResult.totalSnowflakeCost ?? 0) > 0.001">
-              <span>雪花成本（打王，均攤）</span><span>-{{ (loot.settlementResult.totalSnowflakeCost ?? 0).toFixed(1) }} 萬</span>
+              <span>雪花成本（{{ loot.currentSession.snowflakeOwner || '未指定，均攤' }}）</span><span>-{{ (loot.settlementResult.totalSnowflakeCost ?? 0).toFixed(1) }} 萬</span>
             </div>
             <div class="loot-summary-row accent">
               <span>可分配總值</span><span>{{ (loot.settlementResult.netRevenue ?? 0).toFixed(1) }} 萬</span>
@@ -3328,7 +3349,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="heart.js?v=20260522c"></script>
   <script src="equip.js?v=20260606a"></script>
-  <script src="loot.js?v=20260621b"></script>
+  <script src="loot.js?v=20260623a"></script>
   <script src="alchemy.js?v=20260509-1"></script>
   <script src="sync.js?v=20260512a"></script>
   <script src="schedule.js"></script>
